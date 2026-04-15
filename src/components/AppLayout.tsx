@@ -12,6 +12,7 @@ import {
   Menu,
   X,
 } from "lucide-react";
+import logo from "@/assets/logo.png";
 
 const navItems = [
   { path: "/", label: "لوحة التحكم", icon: LayoutDashboard },
@@ -29,67 +30,86 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-background">
+      {/* Background decorative elements */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, hsl(24 95% 53%), transparent)' }} />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, hsl(217 91% 60%), transparent)' }} />
+      </div>
+
       {/* Mobile overlay */}
       {sidebarOpen && (
-        <div className="fixed inset-0 z-40 bg-foreground/30 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm lg:hidden animate-fade-in-up" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-full w-64 bg-sidebar text-sidebar-foreground transition-transform duration-300 lg:static lg:translate-x-0 ${
+        className={`fixed top-0 right-0 z-50 h-full w-[270px] bg-sidebar text-sidebar-foreground transition-transform duration-500 ease-out lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
         }`}
+        style={{ boxShadow: '-10px 0 40px hsla(220 25% 12% / 0.3)' }}
       >
         <div className="flex flex-col h-full">
           {/* Logo area */}
-          <div className="p-6 border-b border-sidebar-border">
-            <h1 className="text-lg font-bold text-sidebar-primary-foreground leading-relaxed">
-              الراعي للعدد والآلات
-            </h1>
-            <p className="text-xs text-sidebar-foreground/60 mt-1">موزع معتمد Fit & Apt</p>
+          <div className="p-5 border-b border-sidebar-border">
+            <div className="flex items-center gap-3">
+              <img src={logo} alt="الراعي للعدد والآلات" className="w-14 h-14 rounded-xl object-contain bg-white/10 p-1" />
+              <div>
+                <h1 className="text-base font-extrabold text-sidebar-primary-foreground leading-tight">
+                  الراعي للعدد والآلات
+                </h1>
+                <p className="text-[11px] text-sidebar-foreground/50 mt-0.5">موزع معتمد Fit & Apt</p>
+              </div>
+            </div>
           </div>
 
           {/* Navigation */}
-          <nav className="flex-1 p-4 space-y-1">
-            {navItems.map((item) => {
+          <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+            {navItems.map((item, idx) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 animate-slide-in ${
                     isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                      : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-[-4px]"
                   }`}
+                  style={{ animationDelay: `${idx * 0.05}s` }}
                 >
-                  <item.icon size={20} />
+                  <item.icon size={20} className={isActive ? "animate-float" : ""} />
                   <span>{item.label}</span>
+                  {isActive && (
+                    <div className="mr-auto w-2 h-2 rounded-full bg-sidebar-primary-foreground animate-pulse" />
+                  )}
                 </Link>
               );
             })}
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/50">
-            <p>إدارة: أ/ مينا عيد</p>
+          <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/40">
+            <p className="font-bold">إدارة: أ/ مينا عيد</p>
             <p className="mt-1" dir="ltr">📞 01210004358</p>
           </div>
         </div>
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen">
+      <main className="flex-1 min-h-screen relative z-10">
         {/* Top bar mobile */}
-        <div className="lg:hidden flex items-center justify-between p-4 bg-card border-b">
-          <h2 className="font-bold text-primary">الراعي للعدد والآلات</h2>
-          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-lg hover:bg-muted">
+        <div className="lg:hidden flex items-center justify-between p-4 glass-card rounded-none border-x-0 border-t-0">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="الراعي" className="w-10 h-10 rounded-lg object-contain" />
+            <h2 className="font-extrabold text-primary">الراعي للعدد والآلات</h2>
+          </div>
+          <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-muted transition-colors">
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 animate-fade-in-up">{children}</div>
       </main>
     </div>
   );
