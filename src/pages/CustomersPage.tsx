@@ -124,5 +124,3 @@ export default function CustomersPage() {
     </>
   );
 }
-
-function Edit2Icon(props: any) { return <Edit2 {...props} />; }
