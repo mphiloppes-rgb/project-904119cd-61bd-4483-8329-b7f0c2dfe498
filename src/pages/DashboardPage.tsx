@@ -37,12 +37,25 @@ export default function DashboardPage() {
 
   return (
     <div>
-      {/* Welcome header */}
-      <div className="flex items-center gap-4 mb-8 animate-fade-in-up">
-        <img src={logo} alt="Logo" className="w-14 h-14 rounded-2xl object-contain animate-float" />
-        <div>
-          <h1 className="text-2xl font-extrabold text-foreground">مرحباً بك في الراعي للعدد والآلات</h1>
-          <p className="text-sm text-muted-foreground">لوحة التحكم - {new Date().toLocaleDateString("ar-EG", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+      {/* Hero welcome section with big logo */}
+      <div className="liquid-glass p-8 mb-8 animate-fade-in-up relative overflow-hidden">
+        {/* Decorative background circles */}
+        <div className="absolute -top-20 -left-20 w-60 h-60 rounded-full opacity-[0.07] animate-spin-slow" style={{ background: 'radial-gradient(circle, hsl(200 85% 48%), transparent)' }} />
+        <div className="absolute -bottom-16 -right-16 w-48 h-48 rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, hsl(200 85% 60%), transparent)' }} />
+        
+        <div className="flex flex-col items-center text-center relative z-10">
+          {/* Big circular logo */}
+          <div className="relative mb-5">
+            <div className="absolute inset-0 rounded-full animate-pulse-ring" style={{ background: 'hsla(200, 85%, 48%, 0.15)', transform: 'scale(1.15)' }} />
+            <div className="w-28 h-28 rounded-full overflow-hidden border-4 shadow-xl animate-float" style={{ borderColor: 'hsl(200, 85%, 48%)', boxShadow: '0 8px 40px hsla(200, 85%, 48%, 0.3)' }}>
+              <img src={logo} alt="الراعي للعدد والآلات" className="w-full h-full object-cover" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-extrabold text-foreground mb-1">الراعي للعدد والآلات</h1>
+          <p className="text-sm text-primary font-bold mb-1">موزع معتمد Fit & Apt</p>
+          <p className="text-xs text-muted-foreground">
+            {new Date().toLocaleDateString("ar-EG", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          </p>
         </div>
       </div>
 

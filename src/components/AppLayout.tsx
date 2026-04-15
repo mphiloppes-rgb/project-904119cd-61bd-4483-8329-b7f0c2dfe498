@@ -33,8 +33,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen bg-background">
       {/* Background decorative elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-[0.07]" style={{ background: 'radial-gradient(circle, hsl(24 95% 53%), transparent)' }} />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full opacity-[0.05]" style={{ background: 'radial-gradient(circle, hsl(217 91% 60%), transparent)' }} />
+        <div className="absolute -top-40 -right-40 w-96 h-96 rounded-full opacity-[0.06]" style={{ background: 'radial-gradient(circle, hsl(200 85% 48%), transparent)' }} />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 rounded-full opacity-[0.04]" style={{ background: 'radial-gradient(circle, hsl(200 85% 60%), transparent)' }} />
       </div>
 
       {/* Mobile overlay */}
@@ -47,13 +47,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         className={`fixed top-0 right-0 z-50 h-full w-[270px] bg-sidebar text-sidebar-foreground transition-transform duration-500 ease-out lg:static lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
         }`}
-        style={{ boxShadow: '-10px 0 40px hsla(220 25% 12% / 0.3)' }}
+        style={{ boxShadow: '-10px 0 40px hsla(215 30% 10% / 0.3)' }}
       >
         <div className="flex flex-col h-full">
           {/* Logo area */}
           <div className="p-5 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
-              <img src={logo} alt="الراعي للعدد والآلات" className="w-14 h-14 rounded-xl object-contain bg-white/10 p-1" />
+              <div className="w-14 h-14 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: 'hsl(200, 85%, 48%)' }}>
+                <img src={logo} alt="الراعي للعدد والآلات" className="w-full h-full object-cover" />
+              </div>
               <div>
                 <h1 className="text-base font-extrabold text-sidebar-primary-foreground leading-tight">
                   الراعي للعدد والآلات
@@ -102,7 +104,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Top bar mobile */}
         <div className="lg:hidden flex items-center justify-between p-4 glass-card rounded-none border-x-0 border-t-0">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="الراعي" className="w-10 h-10 rounded-lg object-contain" />
+            <div className="w-10 h-10 rounded-full overflow-hidden border-2" style={{ borderColor: 'hsl(200, 85%, 48%)' }}>
+              <img src={logo} alt="الراعي" className="w-full h-full object-cover" />
+            </div>
             <h2 className="font-extrabold text-primary">الراعي للعدد والآلات</h2>
           </div>
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-muted transition-colors">
