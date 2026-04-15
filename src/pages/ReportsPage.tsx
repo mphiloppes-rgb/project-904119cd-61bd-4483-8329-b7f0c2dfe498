@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download } from "lucide-react";
 import { getReport } from "@/lib/store";
+import { exportReportToExcel } from "@/lib/excel-export";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
@@ -26,7 +27,13 @@ export default function ReportsPage() {
       <h1 className="page-header">التقارير</h1>
 
       {/* Period selector */}
-      <div className="flex gap-2 mb-6 flex-wrap">
+      <div className="flex gap-2 mb-6 flex-wrap items-center">
+        <button
+          onClick={() => exportReportToExcel(period)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-medium text-sm bg-success text-success-foreground hover:opacity-90 transition-opacity"
+        >
+          <Download size={16} /> تصدير Excel
+        </button>
         {periods.map((p) => (
           <button
             key={p.key}

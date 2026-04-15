@@ -8,6 +8,7 @@ import {
   Receipt,
   Wallet,
   BarChart3,
+  Settings,
   Menu,
   X,
 } from "lucide-react";
@@ -20,6 +21,7 @@ const navItems = [
   { path: "/invoices", label: "الفواتير", icon: Receipt },
   { path: "/expenses", label: "المصاريف", icon: Wallet },
   { path: "/reports", label: "التقارير", icon: BarChart3 },
+  { path: "/settings", label: "الإعدادات", icon: Settings },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
