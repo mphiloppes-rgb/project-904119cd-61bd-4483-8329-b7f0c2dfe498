@@ -11,6 +11,8 @@ import InvoicesPage from "@/pages/InvoicesPage";
 import ExpensesPage from "@/pages/ExpensesPage";
 import ReportsPage from "@/pages/ReportsPage";
 import SettingsPage from "@/pages/SettingsPage";
+import SuppliersPage from "@/pages/SuppliersPage";
+import PurchasesPage from "@/pages/PurchasesPage";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +28,8 @@ const App = () => (
             <Route path="/pos" element={<POSPage />} />
             <Route path="/products" element={<ProductsPage />} />
             <Route path="/customers" element={<CustomersPage />} />
+            <Route path="/suppliers" element={<SuppliersPage />} />
+            <Route path="/purchases" element={<PurchasesPage />} />
             <Route path="/invoices" element={<InvoicesPage />} />
             <Route path="/expenses" element={<ExpensesPage />} />
             <Route path="/reports" element={<ReportsPage />} />

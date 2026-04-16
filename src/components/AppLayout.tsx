@@ -11,6 +11,8 @@ import {
   Settings,
   Menu,
   X,
+  Truck,
+  PackagePlus,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 
@@ -19,6 +21,8 @@ const navItems = [
   { path: "/pos", label: "نقطة البيع", icon: ShoppingCart },
   { path: "/products", label: "المنتجات", icon: Package },
   { path: "/customers", label: "العملاء", icon: Users },
+  { path: "/suppliers", label: "الموردين", icon: Truck },
+  { path: "/purchases", label: "فواتير الشراء", icon: PackagePlus },
   { path: "/invoices", label: "الفواتير", icon: Receipt },
   { path: "/expenses", label: "المصاريف", icon: Wallet },
   { path: "/reports", label: "التقارير", icon: BarChart3 },

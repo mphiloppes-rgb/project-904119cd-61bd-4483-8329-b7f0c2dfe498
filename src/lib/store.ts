@@ -386,7 +386,7 @@ export function getDateRange(period: 'daily' | 'weekly' | 'monthly' | 'yearly'):
 
 export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   const { start, end } = getDateRange(period);
-  const invoices = getInvoices().filter(i => {
+  const allInvoices = getInvoices().filter(i => {
     const d = new Date(i.createdAt);
     return d >= start && d <= end;
   });
@@ -395,30 +395,101 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     return d >= start && d <= end;
   });
 
-  const totalSales = invoices.reduce((s, i) => s + i.total, 0);
-  const totalCost = invoices.reduce((s, i) => s + i.items.reduce((a, it) => a + it.costPrice * it.quantity, 0), 0);
+  // Purchase invoices in range
+  let purchaseInvoices: any[] = [];
+  try {
+    const purchases = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]');
+    purchaseInvoices = purchases.filter((p: any) => {
+      const d = new Date(p.createdAt);
+      return d >= start && d <= end;
+    });
+  } catch {}
+
+  // Compute net qty per item per invoice (after returns)
+  const invoiceNetItems = allInvoices.map(inv => {
+    const returnedMap: Record<string, number> = {};
+    (inv.returnedItems || []).forEach(r => {
+      returnedMap[r.productId] = (returnedMap[r.productId] || 0) + r.quantity;
+    });
+    const items = inv.items.map(it => {
+      const retQty = returnedMap[it.productId] || 0;
+      const netQty = it.quantity - retQty;
+      return {
+        ...it,
+        netQty,
+        netRevenue: netQty * it.unitPrice,
+        netCost: netQty * it.costPrice,
+        profit: netQty * (it.unitPrice - it.costPrice),
+      };
+    });
+    const netTotal = items.reduce((s, it) => s + it.netRevenue, 0);
+    const netCost = items.reduce((s, it) => s + it.netCost, 0);
+    return { invoice: inv, items, netTotal, netCost };
+  });
+
+  const totalSales = invoiceNetItems.reduce((s, x) => s + x.netTotal, 0);
+  const totalCost = invoiceNetItems.reduce((s, x) => s + x.netCost, 0);
   const totalExpenses = expenses.reduce((s, e) => s + e.amount, 0);
+  const totalReturns = allInvoices.reduce((s, inv) => {
+    return s + (inv.returnedItems || []).reduce((a, r) => a + r.total, 0);
+  }, 0);
   const netProfit = totalSales - totalCost - totalExpenses;
 
-  // Best selling products
-  const productSales: Record<string, { name: string; qty: number; revenue: number }> = {};
-  invoices.forEach(inv => {
-    inv.items.forEach(item => {
+  // Best selling products (by net qty)
+  const productSales: Record<string, { name: string; qty: number; revenue: number; cost: number; profit: number }> = {};
+  invoiceNetItems.forEach(({ items }) => {
+    items.forEach(item => {
+      if (item.netQty <= 0) return;
       if (!productSales[item.productId]) {
-        productSales[item.productId] = { name: item.productName, qty: 0, revenue: 0 };
+        productSales[item.productId] = { name: item.productName, qty: 0, revenue: 0, cost: 0, profit: 0 };
       }
-      productSales[item.productId].qty += item.quantity;
-      productSales[item.productId].revenue += item.total;
+      productSales[item.productId].qty += item.netQty;
+      productSales[item.productId].revenue += item.netRevenue;
+      productSales[item.productId].cost += item.netCost;
+      productSales[item.productId].profit += item.profit;
     });
   });
   const bestSelling = Object.values(productSales).sort((a, b) => b.qty - a.qty).slice(0, 10);
+  const productProfits = Object.values(productSales).sort((a, b) => b.profit - a.profit);
+
+  // Returns details
+  const returnsDetails: Array<{ invoiceNumber: string; productName: string; quantity: number; total: number; returnedAt: string }> = [];
+  allInvoices.forEach(inv => {
+    (inv.returnedItems || []).forEach(r => {
+      returnsDetails.push({
+        invoiceNumber: inv.invoiceNumber,
+        productName: r.productName,
+        quantity: r.quantity,
+        total: r.total,
+        returnedAt: r.returnedAt,
+      });
+    });
+  });
+
+  // Sales invoices details
+  const salesDetails = invoiceNetItems.map(({ invoice, netTotal }) => ({
+    invoiceNumber: invoice.invoiceNumber,
+    createdAt: invoice.createdAt,
+    customerName: invoice.customerName || 'بدون عميل',
+    total: netTotal,
+    paid: invoice.paid,
+    remaining: invoice.remaining,
+    isReturned: !!invoice.isReturned,
+  }));
 
   return {
     totalSales,
     totalCost,
     totalExpenses,
+    totalReturns,
     netProfit,
-    invoiceCount: invoices.length,
+    invoiceCount: allInvoices.length,
     bestSelling,
+    productProfits,
+    returnsDetails,
+    salesDetails,
+    expensesDetails: expenses,
+    purchaseDetails: purchaseInvoices,
+    totalPurchases: purchaseInvoices.reduce((s, p) => s + (p.total || 0), 0),
   };
 }
