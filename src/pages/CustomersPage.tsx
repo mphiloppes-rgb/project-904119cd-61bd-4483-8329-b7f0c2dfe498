@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote } from "lucide-react";
+import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote, FileText } from "lucide-react";
 import { getCustomers, addCustomer, updateCustomer, deleteCustomer, getInvoicesByCustomer, payCustomerDebt, type Customer, type Invoice } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import InvoicePrint from "@/components/InvoicePrint";
+import StatementView from "@/components/StatementView";
 
 export default function CustomersPage() {
   const { refreshKey, refresh } = useStoreRefresh();
@@ -12,6 +13,7 @@ export default function CustomersPage() {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", balance: 0 });
   const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
+  const [statementCustomerId, setStatementCustomerId] = useState<string | null>(null);
   const [customerInvoices, setCustomerInvoices] = useState<Invoice[]>([]);
   const [printInvoice, setPrintInvoice] = useState<Invoice | null>(null);
 
@@ -63,6 +65,7 @@ export default function CustomersPage() {
   return (
     <>
       {printInvoice && <InvoicePrint invoice={printInvoice} />}
+      {statementCustomerId && <StatementView type="customer" entityId={statementCustomerId} onClose={() => setStatementCustomerId(null)} />}
       <div className="no-print">
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-3">
@@ -169,10 +172,13 @@ export default function CustomersPage() {
                   {c.balance > 0 ? `عليه ${c.balance.toLocaleString()} ج.م` : "لا مديونية"}
                 </span>
               </div>
-              <div className="mt-3 flex gap-2">
-                <button onClick={() => viewHistory(c.id)} className="flex-1 text-sm text-primary font-bold py-2 rounded-xl bg-primary/10 hover:bg-primary/20 transition-all">كشف حساب</button>
+              <div className="mt-3 flex gap-2 flex-wrap">
+                <button onClick={() => setStatementCustomerId(c.id)} className="flex-1 text-xs text-primary font-bold py-2 rounded-xl bg-primary/10 hover:bg-primary/20 transition-all flex items-center justify-center gap-1">
+                  <FileText size={14} /> كشف حساب
+                </button>
+                <button onClick={() => viewHistory(c.id)} className="text-xs font-bold py-2 px-3 rounded-xl bg-accent hover:bg-accent/80 transition-all">فواتير</button>
                 {c.balance > 0 && (
-                  <button onClick={() => openPayDialog(c)} className="flex-1 text-sm font-bold py-2 rounded-xl bg-success/10 text-success hover:bg-success/20 transition-all flex items-center justify-center gap-1">
+                  <button onClick={() => openPayDialog(c)} className="flex-1 text-xs font-bold py-2 rounded-xl bg-success/10 text-success hover:bg-success/20 transition-all flex items-center justify-center gap-1">
                     <Banknote size={14} /> تسديد
                   </button>
                 )}

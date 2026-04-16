@@ -3,14 +3,26 @@
 export interface Product {
   id: string;
   name: string;
-  code?: string;
+  code?: string; // باركود / كود
   brand?: string;
   model?: string;
   costPrice: number;
-  sellPrice: number;
+  sellPrice: number; // سعر القطاعي (default)
+  wholesalePrice?: number; // سعر الجملة
+  halfWholesalePrice?: number; // سعر نص جملة
+  wholesaleMinQty?: number; // الكمية اللي تفعّل سعر الجملة
+  halfWholesaleMinQty?: number; // الكمية اللي تفعّل نص جملة
   quantity: number;
   lowStockThreshold: number;
+  preferredSupplierId?: string;
   createdAt: string;
+}
+
+// يرجع السعر المناسب حسب الكمية
+export function getTierPrice(p: Product, qty: number): number {
+  if (p.wholesalePrice && p.wholesaleMinQty && qty >= p.wholesaleMinQty) return p.wholesalePrice;
+  if (p.halfWholesalePrice && p.halfWholesaleMinQty && qty >= p.halfWholesaleMinQty) return p.halfWholesalePrice;
+  return p.sellPrice;
 }
 
 export interface Customer {
@@ -323,7 +335,7 @@ export function payInvoice(invoiceId: string, amount: number): boolean {
 }
 
 // Pay customer debt directly (distributes across oldest invoices first)
-export function payCustomerDebt(customerId: string, amount: number): boolean {
+export function payCustomerDebt(customerId: string, amount: number, note?: string): boolean {
   if (amount <= 0) return false;
   const customers = getCustomers();
   const cidx = customers.findIndex(c => c.id === customerId);
@@ -347,11 +359,62 @@ export function payCustomerDebt(customerId: string, amount: number): boolean {
   saveInvoices(invoices);
   customers[cidx].balance = Math.max(0, customers[cidx].balance - amount);
   saveCustomers(customers);
+
+  // Log payment
+  const allPayments = getItem<CustomerPayment[]>('pos_customer_payments', []);
+  allPayments.push({ id: generateId(), customerId, amount, date: new Date().toISOString(), note });
+  setItem('pos_customer_payments', allPayments);
   return true;
 }
 export function getTodayInvoices(): Invoice[] {
   const today = new Date().toISOString().split('T')[0];
   return getInvoices().filter(i => i.createdAt.startsWith(today));
+}
+
+// Find product by barcode/code (exact match)
+export function findProductByCode(code: string): Product | undefined {
+  const c = code.trim().toLowerCase();
+  if (!c) return undefined;
+  return getProducts().find(p => p.code?.toLowerCase() === c);
+}
+
+// Customer payments log (for unified statement view)
+export interface CustomerPayment {
+  id: string;
+  customerId: string;
+  amount: number;
+  date: string;
+  note?: string;
+}
+export function getCustomerPayments(customerId?: string): CustomerPayment[] {
+  const all = getItem<CustomerPayment[]>('pos_customer_payments', []);
+  return customerId ? all.filter(p => p.customerId === customerId) : all;
+}
+export function addCustomerPayment(p: Omit<CustomerPayment, 'id' | 'date'>): CustomerPayment {
+  const all = getItem<CustomerPayment[]>('pos_customer_payments', []);
+  const payment: CustomerPayment = { ...p, id: generateId(), date: new Date().toISOString() };
+  all.push(payment);
+  setItem('pos_customer_payments', all);
+  return payment;
+}
+
+export interface SupplierPayment {
+  id: string;
+  supplierId: string;
+  amount: number;
+  date: string;
+  note?: string;
+}
+export function getSupplierPayments(supplierId?: string): SupplierPayment[] {
+  const all = getItem<SupplierPayment[]>('pos_supplier_payments', []);
+  return supplierId ? all.filter(p => p.supplierId === supplierId) : all;
+}
+export function addSupplierPayment(p: Omit<SupplierPayment, 'id' | 'date'>): SupplierPayment {
+  const all = getItem<SupplierPayment[]>('pos_supplier_payments', []);
+  const payment: SupplierPayment = { ...p, id: generateId(), date: new Date().toISOString() };
+  all.push(payment);
+  setItem('pos_supplier_payments', all);
+  return payment;
 }
 
 // Expenses

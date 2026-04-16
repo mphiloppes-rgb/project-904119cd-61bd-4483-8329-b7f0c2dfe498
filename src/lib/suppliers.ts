@@ -153,7 +153,7 @@ export function paySupplierForInvoice(purchaseId: string, amount: number): boole
   return true;
 }
 
-export function paySupplierDebt(supplierId: string, amount: number): boolean {
+export function paySupplierDebt(supplierId: string, amount: number, note?: string): boolean {
   if (amount <= 0) return false;
   const suppliers = getSuppliers();
   const sidx = suppliers.findIndex(s => s.id === supplierId);
@@ -177,6 +177,11 @@ export function paySupplierDebt(supplierId: string, amount: number): boolean {
   savePurchaseInvoices(list);
   suppliers[sidx].balance = Math.max(0, suppliers[sidx].balance - amount);
   saveSuppliers(suppliers);
+
+  // Log payment
+  const payments = getItem<any[]>('pos_supplier_payments', []);
+  payments.push({ id: generateId(), supplierId, amount, date: new Date().toISOString(), note });
+  setItem('pos_supplier_payments', payments);
   return true;
 }
 

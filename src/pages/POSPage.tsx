@@ -1,11 +1,14 @@
-import { useState, useMemo } from "react";
-import { Search, Plus, Minus, Trash2, Printer, Check, ShoppingCart, AlertTriangle, Save, Percent, Tag, X } from "lucide-react";
-import { getProducts, getCustomers, addInvoice, type InvoiceItem } from "@/lib/store";
+import { useState, useMemo, useEffect, useRef } from "react";
+import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan } from "lucide-react";
+import { getProducts, getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
+import { logAction } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import InvoicePrint from "@/components/InvoicePrint";
+import ThermalPrint from "@/components/ThermalPrint";
 
 type DiscountType = 'amount' | 'percent';
+type PrintMode = 'a4' | 'thermal';
 
 interface CartItem extends InvoiceItem {
   discountType?: DiscountType;
@@ -25,6 +28,10 @@ export default function POSPage() {
   const [showNoCustomerDialog, setShowNoCustomerDialog] = useState(false);
   const [showConfirmSale, setShowConfirmSale] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'print'>('print');
+  const [showProfit, setShowProfit] = useState(false);
+  const [printMode, setPrintMode] = useState<PrintMode>(() => (localStorage.getItem('pos_print_mode') as PrintMode) || 'a4');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const paidRef = useRef<HTMLInputElement>(null);
 
   // Invoice-level discount
   const [invoiceDiscountType, setInvoiceDiscountType] = useState<DiscountType>('amount');
@@ -35,6 +42,10 @@ export default function POSPage() {
   const [tempDiscountType, setTempDiscountType] = useState<DiscountType>('amount');
   const [tempDiscountValue, setTempDiscountValue] = useState<number>(0);
 
+  useEffect(() => {
+    localStorage.setItem('pos_print_mode', printMode);
+  }, [printMode]);
+
   const filtered = useMemo(() => {
     if (!search.trim()) return products.slice(0, 20);
     const s = search.toLowerCase();
@@ -43,7 +54,6 @@ export default function POSPage() {
     );
   }, [search, products]);
 
-  // Helpers to compute item discount in EGP
   const calcItemDiscountAmount = (item: CartItem) => {
     if (!item.discountValue) return 0;
     const gross = item.quantity * item.unitPrice;
@@ -59,6 +69,10 @@ export default function POSPage() {
     : Math.min(afterItemsDiscount, invoiceDiscountValue || 0);
   const total = Math.max(0, afterItemsDiscount - invoiceDiscountAmount);
   const remaining = Math.max(0, total - paid);
+
+  // ربح لحظي = الإجمالي بعد الخصم - تكلفة الأصناف
+  const totalCost = cart.reduce((s, i) => s + i.quantity * i.costPrice, 0);
+  const liveProfit = total - totalCost;
 
   const getAvailableStock = (productId: string) => {
     const product = products.find(p => p.id === productId);
@@ -79,9 +93,28 @@ export default function POSPage() {
       return;
     }
     if (existing) {
-      setCart(cart.map((i) => i.productId === product.id ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.unitPrice } : i));
+      const newQty = existing.quantity + 1;
+      const newPrice = getTierPrice(product, newQty);
+      setCart(cart.map((i) => i.productId === product.id ? { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice } : i));
     } else {
-      setCart([...cart, { productId: product.id, productName: product.name, quantity: 1, unitPrice: product.sellPrice, costPrice: product.costPrice, total: product.sellPrice }]);
+      const price = getTierPrice(product, 1);
+      setCart([...cart, { productId: product.id, productName: product.name, quantity: 1, unitPrice: price, costPrice: product.costPrice, total: price }]);
+    }
+  };
+
+  // Barcode handler: لو الـ search match exact code -> add مباشر
+  const handleSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && search.trim()) {
+      const product = findProductByCode(search.trim());
+      if (product) {
+        addToCart(product);
+        setSearch("");
+      } else if (filtered.length === 1) {
+        addToCart(filtered[0]);
+        setSearch("");
+      } else {
+        toast({ title: "غير موجود", description: "لم يتم العثور على منتج بهذا الكود", variant: "destructive" });
+      }
     }
   };
 
@@ -98,7 +131,9 @@ export default function POSPage() {
       if (i.productId !== productId) return i;
       const newQty = i.quantity + delta;
       if (newQty <= 0) return null;
-      return { ...i, quantity: newQty, total: newQty * i.unitPrice };
+      const product = products.find(p => p.id === productId);
+      const newPrice = product ? getTierPrice(product, newQty) : i.unitPrice;
+      return { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice };
     }).filter(Boolean) as CartItem[]);
   };
 
@@ -145,7 +180,6 @@ export default function POSPage() {
     setShowNoCustomerDialog(false);
     const customer = customers.find((c) => c.id === customerId);
 
-    // Build items with computed discount-applied totals
     const finalItems: InvoiceItem[] = cart.map(i => {
       const gross = i.quantity * i.unitPrice;
       const disc = calcItemDiscountAmount(i);
@@ -177,6 +211,7 @@ export default function POSPage() {
       status: pendingAction === 'print' ? 'completed' : 'saved',
     });
     setLastInvoice(invoice);
+    logAction(pendingAction === 'print' ? 'sell_print' : 'save_invoice', `فاتورة #${invoice.invoiceNumber} - ${total.toLocaleString()} ج.م`);
     toast({
       title: pendingAction === 'print' ? "تم البيع ✅" : "تم الحفظ 💾",
       description: `فاتورة رقم ${invoice.invoiceNumber}`,
@@ -207,9 +242,55 @@ export default function POSPage() {
 
   const editingItem = cart.find(i => i.productId === discountItemId);
 
+  // Keyboard shortcuts: F2=clear/new, F3=focus search, F4=focus paid, Esc=close dialogs
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      // Ignore if typing in input (except F-keys)
+      const tag = (e.target as HTMLElement)?.tagName;
+      const isInput = tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+
+      if (e.key === 'Escape') {
+        if (discountItemId) { setDiscountItemId(null); e.preventDefault(); return; }
+        if (showNoCustomerDialog) { setShowNoCustomerDialog(false); e.preventDefault(); return; }
+        if (showConfirmSale) { setShowConfirmSale(false); e.preventDefault(); return; }
+      }
+      if (e.key === 'F2') {
+        e.preventDefault();
+        setCart([]); setPaid(0); setCustomerId(""); setInvoiceDiscountValue(0);
+        toast({ title: "تم تفريغ الفاتورة" });
+        return;
+      }
+      if (e.key === 'F3') {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+        return;
+      }
+      if (e.key === 'F4') {
+        e.preventDefault();
+        paidRef.current?.focus();
+        paidRef.current?.select();
+        return;
+      }
+      if (e.key === 'F9') {
+        e.preventDefault();
+        if (cart.length > 0) attemptAction('print');
+        return;
+      }
+      if (e.key === 'F10') {
+        e.preventDefault();
+        if (cart.length > 0) attemptAction('save');
+        return;
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cart, discountItemId, showNoCustomerDialog, showConfirmSale]);
+
   return (
     <>
-      {showPrint && <InvoicePrint invoice={invoiceForPrint} />}
+      {showPrint && (printMode === 'thermal' ? <ThermalPrint invoice={invoiceForPrint} /> : <InvoicePrint invoice={invoiceForPrint} />)}
 
       {/* Item Discount Dialog */}
       {discountItemId && editingItem && (
@@ -240,7 +321,6 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* No Customer Dialog */}
       {showNoCustomerDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up no-print">
           <div className="glass-modal rounded-2xl p-6 w-full max-w-sm mx-4 animate-scale-in text-center">
@@ -257,7 +337,6 @@ export default function POSPage() {
         </div>
       )}
 
-      {/* Confirm Sale Dialog */}
       {showConfirmSale && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up no-print">
           <div className="glass-modal rounded-2xl p-6 w-full max-w-sm mx-4 animate-scale-in text-center">
@@ -284,13 +363,48 @@ export default function POSPage() {
       )}
 
       <div className="no-print">
-        <h1 className="page-header">نقطة البيع</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+          <h1 className="page-header mb-0">نقطة البيع</h1>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1 bg-muted/50 rounded-xl p-1 text-xs">
+              <button onClick={() => setPrintMode('a4')} className={`px-3 py-1.5 rounded-lg font-bold transition-all ${printMode === 'a4' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+                <Receipt size={12} className="inline ml-1" /> A4
+              </button>
+              <button onClick={() => setPrintMode('thermal')} className={`px-3 py-1.5 rounded-lg font-bold transition-all ${printMode === 'thermal' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground'}`}>
+                <Receipt size={12} className="inline ml-1" /> 80mm
+              </button>
+            </div>
+            <button onClick={() => setShowProfit(s => !s)} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showProfit ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
+              {showProfit ? <Eye size={14} /> : <EyeOff size={14} />}
+              {showProfit ? 'إخفاء الربح' : 'عرض الربح'}
+            </button>
+          </div>
+        </div>
+
+        {/* Shortcuts hint */}
+        <div className="hidden lg:flex items-center gap-3 mb-3 text-[11px] text-muted-foreground">
+          <span><kbd className="px-1.5 py-0.5 rounded bg-muted">F2</kbd> فاتورة جديدة</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-muted">F3</kbd> بحث</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-muted">F4</kbd> المدفوع</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-muted">F9</kbd> طباعة</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-muted">F10</kbd> حفظ</span>
+          <span><kbd className="px-1.5 py-0.5 rounded bg-muted">Esc</kbd> إلغاء</span>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
-          {/* Products search */}
           <div className="lg:col-span-3 space-y-4 animate-fade-in-up order-2 lg:order-1">
             <div className="relative">
-              <Search className="absolute right-3 top-3 text-muted-foreground" size={18} />
-              <input type="text" placeholder="ابحث بالاسم أو الكود..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field w-full pr-10" />
+              <Scan className="absolute right-3 top-3 text-primary" size={18} />
+              <input
+                ref={searchRef}
+                type="text"
+                placeholder="ابحث بالاسم أو امسح الباركود ثم Enter..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={handleSearchKey}
+                className="input-field w-full pr-10"
+                autoFocus
+              />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
               {filtered.map((p, idx) => (
@@ -298,6 +412,13 @@ export default function POSPage() {
                   <p className="font-extrabold text-sm truncate">{p.name}</p>
                   {p.brand && <p className="text-xs text-muted-foreground">{p.brand}</p>}
                   <p className="text-primary font-extrabold mt-2">{p.sellPrice.toLocaleString()} ج.م</p>
+                  {(p.wholesalePrice || p.halfWholesalePrice) && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {p.halfWholesalePrice && p.halfWholesaleMinQty ? `نص: ${p.halfWholesalePrice}@${p.halfWholesaleMinQty}` : ''}
+                      {p.halfWholesalePrice && p.wholesalePrice ? ' · ' : ''}
+                      {p.wholesalePrice && p.wholesaleMinQty ? `جملة: ${p.wholesalePrice}@${p.wholesaleMinQty}` : ''}
+                    </p>
+                  )}
                   <p className={`text-xs ${p.quantity <= 0 ? 'text-destructive font-extrabold' : 'text-muted-foreground'}`}>
                     المخزون: {p.quantity} {p.quantity <= 0 && '(نفد)'}
                   </p>
@@ -307,7 +428,6 @@ export default function POSPage() {
             </div>
           </div>
 
-          {/* Cart */}
           <div className="lg:col-span-2 animate-slide-in order-1 lg:order-2">
             <div className="stat-card sticky top-6">
               <div className="flex items-center gap-2 mb-4">
@@ -353,7 +473,6 @@ export default function POSPage() {
                 <div className="flex justify-between text-sm"><span className="text-muted-foreground">الإجمالي قبل الخصم</span><span className="font-bold">{subtotal.toLocaleString()} ج.م</span></div>
                 {itemsDiscountTotal > 0 && <div className="flex justify-between text-sm text-amber-600"><span>خصم الأصناف</span><span className="font-bold">- {itemsDiscountTotal.toLocaleString()} ج.م</span></div>}
 
-                {/* Invoice-level discount */}
                 <div className="flex items-center gap-2 bg-muted/50 rounded-xl p-2">
                   <Percent size={16} className="text-muted-foreground" />
                   <span className="text-xs font-bold text-muted-foreground min-w-[55px]">خصم الفاتورة</span>
@@ -376,7 +495,13 @@ export default function POSPage() {
                 {invoiceDiscountAmount > 0 && <div className="flex justify-between text-xs text-amber-600"><span>قيمة خصم الفاتورة</span><span className="font-bold">- {invoiceDiscountAmount.toLocaleString()} ج.م</span></div>}
 
                 <div className="flex justify-between text-lg font-extrabold border-t border-border/50 pt-2"><span>الإجمالي</span><span className="text-primary">{total.toLocaleString()} ج.م</span></div>
-                <div className="flex items-center gap-3"><label className="text-sm text-muted-foreground min-w-[60px] font-bold">المدفوع</label><input type="number" value={paid || ""} onChange={(e) => setPaid(Number(e.target.value))} className="input-field flex-1" placeholder="0" /></div>
+                {showProfit && cart.length > 0 && (
+                  <div className="flex justify-between text-sm bg-success/10 -mx-2 px-3 py-2 rounded-lg">
+                    <span className="text-success font-bold">صافي الربح (للكاشير)</span>
+                    <span className={`font-extrabold ${liveProfit >= 0 ? 'text-success' : 'text-destructive'}`}>{liveProfit.toLocaleString()} ج.م</span>
+                  </div>
+                )}
+                <div className="flex items-center gap-3"><label className="text-sm text-muted-foreground min-w-[60px] font-bold">المدفوع</label><input ref={paidRef} type="number" value={paid || ""} onChange={(e) => setPaid(Number(e.target.value))} className="input-field flex-1" placeholder="0" /></div>
                 <div className="flex justify-between font-extrabold text-destructive"><span>المتبقي</span><span>{remaining.toLocaleString()} ج.م</span></div>
               </div>
 

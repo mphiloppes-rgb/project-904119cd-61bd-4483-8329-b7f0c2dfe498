@@ -11,6 +11,8 @@ import {
 } from "@/lib/suppliers";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
+import StatementView from "@/components/StatementView";
+import { FileText } from "lucide-react";
 
 export default function SuppliersPage() {
   const { refreshKey, refresh } = useStoreRefresh();
@@ -24,6 +26,7 @@ export default function SuppliersPage() {
   const [payAmount, setPayAmount] = useState(0);
 
   const [viewOpen, setViewOpen] = useState<Supplier | null>(null);
+  const [statementSupplierId, setStatementSupplierId] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     if (!search.trim()) return suppliers;
@@ -78,6 +81,7 @@ export default function SuppliersPage() {
 
   return (
     <div>
+      {statementSupplierId && <StatementView type="supplier" entityId={statementSupplierId} onClose={() => setStatementSupplierId(null)} />}
       <div className="flex items-center gap-3 mb-6">
         <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
           <Truck className="text-primary" size={22} />
