@@ -152,14 +152,14 @@ export default function POSPage() {
 
       <div className="no-print">
         <h1 className="page-header">نقطة البيع</h1>
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 lg:gap-6">
           {/* Products search */}
-          <div className="lg:col-span-3 space-y-4 animate-fade-in-up">
+          <div className="lg:col-span-3 space-y-4 animate-fade-in-up order-2 lg:order-1">
             <div className="relative">
               <Search className="absolute right-3 top-3 text-muted-foreground" size={18} />
               <input type="text" placeholder="ابحث بالاسم أو الكود..." value={search} onChange={(e) => setSearch(e.target.value)} className="input-field w-full pr-10" />
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[60vh] overflow-y-auto">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
               {filtered.map((p, idx) => (
                 <button key={p.id} onClick={() => addToCart(p)} disabled={p.quantity <= 0} className={`stat-card text-right cursor-pointer animate-fade-in-up ${p.quantity <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`} style={{ animationDelay: `${idx * 0.03}s` }}>
                   <p className="font-extrabold text-sm truncate">{p.name}</p>
@@ -175,7 +175,7 @@ export default function POSPage() {
           </div>
 
           {/* Cart */}
-          <div className="lg:col-span-2 animate-slide-in">
+          <div className="lg:col-span-2 animate-slide-in order-1 lg:order-2">
             <div className="stat-card sticky top-6">
               <div className="flex items-center gap-2 mb-4">
                 <ShoppingCart className="text-primary" size={22} />
