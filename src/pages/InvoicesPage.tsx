@@ -314,39 +314,70 @@ export default function InvoicesPage() {
           </div>
         )}
 
-        <div className="glass-table animate-fade-in-up">
-          <table className="w-full text-sm">
+        {/* Mobile + tablet: cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:hidden gap-3">
+          {filtered.map((inv) => (
+            <div key={inv.id} className="stat-card cursor-pointer" onClick={() => setSelectedInvoice(inv)}>
+              <div className="flex justify-between items-start mb-2 gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-mono font-extrabold text-primary">#{inv.invoiceNumber}</p>
+                  <p className="text-xs text-muted-foreground">{new Date(inv.createdAt).toLocaleDateString("ar-EG")}</p>
+                </div>
+                {inv.isReturned ? <span className="text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded-lg font-bold whitespace-nowrap">مرتجع</span>
+                  : (inv as any).status === 'saved' ? <span className="text-xs bg-sky-500/20 text-sky-500 px-2 py-1 rounded-lg font-bold whitespace-nowrap">محفوظة</span>
+                  : inv.remaining > 0 ? <span className="text-xs bg-destructive/20 text-destructive px-2 py-1 rounded-lg font-bold whitespace-nowrap">عليها باقي</span>
+                  : <span className="text-xs bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded-lg font-bold whitespace-nowrap">مكتملة</span>}
+              </div>
+              <p className="text-sm font-bold mb-2 truncate">{inv.customerName || "بدون عميل"}</p>
+              <div className="grid grid-cols-3 gap-2 text-center pt-2 border-t border-border/50">
+                <div><p className="text-[10px] text-muted-foreground">إجمالي</p><p className="font-extrabold text-sm">{inv.total.toLocaleString()}</p></div>
+                <div><p className="text-[10px] text-muted-foreground">مدفوع</p><p className="font-extrabold text-sm text-success">{inv.paid.toLocaleString()}</p></div>
+                <div><p className="text-[10px] text-muted-foreground">متبقي</p><p className={`font-extrabold text-sm ${inv.remaining > 0 ? "text-destructive" : "text-success"}`}>{inv.remaining.toLocaleString()}</p></div>
+              </div>
+              <div className="flex gap-1 mt-2 pt-2 border-t border-border/50" onClick={(e) => e.stopPropagation()}>
+                <button onClick={() => setSelectedInvoice(inv)} className="flex-1 p-1.5 hover:bg-muted rounded-lg transition-colors flex items-center justify-center"><Eye size={14} className="text-muted-foreground" /></button>
+                {!inv.isReturned && <button onClick={() => openReturnDialog(inv)} className="flex-1 p-1.5 hover:bg-amber-500/10 rounded-lg transition-colors flex items-center justify-center"><RotateCcw size={14} className="text-amber-500" /></button>}
+                {inv.remaining > 0 && <button onClick={() => openPayDialog(inv)} className="flex-1 p-1.5 hover:bg-success/10 rounded-lg transition-colors flex items-center justify-center"><Banknote size={14} className="text-success" /></button>}
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">لا توجد فواتير</p>}
+        </div>
+
+        {/* Desktop: table */}
+        <div className="hidden lg:block glass-table animate-fade-in-up overflow-x-auto">
+          <table className="w-full text-sm min-w-[800px]">
             <thead>
               <tr className="border-b bg-muted/30">
-                <th className="text-right p-3 font-extrabold">رقم الفاتورة</th>
-                <th className="text-right p-3 font-extrabold">التاريخ</th>
-                <th className="text-right p-3 font-extrabold">العميل</th>
-                <th className="text-right p-3 font-extrabold">الإجمالي</th>
-                <th className="text-right p-3 font-extrabold">المدفوع</th>
-                <th className="text-right p-3 font-extrabold">المتبقي</th>
-                <th className="text-right p-3 font-extrabold">الحالة</th>
-                <th className="text-center p-3 font-extrabold">إجراءات</th>
+                <th className="text-right p-3 font-extrabold whitespace-nowrap">رقم الفاتورة</th>
+                <th className="text-right p-3 font-extrabold whitespace-nowrap">التاريخ</th>
+                <th className="text-right p-3 font-extrabold whitespace-nowrap">العميل</th>
+                <th className="text-right p-3 font-extrabold whitespace-nowrap">الإجمالي</th>
+                <th className="text-right p-3 font-extrabold whitespace-nowrap">المدفوع</th>
+                <th className="text-right p-3 font-extrabold whitespace-nowrap">المتبقي</th>
+                <th className="text-right p-3 font-extrabold whitespace-nowrap">الحالة</th>
+                <th className="text-center p-3 font-extrabold whitespace-nowrap">إجراءات</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((inv, idx) => (
                 <tr key={inv.id} className="border-b hover:bg-muted/20 cursor-pointer transition-colors animate-fade-in-up" style={{ animationDelay: `${idx * 0.03}s` }}>
-                  <td className="p-3 font-mono font-bold text-primary" onClick={() => setSelectedInvoice(inv)}>{inv.invoiceNumber}</td>
-                  <td className="p-3 text-muted-foreground" onClick={() => setSelectedInvoice(inv)}>{new Date(inv.createdAt).toLocaleDateString("ar-EG")}</td>
-                  <td className="p-3 font-bold" onClick={() => setSelectedInvoice(inv)}>{inv.customerName || "بدون عميل"}</td>
-                  <td className="p-3 font-extrabold" onClick={() => setSelectedInvoice(inv)}>{inv.total.toLocaleString()}</td>
-                  <td className="p-3" onClick={() => setSelectedInvoice(inv)}>{inv.paid.toLocaleString()}</td>
-                  <td className={`p-3 font-extrabold ${inv.remaining > 0 ? "text-destructive" : "text-success"}`} onClick={() => setSelectedInvoice(inv)}>{inv.remaining.toLocaleString()}</td>
-                  <td className="p-3" onClick={() => setSelectedInvoice(inv)}>
-                    {inv.isReturned ? <span className="text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded-lg font-bold">مرتجع</span>
-                      : (inv as any).status === 'saved' ? <span className="text-xs bg-sky-500/20 text-sky-400 px-2 py-1 rounded-lg font-bold">محفوظة</span>
+                  <td className="p-3 font-mono font-bold text-primary whitespace-nowrap" onClick={() => setSelectedInvoice(inv)}>{inv.invoiceNumber}</td>
+                  <td className="p-3 text-muted-foreground whitespace-nowrap" onClick={() => setSelectedInvoice(inv)}>{new Date(inv.createdAt).toLocaleDateString("ar-EG")}</td>
+                  <td className="p-3 font-bold whitespace-nowrap" onClick={() => setSelectedInvoice(inv)}>{inv.customerName || "بدون عميل"}</td>
+                  <td className="p-3 font-extrabold whitespace-nowrap" onClick={() => setSelectedInvoice(inv)}>{inv.total.toLocaleString()}</td>
+                  <td className="p-3 whitespace-nowrap" onClick={() => setSelectedInvoice(inv)}>{inv.paid.toLocaleString()}</td>
+                  <td className={`p-3 font-extrabold whitespace-nowrap ${inv.remaining > 0 ? "text-destructive" : "text-success"}`} onClick={() => setSelectedInvoice(inv)}>{inv.remaining.toLocaleString()}</td>
+                  <td className="p-3 whitespace-nowrap" onClick={() => setSelectedInvoice(inv)}>
+                    {inv.isReturned ? <span className="text-xs bg-amber-500/20 text-amber-500 px-2 py-1 rounded-lg font-bold">مرتجع</span>
+                      : (inv as any).status === 'saved' ? <span className="text-xs bg-sky-500/20 text-sky-500 px-2 py-1 rounded-lg font-bold">محفوظة</span>
                       : inv.remaining > 0 ? <span className="text-xs bg-destructive/20 text-destructive px-2 py-1 rounded-lg font-bold">عليها باقي</span>
-                      : <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-lg font-bold">مكتملة</span>}
+                      : <span className="text-xs bg-emerald-500/20 text-emerald-500 px-2 py-1 rounded-lg font-bold">مكتملة</span>}
                   </td>
-                  <td className="p-3 text-center">
+                  <td className="p-3 text-center whitespace-nowrap">
                     <div className="flex items-center justify-center gap-1">
                       <button onClick={(e) => { e.stopPropagation(); setSelectedInvoice(inv); }} className="p-1.5 hover:bg-muted rounded-lg transition-colors"><Eye size={15} className="text-muted-foreground" /></button>
-                      {!inv.isReturned && <button onClick={(e) => { e.stopPropagation(); openReturnDialog(inv); }} className="p-1.5 hover:bg-amber-500/10 rounded-lg transition-colors"><RotateCcw size={15} className="text-amber-400" /></button>}
+                      {!inv.isReturned && <button onClick={(e) => { e.stopPropagation(); openReturnDialog(inv); }} className="p-1.5 hover:bg-amber-500/10 rounded-lg transition-colors"><RotateCcw size={15} className="text-amber-500" /></button>}
                       {inv.remaining > 0 && <button onClick={(e) => { e.stopPropagation(); openPayDialog(inv); }} className="p-1.5 hover:bg-success/10 rounded-lg transition-colors"><Banknote size={15} className="text-success" /></button>}
                     </div>
                   </td>
