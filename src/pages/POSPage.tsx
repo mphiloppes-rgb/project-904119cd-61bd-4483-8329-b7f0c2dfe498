@@ -294,69 +294,75 @@ export default function POSPage() {
 
       {/* Item Discount Dialog */}
       {discountItemId && editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up no-print">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-sm mx-4 animate-scale-in">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-extrabold text-lg flex items-center gap-2"><Tag size={20} className="text-primary" /> خصم على المنتج</h3>
-              <button onClick={() => setDiscountItemId(null)} className="p-1 rounded-lg hover:bg-muted"><X size={18} /></button>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4 truncate">{editingItem.productName}</p>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button onClick={() => setTempDiscountType('amount')} className={`py-2 rounded-xl font-bold text-sm transition-all ${tempDiscountType === 'amount' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>مبلغ (ج.م)</button>
-              <button onClick={() => setTempDiscountType('percent')} className={`py-2 rounded-xl font-bold text-sm transition-all ${tempDiscountType === 'percent' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>نسبة (%)</button>
-            </div>
-            <input
-              type="number"
-              value={tempDiscountValue || ''}
-              onChange={(e) => setTempDiscountValue(Number(e.target.value))}
-              placeholder={tempDiscountType === 'percent' ? 'مثال: 10' : 'مثال: 50'}
-              className="input-field w-full mb-4"
-              autoFocus
-            />
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={applyItemDiscount} className="btn-primary py-3 text-sm">تطبيق</button>
-              <button onClick={clearItemDiscount} className="bg-destructive/10 text-destructive py-3 rounded-xl font-extrabold text-sm hover:bg-destructive/20 transition-all">حذف الخصم</button>
+        <div className="modal-overlay no-print">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-lg flex items-center gap-2"><Tag size={20} className="text-primary" /> خصم على المنتج</h3>
+                <button onClick={() => setDiscountItemId(null)} className="p-1 rounded-lg hover:bg-muted"><X size={18} /></button>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4 truncate">{editingItem.productName}</p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <button onClick={() => setTempDiscountType('amount')} className={`py-2 rounded-xl font-bold text-sm transition-all ${tempDiscountType === 'amount' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>مبلغ (ج.م)</button>
+                <button onClick={() => setTempDiscountType('percent')} className={`py-2 rounded-xl font-bold text-sm transition-all ${tempDiscountType === 'percent' ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground'}`}>نسبة (%)</button>
+              </div>
+              <input
+                type="number"
+                value={tempDiscountValue || ''}
+                onChange={(e) => setTempDiscountValue(Number(e.target.value))}
+                placeholder={tempDiscountType === 'percent' ? 'مثال: 10' : 'مثال: 50'}
+                className="input-field w-full mb-4"
+                autoFocus
+              />
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={applyItemDiscount} className="btn-primary py-3 text-sm">تطبيق</button>
+                <button onClick={clearItemDiscount} className="bg-destructive/10 text-destructive py-3 rounded-xl font-extrabold text-sm hover:bg-destructive/20 transition-all">حذف الخصم</button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {showNoCustomerDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up no-print">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-sm mx-4 animate-scale-in text-center">
-            <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
-              <AlertTriangle className="text-amber-500" size={28} />
-            </div>
-            <h3 className="font-extrabold text-lg mb-2">لم يتم اختيار عميل</h3>
-            <p className="text-muted-foreground text-sm mb-6">هل تريد المتابعة بدون تحديد عميل؟</p>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={proceedWithoutCustomer} className="btn-primary py-3 text-sm">بدون عميل</button>
-              <button onClick={() => setShowNoCustomerDialog(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">اختيار عميل</button>
+        <div className="modal-overlay no-print">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in text-center">
+              <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
+                <AlertTriangle className="text-amber-500" size={28} />
+              </div>
+              <h3 className="font-extrabold text-lg mb-2">لم يتم اختيار عميل</h3>
+              <p className="text-muted-foreground text-sm mb-6">هل تريد المتابعة بدون تحديد عميل؟</p>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={proceedWithoutCustomer} className="btn-primary py-3 text-sm">بدون عميل</button>
+                <button onClick={() => setShowNoCustomerDialog(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">اختيار عميل</button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {showConfirmSale && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up no-print">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-sm mx-4 animate-scale-in text-center">
-            <h3 className="font-extrabold text-lg mb-2">{pendingAction === 'print' ? 'تأكيد البيع والطباعة' : 'تأكيد حفظ الفاتورة'}</h3>
-            <div className="bg-accent/50 rounded-xl p-4 mb-4 space-y-2 text-sm">
-              <div className="flex justify-between"><span>عدد الأصناف</span><span className="font-extrabold">{cart.length}</span></div>
-              <div className="flex justify-between"><span>الإجمالي قبل الخصم</span><span className="font-extrabold">{subtotal.toLocaleString()} ج.م</span></div>
-              {itemsDiscountTotal > 0 && <div className="flex justify-between text-amber-500"><span>خصم الأصناف</span><span className="font-extrabold">- {itemsDiscountTotal.toLocaleString()} ج.م</span></div>}
-              {invoiceDiscountAmount > 0 && <div className="flex justify-between text-amber-500"><span>خصم الفاتورة</span><span className="font-extrabold">- {invoiceDiscountAmount.toLocaleString()} ج.م</span></div>}
-              <div className="flex justify-between border-t border-border/50 pt-2"><span>الإجمالي النهائي</span><span className="font-extrabold text-primary">{total.toLocaleString()} ج.م</span></div>
-              <div className="flex justify-between"><span>المدفوع</span><span className="font-extrabold text-emerald-400">{paid.toLocaleString()} ج.م</span></div>
-              {remaining > 0 && <div className="flex justify-between"><span>المتبقي</span><span className="font-extrabold text-destructive">{remaining.toLocaleString()} ج.م</span></div>}
-              {customerId && <div className="flex justify-between"><span>العميل</span><span className="font-extrabold">{customers.find(c => c.id === customerId)?.name}</span></div>}
-              {!customerId && <div className="flex justify-between"><span>العميل</span><span className="text-muted-foreground">بدون عميل</span></div>}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={confirmAndSell} className="btn-primary py-3 text-sm">
-                {pendingAction === 'print' ? <><Printer size={16} /> طباعة</> : <><Save size={16} /> حفظ</>}
-              </button>
-              <button onClick={() => setShowConfirmSale(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">إلغاء</button>
+        <div className="modal-overlay no-print">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in text-center">
+              <h3 className="font-extrabold text-lg mb-2">{pendingAction === 'print' ? 'تأكيد البيع والطباعة' : 'تأكيد حفظ الفاتورة'}</h3>
+              <div className="bg-accent/50 rounded-xl p-4 mb-4 space-y-2 text-sm">
+                <div className="flex justify-between"><span>عدد الأصناف</span><span className="font-extrabold">{cart.length}</span></div>
+                <div className="flex justify-between"><span>الإجمالي قبل الخصم</span><span className="font-extrabold">{subtotal.toLocaleString()} ج.م</span></div>
+                {itemsDiscountTotal > 0 && <div className="flex justify-between text-amber-500"><span>خصم الأصناف</span><span className="font-extrabold">- {itemsDiscountTotal.toLocaleString()} ج.م</span></div>}
+                {invoiceDiscountAmount > 0 && <div className="flex justify-between text-amber-500"><span>خصم الفاتورة</span><span className="font-extrabold">- {invoiceDiscountAmount.toLocaleString()} ج.م</span></div>}
+                <div className="flex justify-between border-t border-border/50 pt-2"><span>الإجمالي النهائي</span><span className="font-extrabold text-primary">{total.toLocaleString()} ج.م</span></div>
+                <div className="flex justify-between"><span>المدفوع</span><span className="font-extrabold text-success">{paid.toLocaleString()} ج.م</span></div>
+                {remaining > 0 && <div className="flex justify-between"><span>المتبقي</span><span className="font-extrabold text-destructive">{remaining.toLocaleString()} ج.م</span></div>}
+                {customerId && <div className="flex justify-between"><span>العميل</span><span className="font-extrabold">{customers.find(c => c.id === customerId)?.name}</span></div>}
+                {!customerId && <div className="flex justify-between"><span>العميل</span><span className="text-muted-foreground">بدون عميل</span></div>}
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={confirmAndSell} className="btn-primary py-3 text-sm">
+                  {pendingAction === 'print' ? <><Printer size={16} /> طباعة</> : <><Save size={16} /> حفظ</>}
+                </button>
+                <button onClick={() => setShowConfirmSale(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">إلغاء</button>
+              </div>
             </div>
           </div>
         </div>
