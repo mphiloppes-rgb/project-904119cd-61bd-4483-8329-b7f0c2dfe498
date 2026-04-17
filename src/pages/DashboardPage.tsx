@@ -6,8 +6,10 @@ import {
   Users,
   ShoppingCart,
   Receipt,
+  Building2,
 } from "lucide-react";
 import { getTodayInvoices, getTodayExpenses, getLowStockProducts, getCustomersWithDebt } from "@/lib/store";
+import { getSuppliersWithDebt } from "@/lib/suppliers";
 import { Link } from "react-router-dom";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import logo from "@/assets/logo.png";
@@ -20,6 +22,9 @@ export default function DashboardPage() {
     const todayExpenses = getTodayExpenses();
     const lowStock = getLowStockProducts();
     const debtCustomers = getCustomersWithDebt();
+    const debtSuppliers = getSuppliersWithDebt();
+    const totalSupplierDebt = debtSuppliers.reduce((s, x) => s + Math.max(0, x.balance || 0), 0);
+    const totalCustomerDebt = debtCustomers.reduce((s, c) => s + Math.max(0, c.balance || 0), 0);
 
     const totalSales = todayInvoices.reduce((s, i) => s + i.total, 0);
     const totalCost = todayInvoices.reduce(
@@ -28,7 +33,7 @@ export default function DashboardPage() {
     const totalExpenses = todayExpenses.reduce((s, e) => s + e.amount, 0);
     const netProfit = totalSales - totalCost - totalExpenses;
 
-    return { totalSales, totalExpenses, netProfit, lowStock, debtCustomers, invoiceCount: todayInvoices.length };
+    return { totalSales, totalExpenses, netProfit, lowStock, debtCustomers, debtSuppliers, totalSupplierDebt, totalCustomerDebt, invoiceCount: todayInvoices.length };
   }, [refreshKey]);
 
   const stats = [
@@ -61,21 +66,43 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      {/* Stats — uniform sized cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
         {stats.map((stat, idx) => (
-          <div key={stat.label} className={`stat-card animate-fade-in-up stagger-${idx + 1}`}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className={`w-11 h-11 rounded-xl ${stat.iconBg} flex items-center justify-center`}>
+          <div key={stat.label} className={`stat-card animate-fade-in-up stagger-${idx + 1} flex flex-col h-full min-h-[130px]`}>
+            <div className="flex items-center gap-3 mb-3 min-h-[44px]">
+              <div className={`w-11 h-11 rounded-xl ${stat.iconBg} flex items-center justify-center flex-shrink-0`}>
                 <stat.icon className={stat.iconColor} size={22} />
               </div>
-              <span className="text-sm font-bold text-muted-foreground">{stat.label}</span>
+              <span className="text-sm font-bold text-muted-foreground leading-tight line-clamp-2">{stat.label}</span>
             </div>
-            <p className="text-2xl font-extrabold">
+            <p className="text-xl sm:text-2xl font-extrabold mt-auto truncate">
               {stat.isCurrency === false ? stat.value : `${stat.value.toLocaleString()} ج.م`}
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Debt summary — quick view */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6">
+        <Link to="/suppliers" className="stat-card flex items-center gap-3 hover:scale-[1.01] transition-transform">
+          <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+            <Building2 className="text-destructive" size={24} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-muted-foreground mb-0.5">مديونية المحل للموردين</p>
+            <p className="text-xl font-extrabold text-destructive truncate">{data.totalSupplierDebt.toLocaleString()} <span className="text-xs">ج.م</span></p>
+          </div>
+        </Link>
+        <Link to="/customers" className="stat-card flex items-center gap-3 hover:scale-[1.01] transition-transform">
+          <div className="w-12 h-12 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
+            <Users className="text-warning" size={24} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-muted-foreground mb-0.5">مديونية العملاء للمحل</p>
+            <p className="text-xl font-extrabold text-warning truncate">{data.totalCustomerDebt.toLocaleString()} <span className="text-xs">ج.م</span></p>
+          </div>
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

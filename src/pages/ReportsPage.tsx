@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users } from "lucide-react";
 import { getReport } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
@@ -12,7 +12,7 @@ const periods: { key: Period; label: string }[] = [
   { key: "yearly", label: "سنوي" },
 ];
 
-type Tab = "summary" | "sales" | "returns" | "expenses" | "purchases" | "products";
+type Tab = "summary" | "financial" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products";
 
 export default function ReportsPage() {
   const { refreshKey } = useStoreRefresh();
@@ -58,19 +58,41 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      {/* Stats — uniform sized cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         {stats.map((s, idx) => (
-          <div key={s.label} className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1}`}>
-            <div className="flex items-center gap-2 mb-2">
+          <div key={s.label} className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1} flex flex-col h-full min-h-[120px]`}>
+            <div className="flex items-center gap-2 mb-2 min-h-[40px]">
               <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
                 <s.icon className={s.iconColor} size={18} />
               </div>
-              <span className="text-xs font-bold text-muted-foreground line-clamp-2">{s.label}</span>
+              <span className="text-xs font-bold text-muted-foreground line-clamp-2 leading-tight">{s.label}</span>
             </div>
-            <p className="text-lg sm:text-xl font-extrabold">{s.value.toLocaleString()} <span className="text-xs">ج.م</span></p>
+            <p className="text-lg sm:text-xl font-extrabold mt-auto truncate">{s.value.toLocaleString()} <span className="text-xs">ج.م</span></p>
           </div>
         ))}
+      </div>
+
+      {/* Quick debt overview — current snapshot (live, not period-bound) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+        <div className="stat-card flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
+            <AlertCircle className="text-destructive" size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-muted-foreground mb-0.5">مديونية المحل للموردين (الآن)</p>
+            <p className="text-xl font-extrabold text-destructive truncate">{report.currentSupplierDebt.toLocaleString()} <span className="text-xs">ج.م</span></p>
+          </div>
+        </div>
+        <div className="stat-card flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
+            <Users className="text-warning" size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-bold text-muted-foreground mb-0.5">مديونية العملاء للمحل (الآن)</p>
+            <p className="text-xl font-extrabold text-warning truncate">{report.currentCustomerDebt.toLocaleString()} <span className="text-xs">ج.م</span></p>
+          </div>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -120,6 +142,79 @@ export default function ReportsPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {tab === "financial" && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Banknote className="text-success" size={20} />
+              <h3 className="font-extrabold">الموقف المالي الكامل</h3>
+            </div>
+
+            {/* Section: Operations */}
+            <h4 className="font-extrabold text-sm mb-2 text-muted-foreground">📊 الأرباح التشغيلية (الفترة الحالية)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+              <SummaryRow label="صافي المبيعات" value={`${report.totalSales.toLocaleString()} ج.م`} variant="primary" />
+              <SummaryRow label="تكلفة البضاعة المباعة" value={`-${report.totalCost.toLocaleString()} ج.م`} />
+              <SummaryRow label="مصاريف تشغيلية" value={`-${report.totalExpenses.toLocaleString()} ج.م`} />
+              <SummaryRow label="صافي الربح" value={`${report.netProfit.toLocaleString()} ج.م`} variant={report.netProfit >= 0 ? "success" : "destructive"} />
+            </div>
+
+            {/* Section: Suppliers */}
+            <h4 className="font-extrabold text-sm mb-2 text-muted-foreground">🏭 الموردين (الفترة الحالية)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <SummaryRow label="إجمالي فواتير الشراء" value={`${report.totalPurchases.toLocaleString()} ج.م`} />
+              <SummaryRow label="مدفوع للموردين على الفواتير" value={`${report.totalPurchasesPaid.toLocaleString()} ج.م`} variant="success" />
+              <SummaryRow label="متبقي على فواتير الفترة" value={`${report.totalPurchasesRemaining.toLocaleString()} ج.م`} variant="warn" />
+              <SummaryRow label="مدفوعات سداد ديون قديمة" value={`${report.totalSupplierPayments.toLocaleString()} ج.م`} variant="success" />
+            </div>
+            <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl mb-5 flex items-center justify-between">
+              <span className="text-sm font-bold text-destructive">⚠️ مديونية المحل الكلية للموردين (الآن)</span>
+              <span className="text-xl font-extrabold text-destructive">{report.currentSupplierDebt.toLocaleString()} ج.م</span>
+            </div>
+
+            {/* Section: Customers */}
+            <h4 className="font-extrabold text-sm mb-2 text-muted-foreground">👥 العملاء (الفترة الحالية)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <SummaryRow label="مدفوعات سداد ديون عملاء" value={`${report.totalCustomerPayments.toLocaleString()} ج.م`} variant="success" />
+              <SummaryRow label="عدد فواتير البيع" value={`${report.invoiceCount}`} />
+            </div>
+            <div className="p-4 bg-warning/10 border border-warning/20 rounded-xl mb-5 flex items-center justify-between">
+              <span className="text-sm font-bold text-warning">💰 مديونية العملاء للمحل (الآن)</span>
+              <span className="text-xl font-extrabold text-warning">{report.currentCustomerDebt.toLocaleString()} ج.م</span>
+            </div>
+
+            {/* Section: Cash Flow */}
+            <h4 className="font-extrabold text-sm mb-2 text-muted-foreground">💵 السيولة (Cash Flow الفترة)</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <SummaryRow label="نقدية داخلة (مبيعات + سداد عملاء)" value={`+${report.cashIn.toLocaleString()} ج.م`} variant="success" />
+              <SummaryRow label="نقدية خارجة (شراء + سداد موردين + مصاريف)" value={`-${report.cashOut.toLocaleString()} ج.م`} variant="destructive" />
+            </div>
+            <div className={`p-4 rounded-xl flex items-center justify-between border ${report.cashFlow >= 0 ? 'bg-success/10 border-success/20' : 'bg-destructive/10 border-destructive/20'}`}>
+              <span className={`text-sm font-bold ${report.cashFlow >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {report.cashFlow >= 0 ? '✅ صافي تدفق نقدي موجب' : '🔻 صافي تدفق نقدي سالب'}
+              </span>
+              <span className={`text-xl font-extrabold ${report.cashFlow >= 0 ? 'text-success' : 'text-destructive'}`}>
+                {report.cashFlow.toLocaleString()} ج.م
+              </span>
+            </div>
+
+            {/* Net position */}
+            <div className="mt-5 p-4 bg-primary/5 border-2 border-primary/20 rounded-xl">
+              <p className="text-xs font-bold text-muted-foreground mb-2">صافي مركز المحل (Net Position)</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-bold">مديونية العملاء − مديونية الموردين</span>
+                <span className={`text-2xl font-extrabold ${(report.currentCustomerDebt - report.currentSupplierDebt) >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  {(report.currentCustomerDebt - report.currentSupplierDebt).toLocaleString()} ج.م
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                {(report.currentCustomerDebt - report.currentSupplierDebt) >= 0
+                  ? 'لو حصّلت كل ديونك ودفعت كل اللي عليك، هتفضل بفارق موجب.'
+                  : 'لو حصّلت كل ديونك ودفعت كل اللي عليك، هيبقى عليك فرق سالب — لازم سيولة إضافية.'}
+              </p>
+            </div>
           </div>
         )}
 
@@ -185,6 +280,21 @@ export default function ReportsPage() {
               `${p.remaining.toLocaleString()} ج.م`,
             ])}
             footer={`إجمالي المشتريات: ${report.totalPurchases.toLocaleString()} ج.م`}
+          />
+        )}
+
+        {tab === "supplierPayments" && (
+          <DataTable
+            title="مدفوعات سداد الموردين (سداد ديون قديمة)"
+            empty="لا يوجد مدفوعات سداد للموردين في هذه الفترة"
+            headers={["المورد", "المبلغ", "ملاحظة", "التاريخ"]}
+            rows={report.supplierPaymentsDetails.map((p: any) => [
+              p.supplierName,
+              `${(p.amount || 0).toLocaleString()} ج.م`,
+              p.note || '—',
+              new Date(p.date).toLocaleString("ar-EG"),
+            ])}
+            footer={`إجمالي المدفوعات: ${report.totalSupplierPayments.toLocaleString()} ج.م`}
           />
         )}
 
