@@ -160,6 +160,14 @@
       inset 0 1px 0 hsla(0 0% 100% / 0.6);
   }
 
+  /* Modal overlay — scrollable, top-aligned so dialogs always start at top */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 overflow-y-auto bg-foreground/20 backdrop-blur-sm animate-fade-in-up;
+  }
+  .modal-overlay > .modal-content {
+    @apply min-h-full flex items-start sm:items-center justify-center p-4 py-8 sm:py-12;
+  }
+
   .glass-table {
     background: hsla(var(--glass-bg));
     backdrop-filter: blur(24px) saturate(200%);
