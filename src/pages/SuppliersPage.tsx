@@ -212,17 +212,19 @@ export default function SuppliersPage() {
 
       {/* Add/Edit Form */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
-            <h3 className="font-extrabold text-lg mb-4">{editing ? "تعديل المورد" : "إضافة مورد جديد"}</h3>
-            <div className="space-y-3">
-              <input className="input-field w-full" placeholder="الاسم *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-              <input className="input-field w-full" placeholder="رقم الهاتف" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-              <textarea className="input-field w-full min-h-[80px]" placeholder="ملاحظات" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-            </div>
-            <div className="grid grid-cols-2 gap-3 mt-4">
-              <button onClick={submit} className="btn-primary py-3">حفظ</button>
-              <button onClick={() => setShowForm(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold hover:opacity-90">إلغاء</button>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
+              <h3 className="font-extrabold text-lg mb-4">{editing ? "تعديل المورد" : "إضافة مورد جديد"}</h3>
+              <div className="space-y-3">
+                <input className="input-field w-full" placeholder="الاسم *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
+                <input className="input-field w-full" placeholder="رقم الهاتف" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+                <textarea className="input-field w-full min-h-[80px]" placeholder="ملاحظات" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <button onClick={submit} className="btn-primary py-3">حفظ</button>
+                <button onClick={() => setShowForm(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold hover:opacity-90">إلغاء</button>
+              </div>
             </div>
           </div>
         </div>
@@ -230,20 +232,22 @@ export default function SuppliersPage() {
 
       {/* Pay Dialog */}
       {payOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
-            <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
-              <Banknote size={20} className="text-success" /> دفع للمورد
-            </h3>
-            <p className="text-sm text-muted-foreground mb-4">{payOpen.name}</p>
-            <div className="bg-accent/50 rounded-xl p-3 mb-3 flex justify-between text-sm">
-              <span>المديونية الحالية</span>
-              <span className="font-extrabold text-destructive">{payOpen.balance.toLocaleString()} ج.م</span>
-            </div>
-            <input type="number" className="input-field w-full mb-3" value={payAmount || ""} onChange={(e) => setPayAmount(Number(e.target.value))} placeholder="المبلغ" />
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={handlePay} className="btn-primary py-3">دفع</button>
-              <button onClick={() => setPayOpen(null)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+              <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
+                <Banknote size={20} className="text-success" /> دفع للمورد
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">{payOpen.name}</p>
+              <div className="bg-accent/50 rounded-xl p-3 mb-3 flex justify-between text-sm">
+                <span>المديونية الحالية</span>
+                <span className="font-extrabold text-destructive">{payOpen.balance.toLocaleString()} ج.م</span>
+              </div>
+              <input type="number" className="input-field w-full mb-3" value={payAmount || ""} onChange={(e) => setPayAmount(Number(e.target.value))} placeholder="المبلغ" autoFocus />
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={handlePay} className="btn-primary py-3">دفع</button>
+                <button onClick={() => setPayOpen(null)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
+              </div>
             </div>
           </div>
         </div>
@@ -251,38 +255,40 @@ export default function SuppliersPage() {
 
       {/* View Supplier Details */}
       {viewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl max-h-[85vh] overflow-y-auto animate-scale-in">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="font-extrabold text-lg">{viewOpen.name}</h3>
-                {viewOpen.phone && <p className="text-sm text-muted-foreground">{viewOpen.phone}</p>}
-              </div>
-              <button onClick={() => setViewOpen(null)} className="p-2 hover:bg-muted rounded-xl">✕</button>
-            </div>
-            <div className="bg-accent/50 rounded-xl p-3 mb-4 flex justify-between">
-              <span className="font-bold">المديونية</span>
-              <span className={`font-extrabold ${viewOpen.balance > 0 ? "text-destructive" : "text-success"}`}>
-                {viewOpen.balance.toLocaleString()} ج.م
-              </span>
-            </div>
-            <h4 className="font-extrabold mb-2">سجل المشتريات</h4>
-            <div className="space-y-2">
-              {getPurchaseInvoicesBySupplier(viewOpen.id).map((inv) => (
-                <div key={inv.id} className="flex justify-between items-center p-3 bg-accent/40 rounded-xl">
-                  <div>
-                    <p className="font-bold text-sm">#{inv.invoiceNumber}</p>
-                    <p className="text-xs text-muted-foreground">{new Date(inv.createdAt).toLocaleString("ar-EG")}</p>
-                  </div>
-                  <div className="text-left">
-                    <p className="font-extrabold">{inv.total.toLocaleString()} ج.م</p>
-                    {inv.remaining > 0 && <p className="text-xs text-destructive">باقي: {inv.remaining.toLocaleString()}</p>}
-                  </div>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl animate-scale-in">
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="font-extrabold text-lg">{viewOpen.name}</h3>
+                  {viewOpen.phone && <p className="text-sm text-muted-foreground">{viewOpen.phone}</p>}
                 </div>
-              ))}
-              {getPurchaseInvoicesBySupplier(viewOpen.id).length === 0 && (
-                <p className="text-center text-sm text-muted-foreground py-4">لا توجد فواتير شراء</p>
-              )}
+                <button onClick={() => setViewOpen(null)} className="p-2 hover:bg-muted rounded-xl">✕</button>
+              </div>
+              <div className="bg-accent/50 rounded-xl p-3 mb-4 flex justify-between">
+                <span className="font-bold">المديونية</span>
+                <span className={`font-extrabold ${viewOpen.balance > 0 ? "text-destructive" : "text-success"}`}>
+                  {viewOpen.balance.toLocaleString()} ج.م
+                </span>
+              </div>
+              <h4 className="font-extrabold mb-2">سجل المشتريات</h4>
+              <div className="space-y-2">
+                {getPurchaseInvoicesBySupplier(viewOpen.id).map((inv) => (
+                  <div key={inv.id} className="flex justify-between items-center p-3 bg-accent/40 rounded-xl">
+                    <div>
+                      <p className="font-bold text-sm">#{inv.invoiceNumber}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(inv.createdAt).toLocaleString("ar-EG")}</p>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-extrabold">{inv.total.toLocaleString()} ج.م</p>
+                      {inv.remaining > 0 && <p className="text-xs text-destructive">باقي: {inv.remaining.toLocaleString()}</p>}
+                    </div>
+                  </div>
+                ))}
+                {getPurchaseInvoicesBySupplier(viewOpen.id).length === 0 && (
+                  <p className="text-center text-sm text-muted-foreground py-4">لا توجد فواتير شراء</p>
+                )}
+              </div>
             </div>
           </div>
         </div>

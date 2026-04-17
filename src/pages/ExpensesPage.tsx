@@ -67,30 +67,35 @@ export default function ExpensesPage() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-md mx-4 animate-scale-in">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-lg">إضافة مصروف</h3>
-              <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
-            </div>
-            <div className="space-y-3">
-              <div><label className="text-sm font-bold text-muted-foreground">الاسم</label><input className="input-field w-full mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-              <div><label className="text-sm font-bold text-muted-foreground">المبلغ</label><input type="number" className="input-field w-full mt-1" value={form.amount || ""} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} /></div>
-              <div>
-                <label className="text-sm font-bold text-muted-foreground">النوع</label>
-                <select className="input-field w-full mt-1" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-                  {expenseTypes.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-extrabold text-lg">إضافة مصروف</h3>
+                <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
               </div>
-              {form.type === "أخرى" && (
-                <div className="animate-fade-in-up">
-                  <label className="text-sm font-bold text-muted-foreground">وصف المصروف</label>
-                  <input className="input-field w-full mt-1" placeholder="اكتب نوع المصروف هنا..." value={form.customType} onChange={(e) => setForm({ ...form, customType: e.target.value })} />
+              <div className="space-y-3">
+                <div><label className="text-sm font-bold text-muted-foreground">الاسم</label><input className="input-field w-full mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus /></div>
+                <div><label className="text-sm font-bold text-muted-foreground">المبلغ</label><input type="number" className="input-field w-full mt-1" value={form.amount || ""} onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })} /></div>
+                <div>
+                  <label className="text-sm font-bold text-muted-foreground">النوع</label>
+                  <select className="input-field w-full mt-1" value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                    {expenseTypes.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
                 </div>
-              )}
-              <div><label className="text-sm font-bold text-muted-foreground">التاريخ</label><input type="date" className="input-field w-full mt-1" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+                {form.type === "أخرى" && (
+                  <div className="animate-fade-in-up">
+                    <label className="text-sm font-bold text-muted-foreground">وصف المصروف</label>
+                    <input className="input-field w-full mt-1" placeholder="اكتب نوع المصروف هنا..." value={form.customType} onChange={(e) => setForm({ ...form, customType: e.target.value })} />
+                  </div>
+                )}
+                <div><label className="text-sm font-bold text-muted-foreground">التاريخ</label><input type="date" className="input-field w-full mt-1" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <button onClick={handleSave} className="btn-primary py-3"><Check size={18} /> إضافة</button>
+                <button onClick={() => setShowForm(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold hover:opacity-90 transition-all">إلغاء</button>
+              </div>
             </div>
-            <button onClick={handleSave} className="w-full mt-4 btn-primary py-3"><Check size={18} /> إضافة</button>
           </div>
         </div>
       )}

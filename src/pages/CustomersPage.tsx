@@ -76,80 +76,89 @@ export default function CustomersPage() {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-md mx-4 animate-scale-in">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-extrabold text-lg">{editId ? "تعديل العميل" : "إضافة عميل"}</h3>
-                <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-extrabold text-lg">{editId ? "تعديل العميل" : "إضافة عميل"}</h3>
+                  <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
+                </div>
+                <div className="space-y-3">
+                  <div><label className="text-sm font-bold text-muted-foreground">الاسم *</label><input className="input-field w-full mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">الهاتف</label><input className="input-field w-full mt-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">الرصيد (مديونية)</label><input type="number" className="input-field w-full mt-1" value={form.balance || ""} onChange={(e) => setForm({ ...form, balance: Number(e.target.value) })} /></div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-4">
+                  <button onClick={handleSave} className="btn-primary py-3"><Check size={18} /> {editId ? "تحديث" : "إضافة"}</button>
+                  <button onClick={() => setShowForm(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold hover:opacity-90 transition-all">إلغاء</button>
+                </div>
               </div>
-              <div className="space-y-3">
-                <div><label className="text-sm font-bold text-muted-foreground">الاسم *</label><input className="input-field w-full mt-1" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-                <div><label className="text-sm font-bold text-muted-foreground">الهاتف</label><input className="input-field w-full mt-1" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
-                <div><label className="text-sm font-bold text-muted-foreground">الرصيد (مديونية)</label><input type="number" className="input-field w-full mt-1" value={form.balance || ""} onChange={(e) => setForm({ ...form, balance: Number(e.target.value) })} /></div>
-              </div>
-              <button onClick={handleSave} className="w-full mt-4 btn-primary py-3"><Check size={18} /> {editId ? "تحديث" : "إضافة"}</button>
             </div>
           </div>
         )}
 
         {/* Payment Dialog */}
         {showPayDialog && payCustomer && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm mx-4 animate-scale-in">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-extrabold text-lg flex items-center gap-2"><Banknote size={20} className="text-success" /> تسديد مديونية</h3>
-                <button onClick={() => { setShowPayDialog(false); setConfirmPay(false); }} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
-              </div>
-              <div className="bg-accent/50 rounded-xl p-4 mb-4 space-y-2 text-sm">
-                <div className="flex justify-between"><span>العميل</span><span className="font-extrabold">{payCustomer.name}</span></div>
-                <div className="flex justify-between"><span>المديونية الحالية</span><span className="font-extrabold text-destructive">{payCustomer.balance.toLocaleString()} ج.م</span></div>
-              </div>
-              <div className="mb-4">
-                <label className="text-sm font-bold text-muted-foreground">المبلغ المدفوع</label>
-                <input type="number" className="input-field w-full mt-1" value={payAmount || ""} onChange={(e) => { setPayAmount(Number(e.target.value)); setConfirmPay(false); }} placeholder="0" max={payCustomer.balance} />
-              </div>
-              <button onClick={() => { setPayAmount(payCustomer.balance); setConfirmPay(false); }} className="w-full mb-3 text-sm py-2 rounded-xl bg-accent hover:bg-accent/80 font-bold transition-all">
-                تسديد كامل المبلغ ({payCustomer.balance.toLocaleString()} ج.م)
-              </button>
-              {confirmPay && (
-                <div className="bg-success/10 border border-success/20 rounded-xl p-3 text-center mb-3">
-                  <p className="text-sm font-extrabold text-success">هل أنت متأكد من تسجيل دفع {payAmount.toLocaleString()} ج.م؟</p>
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-extrabold text-lg flex items-center gap-2"><Banknote size={20} className="text-success" /> تسديد مديونية</h3>
+                  <button onClick={() => { setShowPayDialog(false); setConfirmPay(false); }} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
                 </div>
-              )}
-              <div className="grid grid-cols-2 gap-3">
-                <button onClick={handlePay} disabled={payAmount <= 0} className="btn-primary py-3 text-sm disabled:opacity-50">
-                  {confirmPay ? "تأكيد الدفع" : "دفع"}
+                <div className="bg-accent/50 rounded-xl p-4 mb-4 space-y-2 text-sm">
+                  <div className="flex justify-between"><span>العميل</span><span className="font-extrabold">{payCustomer.name}</span></div>
+                  <div className="flex justify-between"><span>المديونية الحالية</span><span className="font-extrabold text-destructive">{payCustomer.balance.toLocaleString()} ج.م</span></div>
+                </div>
+                <div className="mb-4">
+                  <label className="text-sm font-bold text-muted-foreground">المبلغ المدفوع</label>
+                  <input type="number" className="input-field w-full mt-1" value={payAmount || ""} onChange={(e) => { setPayAmount(Number(e.target.value)); setConfirmPay(false); }} placeholder="0" max={payCustomer.balance} autoFocus />
+                </div>
+                <button onClick={() => { setPayAmount(payCustomer.balance); setConfirmPay(false); }} className="w-full mb-3 text-sm py-2 rounded-xl bg-accent hover:bg-accent/80 font-bold transition-all">
+                  تسديد كامل المبلغ ({payCustomer.balance.toLocaleString()} ج.م)
                 </button>
-                <button onClick={() => { setShowPayDialog(false); setConfirmPay(false); }} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">إلغاء</button>
+                {confirmPay && (
+                  <div className="bg-success/10 border border-success/20 rounded-xl p-3 text-center mb-3">
+                    <p className="text-sm font-extrabold text-success">هل أنت متأكد من تسجيل دفع {payAmount.toLocaleString()} ج.م؟</p>
+                  </div>
+                )}
+                <div className="grid grid-cols-2 gap-3">
+                  <button onClick={handlePay} disabled={payAmount <= 0} className="btn-primary py-3 text-sm disabled:opacity-50">
+                    {confirmPay ? "تأكيد الدفع" : "دفع"}
+                  </button>
+                  <button onClick={() => { setShowPayDialog(false); setConfirmPay(false); }} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">إلغاء</button>
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {selectedCustomer && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl mx-4 max-h-[80vh] overflow-y-auto animate-scale-in">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-extrabold text-lg">فواتير {customers.find(c => c.id === selectedCustomer)?.name}</h3>
-                <button onClick={() => setSelectedCustomer(null)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
-              </div>
-              {customerInvoices.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">لا توجد فواتير</p>
-              ) : (
-                <div className="space-y-3">
-                  {customerInvoices.map(inv => (
-                    <div key={inv.id} className="p-4 bg-accent/50 rounded-xl flex justify-between items-center hover:bg-accent transition-colors">
-                      <div>
-                        <p className="font-bold text-sm">فاتورة #{inv.invoiceNumber} - {new Date(inv.createdAt).toLocaleDateString("ar-EG")}</p>
-                        <p className="text-sm text-muted-foreground">{inv.items.length} منتج | الإجمالي: {inv.total.toLocaleString()} ج.م</p>
-                        {inv.remaining > 0 && <p className="text-xs text-destructive font-extrabold">متبقي: {inv.remaining.toLocaleString()} ج.م</p>}
-                        {inv.isReturned && <p className="text-xs text-amber-500 font-extrabold">مرتجع</p>}
-                      </div>
-                      <button onClick={() => handlePrintInvoice(inv)} className="p-2 hover:bg-muted rounded-xl transition-colors"><Eye size={18} /></button>
-                    </div>
-                  ))}
+          <div className="modal-overlay">
+            <div className="modal-content">
+              <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl animate-scale-in">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="font-extrabold text-lg">فواتير {customers.find(c => c.id === selectedCustomer)?.name}</h3>
+                  <button onClick={() => setSelectedCustomer(null)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
                 </div>
-              )}
+                {customerInvoices.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">لا توجد فواتير</p>
+                ) : (
+                  <div className="space-y-3">
+                    {customerInvoices.map(inv => (
+                      <div key={inv.id} className="p-4 bg-accent/50 rounded-xl flex justify-between items-center hover:bg-accent transition-colors">
+                        <div>
+                          <p className="font-bold text-sm">فاتورة #{inv.invoiceNumber} - {new Date(inv.createdAt).toLocaleDateString("ar-EG")}</p>
+                          <p className="text-sm text-muted-foreground">{inv.items.length} منتج | الإجمالي: {inv.total.toLocaleString()} ج.م</p>
+                          {inv.remaining > 0 && <p className="text-xs text-destructive font-extrabold">متبقي: {inv.remaining.toLocaleString()} ج.م</p>}
+                          {inv.isReturned && <p className="text-xs text-amber-500 font-extrabold">مرتجع</p>}
+                        </div>
+                        <button onClick={() => handlePrintInvoice(inv)} className="p-2 hover:bg-muted rounded-xl transition-colors"><Eye size={18} /></button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
