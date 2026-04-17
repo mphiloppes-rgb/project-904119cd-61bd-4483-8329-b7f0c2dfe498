@@ -298,6 +298,7 @@ export default function ReportsPage() {
           />
         )}
 
+        {tab === "products" && (
           <DataTable
             title="ربح كل منتج"
             empty="لا توجد مبيعات"
