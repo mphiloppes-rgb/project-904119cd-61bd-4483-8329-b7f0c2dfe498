@@ -605,6 +605,57 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     supplierName: suppliersAll.find(s => s.id === p.supplierId)?.name || '—',
   }));
 
+  // Best customers (by net spending in period)
+  const customerStats: Record<string, { name: string; invoiceCount: number; totalSpent: number; totalPaid: number; totalRemaining: number }> = {};
+  invoiceNetItems.forEach(({ invoice, netTotal }) => {
+    const key = invoice.customerId || '__walkin__';
+    const name = invoice.customerName || 'بدون عميل';
+    if (!customerStats[key]) customerStats[key] = { name, invoiceCount: 0, totalSpent: 0, totalPaid: 0, totalRemaining: 0 };
+    customerStats[key].invoiceCount += 1;
+    customerStats[key].totalSpent += netTotal;
+    customerStats[key].totalPaid += invoice.paid || 0;
+    customerStats[key].totalRemaining += invoice.remaining || 0;
+  });
+  const bestCustomers = Object.values(customerStats)
+    .filter(c => c.totalSpent > 0)
+    .sort((a, b) => b.totalSpent - a.totalSpent)
+    .slice(0, 20);
+
+  // Stale products: في المخزون لكن مفيش عليها بيع آخر 30 يوم (مستقل عن الـ period المختار)
+  const allInvoicesUnfiltered = getInvoices();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentlySoldIds = new Set<string>();
+  allInvoicesUnfiltered.forEach(inv => {
+    if (new Date(inv.createdAt) >= thirtyDaysAgo) {
+      inv.items.forEach(it => recentlySoldIds.add(it.productId));
+    }
+  });
+  const lastSaleMap: Record<string, string> = {};
+  allInvoicesUnfiltered.forEach(inv => {
+    inv.items.forEach(it => {
+      if (!lastSaleMap[it.productId] || new Date(inv.createdAt) > new Date(lastSaleMap[it.productId])) {
+        lastSaleMap[it.productId] = inv.createdAt;
+      }
+    });
+  });
+  const allProductsList = getProducts();
+  const staleProducts = allProductsList
+    .filter(p => p.quantity > 0 && !recentlySoldIds.has(p.id))
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      code: p.code || '—',
+      quantity: p.quantity,
+      stockValue: p.quantity * p.costPrice,
+      lastSale: lastSaleMap[p.id] || null,
+      daysSinceLastSale: lastSaleMap[p.id]
+        ? Math.floor((Date.now() - new Date(lastSaleMap[p.id]).getTime()) / (1000 * 60 * 60 * 24))
+        : null,
+    }))
+    .sort((a, b) => b.stockValue - a.stockValue);
+  const totalStaleValue = staleProducts.reduce((s, p) => s + p.stockValue, 0);
+
   return {
     totalSales,
     totalCost,
@@ -629,6 +680,9 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     cashOut,
     cashFlow,
     supplierPaymentsDetails,
+    bestCustomers,
+    staleProducts,
+    totalStaleValue,
   };
 }
 
