@@ -12,7 +12,7 @@ const periods: { key: Period; label: string }[] = [
   { key: "yearly", label: "سنوي" },
 ];
 
-type Tab = "summary" | "financial" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products";
+type Tab = "summary" | "financial" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
 
 export default function ReportsPage() {
   const { refreshKey } = useStoreRefresh();
@@ -31,10 +31,14 @@ export default function ReportsPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "summary", label: "ملخص" },
+    { key: "financial", label: "الموقف المالي" },
     { key: "sales", label: `المبيعات (${report.salesDetails.length})` },
+    { key: "bestCustomers", label: `أفضل العملاء (${report.bestCustomers.length})` },
+    { key: "staleProducts", label: `منتجات راكدة (${report.staleProducts.length})` },
     { key: "returns", label: `المرتجعات (${report.returnsDetails.length})` },
     { key: "expenses", label: `المصاريف (${report.expensesDetails.length})` },
     { key: "purchases", label: `المشتريات (${report.purchaseDetails.length})` },
+    { key: "supplierPayments", label: `سداد موردين (${report.supplierPaymentsDetails.length})` },
     { key: "products", label: `ربح المنتجات (${report.productProfits.length})` },
   ];
 
@@ -59,9 +63,9 @@ export default function ReportsPage() {
       </div>
 
       {/* Stats — uniform sized cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
         {stats.map((s, idx) => (
-          <div key={s.label} className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1} flex flex-col h-full min-h-[120px]`}>
+          <div key={s.label} className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1} flex flex-col h-full min-h-[130px]`}>
             <div className="flex items-center gap-2 mb-2 min-h-[40px]">
               <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
                 <s.icon className={s.iconColor} size={18} />
