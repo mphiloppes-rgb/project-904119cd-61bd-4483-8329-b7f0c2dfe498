@@ -469,13 +469,36 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
 
   // Purchase invoices in range
   let purchaseInvoices: any[] = [];
+  let allPurchases: any[] = [];
   try {
-    const purchases = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]');
-    purchaseInvoices = purchases.filter((p: any) => {
+    allPurchases = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]');
+    purchaseInvoices = allPurchases.filter((p: any) => {
       const d = new Date(p.createdAt);
       return d >= start && d <= end;
     });
   } catch {}
+
+  // Supplier payments in range (and total)
+  let supplierPaymentsAll: any[] = [];
+  try {
+    supplierPaymentsAll = JSON.parse(localStorage.getItem('pos_supplier_payments') || '[]');
+  } catch {}
+  const supplierPaymentsInRange = supplierPaymentsAll.filter((p: any) => {
+    const d = new Date(p.date);
+    return d >= start && d <= end;
+  });
+  const totalSupplierPayments = supplierPaymentsInRange.reduce((s, p) => s + (p.amount || 0), 0);
+
+  // Customer payments in range
+  let customerPaymentsAll: any[] = [];
+  try {
+    customerPaymentsAll = JSON.parse(localStorage.getItem('pos_customer_payments') || '[]');
+  } catch {}
+  const customerPaymentsInRange = customerPaymentsAll.filter((p: any) => {
+    const d = new Date(p.date);
+    return d >= start && d <= end;
+  });
+  const totalCustomerPayments = customerPaymentsInRange.reduce((s, p) => s + (p.amount || 0), 0);
 
   // Compute net qty per item per invoice (after returns)
   const invoiceNetItems = allInvoices.map(inv => {
@@ -505,7 +528,32 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   const totalReturns = allInvoices.reduce((s, inv) => {
     return s + (inv.returnedItems || []).reduce((a, r) => a + r.total, 0);
   }, 0);
+
+  // Purchases totals (in period)
+  const totalPurchases = purchaseInvoices.reduce((s, p) => s + (p.total || 0), 0);
+  const totalPurchasesPaid = purchaseInvoices.reduce((s, p) => s + (p.paid || 0), 0);
+  const totalPurchasesRemaining = purchaseInvoices.reduce((s, p) => s + (p.remaining || 0), 0);
+
+  // Net profit (operational): sales − cost of goods sold − operating expenses
+  // (purchases & supplier payments are NOT subtracted here — cost is already inside `totalCost` per sold unit)
   const netProfit = totalSales - totalCost - totalExpenses;
+
+  // === Current outstanding totals (snapshot — not period-bound) ===
+  let currentSupplierDebt = 0; // ما يدين به المحل للموردين الآن
+  try {
+    const suppliers = JSON.parse(localStorage.getItem('pos_suppliers') || '[]');
+    currentSupplierDebt = suppliers.reduce((s: number, x: any) => s + Math.max(0, x.balance || 0), 0);
+  } catch {}
+  let currentCustomerDebt = 0; // ما يدين به العملاء للمحل الآن
+  try {
+    const customers = JSON.parse(localStorage.getItem('pos_customers') || '[]');
+    currentCustomerDebt = customers.reduce((s: number, c: any) => s + Math.max(0, c.balance || 0), 0);
+  } catch {}
+
+  // Cash flow within period (السيولة الفعلية الداخلة/الخارجة)
+  const cashIn = invoiceNetItems.reduce((s, x) => s + (x.invoice.paid || 0), 0) + totalCustomerPayments;
+  const cashOut = totalPurchasesPaid + totalSupplierPayments + totalExpenses;
+  const cashFlow = cashIn - cashOut;
 
   // Best selling products (by net qty)
   const productSales: Record<string, { name: string; qty: number; revenue: number; cost: number; profit: number }> = {};
@@ -549,6 +597,14 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     isReturned: !!invoice.isReturned,
   }));
 
+  // Supplier payments details (joined with supplier name)
+  let suppliersAll: any[] = [];
+  try { suppliersAll = JSON.parse(localStorage.getItem('pos_suppliers') || '[]'); } catch {}
+  const supplierPaymentsDetails = supplierPaymentsInRange.map((p: any) => ({
+    ...p,
+    supplierName: suppliersAll.find(s => s.id === p.supplierId)?.name || '—',
+  }));
+
   return {
     totalSales,
     totalCost,
@@ -562,6 +618,17 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     salesDetails,
     expensesDetails: expenses,
     purchaseDetails: purchaseInvoices,
-    totalPurchases: purchaseInvoices.reduce((s, p) => s + (p.total || 0), 0),
+    totalPurchases,
+    totalPurchasesPaid,
+    totalPurchasesRemaining,
+    totalSupplierPayments,
+    totalCustomerPayments,
+    currentSupplierDebt,
+    currentCustomerDebt,
+    cashIn,
+    cashOut,
+    cashFlow,
+    supplierPaymentsDetails,
   };
 }
+
