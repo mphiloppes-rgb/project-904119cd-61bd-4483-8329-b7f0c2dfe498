@@ -79,49 +79,54 @@ export default function ProductsPage() {
       </div>
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-scale-in">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-extrabold text-lg">{editId ? "تعديل المنتج" : "إضافة منتج جديد"}</h3>
-              <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
-            </div>
-            <div className="space-y-3">
-              <div><label className="text-sm font-bold text-muted-foreground">الاسم *</label><input className="input-field w-full mt-1" value={form.name} onChange={(e) => setField("name", e.target.value)} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-sm font-bold text-muted-foreground">الكود / الباركود</label><input className="input-field w-full mt-1" value={form.code} onChange={(e) => setField("code", e.target.value)} /></div>
-                <div><label className="text-sm font-bold text-muted-foreground">الماركة</label><input className="input-field w-full mt-1" value={form.brand} onChange={(e) => setField("brand", e.target.value)} /></div>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl animate-scale-in">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="font-extrabold text-lg">{editId ? "تعديل المنتج" : "إضافة منتج جديد"}</h3>
+                <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
               </div>
-              <div><label className="text-sm font-bold text-muted-foreground">الموديل</label><input className="input-field w-full mt-1" value={form.model} onChange={(e) => setField("model", e.target.value)} /></div>
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-sm font-bold text-muted-foreground">سعر الشراء</label><input type="number" className="input-field w-full mt-1" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} /></div>
-                <div><label className="text-sm font-bold text-muted-foreground">سعر القطاعي *</label><input type="number" className="input-field w-full mt-1" value={form.sellPrice || ""} onChange={(e) => setField("sellPrice", Number(e.target.value))} /></div>
-              </div>
-
-              <div className="bg-accent/30 rounded-xl p-3 space-y-3">
-                <p className="text-xs font-extrabold text-muted-foreground">أسعار متعددة (اختياري)</p>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-xs font-bold">سعر نص جملة</label><input type="number" className="input-field w-full mt-1" value={form.halfWholesalePrice || ""} onChange={(e) => setField("halfWholesalePrice", Number(e.target.value))} /></div>
-                  <div><label className="text-xs font-bold">يبدأ من كمية</label><input type="number" className="input-field w-full mt-1" value={form.halfWholesaleMinQty || ""} onChange={(e) => setField("halfWholesaleMinQty", Number(e.target.value))} /></div>
+              <div className="space-y-3">
+                <div><label className="text-sm font-bold text-muted-foreground">الاسم *</label><input className="input-field w-full mt-1" value={form.name} onChange={(e) => setField("name", e.target.value)} autoFocus /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><label className="text-sm font-bold text-muted-foreground">الكود / الباركود</label><input className="input-field w-full mt-1" value={form.code} onChange={(e) => setField("code", e.target.value)} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">الماركة</label><input className="input-field w-full mt-1" value={form.brand} onChange={(e) => setField("brand", e.target.value)} /></div>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-xs font-bold">سعر الجملة</label><input type="number" className="input-field w-full mt-1" value={form.wholesalePrice || ""} onChange={(e) => setField("wholesalePrice", Number(e.target.value))} /></div>
-                  <div><label className="text-xs font-bold">يبدأ من كمية</label><input type="number" className="input-field w-full mt-1" value={form.wholesaleMinQty || ""} onChange={(e) => setField("wholesaleMinQty", Number(e.target.value))} /></div>
+                <div><label className="text-sm font-bold text-muted-foreground">الموديل</label><input className="input-field w-full mt-1" value={form.model} onChange={(e) => setField("model", e.target.value)} /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><label className="text-sm font-bold text-muted-foreground">سعر الشراء</label><input type="number" className="input-field w-full mt-1" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">سعر القطاعي *</label><input type="number" className="input-field w-full mt-1" value={form.sellPrice || ""} onChange={(e) => setField("sellPrice", Number(e.target.value))} /></div>
+                </div>
+
+                <div className="bg-accent/30 rounded-xl p-3 space-y-3">
+                  <p className="text-xs font-extrabold text-muted-foreground">أسعار متعددة (اختياري)</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div><label className="text-xs font-bold">سعر نص جملة</label><input type="number" className="input-field w-full mt-1" value={form.halfWholesalePrice || ""} onChange={(e) => setField("halfWholesalePrice", Number(e.target.value))} /></div>
+                    <div><label className="text-xs font-bold">يبدأ من كمية</label><input type="number" className="input-field w-full mt-1" value={form.halfWholesaleMinQty || ""} onChange={(e) => setField("halfWholesaleMinQty", Number(e.target.value))} /></div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div><label className="text-xs font-bold">سعر الجملة</label><input type="number" className="input-field w-full mt-1" value={form.wholesalePrice || ""} onChange={(e) => setField("wholesalePrice", Number(e.target.value))} /></div>
+                    <div><label className="text-xs font-bold">يبدأ من كمية</label><input type="number" className="input-field w-full mt-1" value={form.wholesaleMinQty || ""} onChange={(e) => setField("wholesaleMinQty", Number(e.target.value))} /></div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div><label className="text-sm font-bold text-muted-foreground">الكمية</label><input type="number" className="input-field w-full mt-1" value={form.quantity || ""} onChange={(e) => setField("quantity", Number(e.target.value))} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground">حد التنبيه</label><input type="number" className="input-field w-full mt-1" value={form.lowStockThreshold || ""} onChange={(e) => setField("lowStockThreshold", Number(e.target.value))} /></div>
+                </div>
+                <div>
+                  <label className="text-sm font-bold text-muted-foreground">المورد المفضل</label>
+                  <select className="input-field w-full mt-1" value={form.preferredSupplierId} onChange={(e) => setField("preferredSupplierId", e.target.value)}>
+                    <option value="">— بدون —</option>
+                    {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div><label className="text-sm font-bold text-muted-foreground">الكمية</label><input type="number" className="input-field w-full mt-1" value={form.quantity || ""} onChange={(e) => setField("quantity", Number(e.target.value))} /></div>
-                <div><label className="text-sm font-bold text-muted-foreground">حد التنبيه</label><input type="number" className="input-field w-full mt-1" value={form.lowStockThreshold || ""} onChange={(e) => setField("lowStockThreshold", Number(e.target.value))} /></div>
-              </div>
-              <div>
-                <label className="text-sm font-bold text-muted-foreground">المورد المفضل</label>
-                <select className="input-field w-full mt-1" value={form.preferredSupplierId} onChange={(e) => setField("preferredSupplierId", e.target.value)}>
-                  <option value="">— بدون —</option>
-                  {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                </select>
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <button onClick={handleSave} className="btn-primary py-3"><Check size={18} /> {editId ? "تحديث" : "إضافة"}</button>
+                <button onClick={() => setShowForm(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold hover:opacity-90 transition-all">إلغاء</button>
               </div>
             </div>
-            <button onClick={handleSave} className="w-full mt-4 btn-primary py-3"><Check size={18} /> {editId ? "تحديث" : "إضافة"}</button>
           </div>
         </div>
       )}
