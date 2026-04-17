@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { X, Receipt, Banknote, TrendingUp, TrendingDown } from "lucide-react";
-import { getInvoicesByCustomer, getCustomerPayments, getCustomers } from "@/lib/store";
-import { getPurchaseInvoicesBySupplier, getSupplierPayments, getSuppliers } from "@/lib/suppliers";
+import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments } from "@/lib/store";
+import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
 type Props = {
   type: 'customer' | 'supplier';
