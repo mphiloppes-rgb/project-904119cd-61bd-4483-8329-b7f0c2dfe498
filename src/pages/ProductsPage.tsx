@@ -158,32 +158,32 @@ export default function ProductsPage() {
       </div>
 
       <div className="hidden md:block glass-table animate-fade-in-up overflow-x-auto">
-        <table className="w-full text-sm">
+        <table className="w-full text-sm min-w-[900px]">
           <thead>
             <tr className="border-b bg-muted/30">
-              <th className="text-right p-3 font-extrabold">الاسم</th>
-              <th className="text-right p-3 font-extrabold">الكود</th>
-              <th className="text-right p-3 font-extrabold">الماركة</th>
-              <th className="text-right p-3 font-extrabold">شراء</th>
-              <th className="text-right p-3 font-extrabold">قطاعي</th>
-              <th className="text-right p-3 font-extrabold">نص جملة</th>
-              <th className="text-right p-3 font-extrabold">جملة</th>
-              <th className="text-right p-3 font-extrabold">الكمية</th>
-              <th className="text-center p-3 font-extrabold">إجراءات</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">الاسم</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">الكود</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">الماركة</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">شراء</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">قطاعي</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">نص جملة</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">جملة</th>
+              <th className="text-right p-3 font-extrabold whitespace-nowrap">الكمية</th>
+              <th className="text-center p-3 font-extrabold whitespace-nowrap">إجراءات</th>
             </tr>
           </thead>
           <tbody>
             {filtered.map((p, idx) => (
               <tr key={p.id} className="border-b hover:bg-muted/20 transition-colors animate-fade-in-up" style={{ animationDelay: `${idx * 0.03}s` }}>
-                <td className="p-3 font-bold">{p.name}</td>
-                <td className="p-3 text-muted-foreground">{p.code || "-"}</td>
-                <td className="p-3 text-muted-foreground">{p.brand || "-"}</td>
-                <td className="p-3">{p.costPrice.toLocaleString()}</td>
-                <td className="p-3 font-extrabold text-primary">{p.sellPrice.toLocaleString()}</td>
-                <td className="p-3 text-xs">{p.halfWholesalePrice ? `${p.halfWholesalePrice} (≥${p.halfWholesaleMinQty})` : "-"}</td>
-                <td className="p-3 text-xs">{p.wholesalePrice ? `${p.wholesalePrice} (≥${p.wholesaleMinQty})` : "-"}</td>
-                <td className={`p-3 font-extrabold ${p.quantity <= p.lowStockThreshold ? "text-destructive" : ""}`}>{p.quantity}</td>
-                <td className="p-3 text-center">
+                <td className="p-3 font-bold whitespace-nowrap">{p.name}</td>
+                <td className="p-3 text-muted-foreground whitespace-nowrap">{p.code || "-"}</td>
+                <td className="p-3 text-muted-foreground whitespace-nowrap">{p.brand || "-"}</td>
+                <td className="p-3 whitespace-nowrap">{p.costPrice.toLocaleString()}</td>
+                <td className="p-3 font-extrabold text-primary whitespace-nowrap">{p.sellPrice.toLocaleString()}</td>
+                <td className="p-3 text-xs whitespace-nowrap">{p.halfWholesalePrice ? `${p.halfWholesalePrice} (≥${p.halfWholesaleMinQty})` : "-"}</td>
+                <td className="p-3 text-xs whitespace-nowrap">{p.wholesalePrice ? `${p.wholesalePrice} (≥${p.wholesaleMinQty})` : "-"}</td>
+                <td className={`p-3 font-extrabold whitespace-nowrap ${p.quantity <= p.lowStockThreshold ? "text-destructive" : ""}`}>{p.quantity}</td>
+                <td className="p-3 text-center whitespace-nowrap">
                   <div className="flex justify-center gap-1">
                     <button onClick={() => openEdit(p)} className="p-2 rounded-xl hover:bg-muted transition-colors"><Edit2 size={16} /></button>
                     <button onClick={() => handleDelete(p.id)} className="p-2 rounded-xl hover:bg-destructive/10 text-destructive transition-colors"><Trash2 size={16} /></button>
