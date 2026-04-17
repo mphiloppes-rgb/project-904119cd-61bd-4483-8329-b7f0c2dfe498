@@ -6,8 +6,10 @@ import {
   Users,
   ShoppingCart,
   Receipt,
+  Building2,
 } from "lucide-react";
 import { getTodayInvoices, getTodayExpenses, getLowStockProducts, getCustomersWithDebt } from "@/lib/store";
+import { getSuppliersWithDebt } from "@/lib/suppliers";
 import { Link } from "react-router-dom";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import logo from "@/assets/logo.png";
@@ -20,6 +22,9 @@ export default function DashboardPage() {
     const todayExpenses = getTodayExpenses();
     const lowStock = getLowStockProducts();
     const debtCustomers = getCustomersWithDebt();
+    const debtSuppliers = getSuppliersWithDebt();
+    const totalSupplierDebt = debtSuppliers.reduce((s, x) => s + Math.max(0, x.balance || 0), 0);
+    const totalCustomerDebt = debtCustomers.reduce((s, c) => s + Math.max(0, c.balance || 0), 0);
 
     const totalSales = todayInvoices.reduce((s, i) => s + i.total, 0);
     const totalCost = todayInvoices.reduce(
@@ -28,7 +33,7 @@ export default function DashboardPage() {
     const totalExpenses = todayExpenses.reduce((s, e) => s + e.amount, 0);
     const netProfit = totalSales - totalCost - totalExpenses;
 
-    return { totalSales, totalExpenses, netProfit, lowStock, debtCustomers, invoiceCount: todayInvoices.length };
+    return { totalSales, totalExpenses, netProfit, lowStock, debtCustomers, debtSuppliers, totalSupplierDebt, totalCustomerDebt, invoiceCount: todayInvoices.length };
   }, [refreshKey]);
 
   const stats = [
