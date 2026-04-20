@@ -221,8 +221,8 @@ export default function PurchasesPage() {
 
       {/* New Purchase Form */}
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-scale-in">
+        <div className="modal-overlay">
+          <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-extrabold text-lg">فاتورة شراء جديدة</h3>
               <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl"><X size={20} /></button>
@@ -310,8 +310,8 @@ export default function PurchasesPage() {
 
       {/* View Invoice */}
       {viewing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-lg max-h-[85vh] overflow-y-auto animate-scale-in">
+        <div className="modal-overlay">
+          <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[85vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-extrabold text-lg">فاتورة شراء #{viewing.invoiceNumber}</h3>
               <button onClick={() => setViewing(null)} className="p-2 hover:bg-muted rounded-xl">✕</button>
@@ -343,8 +343,8 @@ export default function PurchasesPage() {
 
       {/* Pay invoice */}
       {payOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-          <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+        <div className="modal-overlay">
+          <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
             <h3 className="font-extrabold text-lg mb-3">دفع لفاتورة #{payOpen.invoiceNumber}</h3>
             <div className="bg-accent/50 rounded-xl p-3 mb-3 flex justify-between text-sm">
               <span>المتبقي</span>
