@@ -2,11 +2,13 @@
 // المدير: كل شيء. الكاشير: بيع + عملاء فقط، مفيش تقارير/مرتجعات/حذف.
 
 export type Role = 'admin' | 'cashier';
+export type AuthMode = 'pin' | 'pattern';
 
 export interface AppUser {
   id: string;
   name: string;
-  pin: string; // 4-6 digits
+  pin: string; // 4-6 digits OR pattern as comma-joined dot indices "0,1,2,4"
+  authMode?: AuthMode; // default 'pin'
   role: Role;
   createdAt: string;
 }
@@ -80,6 +82,17 @@ export function isAdmin(): boolean {
   if (!isAuthEnabled()) return true; // No auth = full access
   const u = getCurrentUser();
   return u?.role === 'admin';
+}
+
+export function isCashier(): boolean {
+  if (!isAuthEnabled()) return false;
+  const u = getCurrentUser();
+  return u?.role === 'cashier';
+}
+
+// هل اللي مسجل دلوقتي مسموح يشوف سعر الشراء؟ الكاشير لأ.
+export function canViewCostPrice(): boolean {
+  return isAdmin();
 }
 
 export function canDoAdmin(): boolean { return isAdmin(); }

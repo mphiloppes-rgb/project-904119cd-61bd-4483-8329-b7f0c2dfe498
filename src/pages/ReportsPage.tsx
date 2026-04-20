@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown } from "lucide-react";
-import { getReport } from "@/lib/store";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins } from "lucide-react";
+import { getReport, getStaleProductsByDays } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
+import { isCashier } from "@/lib/auth";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
@@ -12,13 +13,27 @@ const periods: { key: Period; label: string }[] = [
   { key: "yearly", label: "سنوي" },
 ];
 
-type Tab = "summary" | "financial" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
+type Tab = "summary" | "financial" | "inventory" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
+type StaleDays = 30 | 60 | 90 | 180;
 
 export default function ReportsPage() {
   const { refreshKey } = useStoreRefresh();
   const [period, setPeriod] = useState<Period>("daily");
   const [tab, setTab] = useState<Tab>("summary");
+  const [staleDays, setStaleDays] = useState<StaleDays>(30);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
+  const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
+
+  // الكاشير ميقدرش يدخل التقارير
+  if (isCashier()) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <BarChart3 size={56} className="text-muted-foreground mb-4" />
+        <h2 className="text-xl font-extrabold mb-2">مفيش صلاحية</h2>
+        <p className="text-sm text-muted-foreground">صفحة التقارير للمدير فقط</p>
+      </div>
+    );
+  }
 
   const stats = [
     { label: "إجمالي المبيعات (صافي)", value: report.totalSales, icon: BarChart3, iconBg: "bg-primary/10", iconColor: "text-primary" },
@@ -31,10 +46,11 @@ export default function ReportsPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "summary", label: "ملخص" },
-    { key: "financial", label: "الموقف المالي" },
+    { key: "financial", label: "💰 الموقف المالي" },
+    { key: "inventory", label: "📦 المخزون والكاش" },
     { key: "sales", label: `المبيعات (${report.salesDetails.length})` },
     { key: "bestCustomers", label: `أفضل العملاء (${report.bestCustomers.length})` },
-    { key: "staleProducts", label: `منتجات راكدة (${report.staleProducts.length})` },
+    { key: "staleProducts", label: `منتجات راكدة` },
     { key: "returns", label: `المرتجعات (${report.returnsDetails.length})` },
     { key: "expenses", label: `المصاريف (${report.expensesDetails.length})` },
     { key: "purchases", label: `المشتريات (${report.purchaseDetails.length})` },
@@ -222,6 +238,95 @@ export default function ReportsPage() {
           </div>
         )}
 
+        {tab === "inventory" && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Boxes className="text-primary" size={20} />
+              <h3 className="font-extrabold">المخزون والكاش (الوضع الحالي)</h3>
+            </div>
+
+            {/* Hero KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Boxes className="text-primary" size={18} />
+                  <p className="text-xs font-extrabold text-muted-foreground">قيمة المخزون (تكلفة)</p>
+                </div>
+                <p className="text-2xl font-extrabold text-primary">{report.currentInventoryValueCost.toLocaleString()} <span className="text-sm">ج.م</span></p>
+                <p className="text-xs text-muted-foreground mt-1">{report.totalUnitsInStock.toLocaleString()} قطعة • {report.totalSKUs} منتج</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-success/10 to-success/5 border-2 border-success/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="text-success" size={18} />
+                  <p className="text-xs font-extrabold text-muted-foreground">قيمة المخزون (بيع)</p>
+                </div>
+                <p className="text-2xl font-extrabold text-success">{report.currentInventoryValueSell.toLocaleString()} <span className="text-sm">ج.م</span></p>
+                <p className="text-xs text-muted-foreground mt-1">لو بعت كل اللي في المخزن</p>
+              </div>
+
+              <div className={`p-4 rounded-2xl bg-gradient-to-br border-2 ${report.cashOnHand >= 0 ? 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/20' : 'from-destructive/10 to-destructive/5 border-destructive/20'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Coins className={report.cashOnHand >= 0 ? 'text-emerald-600' : 'text-destructive'} size={18} />
+                  <p className="text-xs font-extrabold text-muted-foreground">الكاش الحالي (تقديري)</p>
+                </div>
+                <p className={`text-2xl font-extrabold ${report.cashOnHand >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                  {report.cashOnHand.toLocaleString()} <span className="text-sm">ج.م</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">داخل {report.lifetimeCashIn.toLocaleString()} − خارج {report.lifetimeCashOut.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {/* Profit forecast from stock */}
+            <div className="p-4 rounded-2xl bg-accent/40 mb-5">
+              <p className="text-sm font-extrabold mb-2">📈 الربح المتوقع من تصريف المخزون الحالي</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">قيمة بيع - قيمة شراء</span>
+                <span className={`text-2xl font-extrabold ${report.expectedGrossProfitFromStock >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  {report.expectedGrossProfitFromStock.toLocaleString()} ج.م
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                ده الـ Gross Profit المتوقع لو بعت كل المخزون بسعر القطاعي العادي (مش بالجملة).
+              </p>
+            </div>
+
+            {/* Stock alerts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
+                <p className="text-xs font-bold text-muted-foreground">منتجات قاربت تخلص (low stock)</p>
+                <p className="text-2xl font-extrabold text-warning mt-1">{report.lowStockCount}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                <p className="text-xs font-bold text-muted-foreground">منتجات نفدت (out of stock)</p>
+                <p className="text-2xl font-extrabold text-destructive mt-1">{report.outOfStockCount}</p>
+              </div>
+            </div>
+
+            {/* Equation walkthrough */}
+            <div className="p-4 rounded-2xl border-2 border-dashed border-border">
+              <p className="text-sm font-extrabold mb-3">🧮 إزاي طلعت الأرقام دي؟</p>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between p-2 bg-accent/30 rounded-lg">
+                  <span>+ كل اللي قبضته (مدفوع على فواتير + سداد عملاء)</span>
+                  <span className="font-extrabold text-success">+{report.lifetimeCashIn.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-accent/30 rounded-lg">
+                  <span>− مدفوعات للموردين (شراء + سداد)</span>
+                  <span className="font-extrabold text-destructive">-{(report.lifetimeCashOut - 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-accent/30 rounded-lg border-t-2 border-primary/30 mt-1">
+                  <span className="font-extrabold">= الكاش المتاح حاليًا</span>
+                  <span className={`font-extrabold ${report.cashOnHand >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>{report.cashOnHand.toLocaleString()}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                💡 مفهوم: لما تشتري بضاعة وتدفع كاش، الفلوس بتتحول لـ "مخزون" مش بتختفي — كل اللي اشتريته متراكم في قيمة المخزون الحالية.
+              </p>
+            </div>
+          </div>
+        )}
+
         {tab === "sales" && (
           <DataTable
             title="تفاصيل فواتير المبيعات"
@@ -363,18 +468,31 @@ export default function ReportsPage() {
 
         {tab === "staleProducts" && (
           <div>
-            <div className="flex items-center gap-3 mb-4">
-              <Package className="text-warning" size={20} />
-              <h3 className="font-extrabold">المنتجات الراكدة (مفيش مبيعات منذ 30+ يوم)</h3>
+            <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+              <div className="flex items-center gap-3">
+                <Package className="text-warning" size={20} />
+                <h3 className="font-extrabold">المنتجات الراكدة (مفيش مبيعات منذ {staleDays}+ يوم)</h3>
+              </div>
+              <div className="flex gap-1 bg-muted/50 rounded-xl p-1">
+                {([30, 60, 90, 180] as StaleDays[]).map(d => (
+                  <button
+                    key={d}
+                    onClick={() => setStaleDays(d)}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${staleDays === d ? "bg-primary text-primary-foreground shadow" : "text-muted-foreground hover:bg-accent"}`}
+                  >
+                    {d === 180 ? "6 شهور" : `${d} يوم`}
+                  </button>
+                ))}
+              </div>
             </div>
-            {report.staleProducts.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-6 text-center">🎉 ممتاز! كل المنتجات اللي عندك مخزون منها بيعت في آخر 30 يوم.</p>
+            {staleByDays.staleProducts.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-6 text-center">🎉 ممتاز! كل المنتجات اللي عندك مخزون منها بيعت في آخر {staleDays} يوم.</p>
             ) : (
               <>
                 <div className="p-4 bg-warning/10 border border-warning/20 rounded-xl mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
                     <p className="text-xs text-muted-foreground font-bold">قيمة المخزون الراكد (تكلفة)</p>
-                    <p className="text-xl font-extrabold text-warning">{report.totalStaleValue.toLocaleString()} ج.م</p>
+                    <p className="text-xl font-extrabold text-warning">{staleByDays.totalStaleValue.toLocaleString()} ج.م</p>
                   </div>
                   <p className="text-xs text-muted-foreground sm:text-left">رأس مال متجمد — فكّر في تخفيضات أو إرجاعها للموردين</p>
                 </div>
@@ -382,7 +500,7 @@ export default function ReportsPage() {
                   title=""
                   empty=""
                   headers={["المنتج", "الكود", "الكمية", "قيمة المخزون", "آخر بيع", "أيام بدون بيع"]}
-                  rows={report.staleProducts.map((p) => [
+                  rows={staleByDays.staleProducts.map((p) => [
                     p.name,
                     p.code,
                     `${p.quantity}`,

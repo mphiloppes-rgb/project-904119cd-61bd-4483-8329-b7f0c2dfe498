@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -15,15 +15,18 @@ import {
   PackagePlus,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
+import { LogoutButton } from "./PinLock";
+import { isCashier, isAuthEnabled, getCurrentUser } from "@/lib/auth";
 
-const navItems = [
+interface NavItem { path: string; label: string; icon: any; cashierAllowed?: boolean; }
+const navItems: NavItem[] = [
   { path: "/", label: "لوحة التحكم", icon: LayoutDashboard },
-  { path: "/pos", label: "نقطة البيع", icon: ShoppingCart },
+  { path: "/pos", label: "نقطة البيع", icon: ShoppingCart, cashierAllowed: true },
   { path: "/products", label: "المنتجات", icon: Package },
-  { path: "/customers", label: "العملاء", icon: Users },
+  { path: "/customers", label: "العملاء", icon: Users, cashierAllowed: true },
   { path: "/suppliers", label: "الموردين", icon: Truck },
   { path: "/purchases", label: "فواتير الشراء", icon: PackagePlus },
-  { path: "/invoices", label: "الفواتير", icon: Receipt },
+  { path: "/invoices", label: "الفواتير", icon: Receipt, cashierAllowed: true },
   { path: "/expenses", label: "المصاريف", icon: Wallet },
   { path: "/reports", label: "التقارير", icon: BarChart3 },
   { path: "/settings", label: "الإعدادات", icon: Settings },
@@ -32,6 +35,21 @@ const navItems = [
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    const handler = () => setTick(t => t + 1);
+    window.addEventListener("auth-change", handler);
+    window.addEventListener("storage", handler);
+    return () => {
+      window.removeEventListener("auth-change", handler);
+      window.removeEventListener("storage", handler);
+    };
+  }, []);
+
+  const cashier = isCashier();
+  const visibleNav = navItems.filter(it => !cashier || it.cashierAllowed);
+  const currentUser = getCurrentUser();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -71,7 +89,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           {/* Navigation */}
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
-            {navItems.map((item, idx) => {
+            {visibleNav.map((item, idx) => {
               const isActive = location.pathname === item.path;
               return (
                 <Link
@@ -96,9 +114,17 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/40">
+          <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/40 space-y-2">
+            {currentUser && (
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-sidebar-foreground/80 font-extrabold">
+                  {currentUser.name} • {currentUser.role === 'admin' ? 'مدير' : 'كاشير'}
+                </span>
+                <LogoutButton />
+              </div>
+            )}
             <p className="font-bold">إدارة: أ/ مينا عيد</p>
-            <p className="mt-1" dir="ltr">📞 01210004358</p>
+            <p dir="ltr">📞 01210004358</p>
           </div>
         </div>
       </aside>

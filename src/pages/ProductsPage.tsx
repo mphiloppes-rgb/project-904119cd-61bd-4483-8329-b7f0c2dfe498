@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
-import { Plus, Edit2, Trash2, Search, X, Check, Package } from "lucide-react";
+import { Plus, Edit2, Trash2, Search, X, Check, Package, Lock } from "lucide-react";
 import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from "@/lib/store";
 import { getSuppliers } from "@/lib/suppliers";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
+import { canViewCostPrice, isCashier } from "@/lib/auth";
 
 const emptyForm = {
   name: "", code: "", brand: "", model: "",
@@ -22,6 +23,8 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const showCost = canViewCostPrice();
+  const cashierMode = isCashier();
 
   const filtered = useMemo(() => {
     if (!search.trim()) return products;
@@ -62,6 +65,16 @@ export default function ProductsPage() {
 
   const handleDelete = (id: string) => { if (confirm("هل تريد حذف هذا المنتج؟")) { deleteProduct(id); refresh(); toast({ title: "تم الحذف" }); } };
   const setField = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
+
+  if (cashierMode) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <Lock size={56} className="text-muted-foreground mb-4" />
+        <h2 className="text-xl font-extrabold mb-2">مفيش صلاحية</h2>
+        <p className="text-sm text-muted-foreground">صفحة المنتجات للمدير فقط</p>
+      </div>
+    );
+  }
 
   return (
     <div>

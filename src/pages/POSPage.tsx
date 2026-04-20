@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan } from "lucide-react";
 import { getProducts, getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
-import { logAction } from "@/lib/auth";
+import { logAction, canViewCostPrice } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import InvoicePrint from "@/components/InvoicePrint";
@@ -29,6 +29,7 @@ export default function POSPage() {
   const [showConfirmSale, setShowConfirmSale] = useState(false);
   const [pendingAction, setPendingAction] = useState<'save' | 'print'>('print');
   const [showProfit, setShowProfit] = useState(false);
+  const allowProfit = canViewCostPrice();
   const [printMode, setPrintMode] = useState<PrintMode>(() => (localStorage.getItem('pos_print_mode') as PrintMode) || 'a4');
   const searchRef = useRef<HTMLInputElement>(null);
   const paidRef = useRef<HTMLInputElement>(null);
@@ -380,10 +381,12 @@ export default function POSPage() {
                 <Receipt size={12} className="inline ml-1" /> 80mm
               </button>
             </div>
-            <button onClick={() => setShowProfit(s => !s)} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showProfit ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
-              {showProfit ? <Eye size={14} /> : <EyeOff size={14} />}
-              {showProfit ? 'إخفاء الربح' : 'عرض الربح'}
-            </button>
+            {allowProfit && (
+              <button onClick={() => setShowProfit(s => !s)} className={`flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${showProfit ? 'bg-success/20 text-success' : 'bg-muted text-muted-foreground'}`}>
+                {showProfit ? <Eye size={14} /> : <EyeOff size={14} />}
+                {showProfit ? 'إخفاء الربح' : 'عرض الربح'}
+              </button>
+            )}
           </div>
         </div>
 
@@ -501,9 +504,9 @@ export default function POSPage() {
                 {invoiceDiscountAmount > 0 && <div className="flex justify-between text-xs text-amber-600"><span>قيمة خصم الفاتورة</span><span className="font-bold">- {invoiceDiscountAmount.toLocaleString()} ج.م</span></div>}
 
                 <div className="flex justify-between text-lg font-extrabold border-t border-border/50 pt-2"><span>الإجمالي</span><span className="text-primary">{total.toLocaleString()} ج.م</span></div>
-                {showProfit && cart.length > 0 && (
+                {allowProfit && showProfit && cart.length > 0 && (
                   <div className="flex justify-between text-sm bg-success/10 -mx-2 px-3 py-2 rounded-lg">
-                    <span className="text-success font-bold">صافي الربح (للكاشير)</span>
+                    <span className="text-success font-bold">صافي الربح اللحظي</span>
                     <span className={`font-extrabold ${liveProfit >= 0 ? 'text-success' : 'text-destructive'}`}>{liveProfit.toLocaleString()} ج.م</span>
                   </div>
                 )}

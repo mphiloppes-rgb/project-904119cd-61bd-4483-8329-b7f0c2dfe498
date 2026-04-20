@@ -656,6 +656,31 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     .sort((a, b) => b.stockValue - a.stockValue);
   const totalStaleValue = staleProducts.reduce((s, p) => s + p.stockValue, 0);
 
+  // === تحليل المخزون الحالي (snapshot) ===
+  // قيمة المخزون = مجموع (الكمية × سعر الشراء) لكل المنتجات الحالية
+  const currentInventoryValueCost = allProductsList.reduce((s, p) => s + (p.quantity * p.costPrice), 0);
+  const currentInventoryValueSell = allProductsList.reduce((s, p) => s + (p.quantity * p.sellPrice), 0);
+  const totalSKUs = allProductsList.length;
+  const totalUnitsInStock = allProductsList.reduce((s, p) => s + p.quantity, 0);
+  const lowStockCount = allProductsList.filter(p => p.quantity > 0 && p.quantity <= p.lowStockThreshold).length;
+  const outOfStockCount = allProductsList.filter(p => p.quantity <= 0).length;
+  const expectedGrossProfitFromStock = currentInventoryValueSell - currentInventoryValueCost;
+
+  // كاش متاح في المحل (تقديري) = (نقدية داخلة − نقدية خارجة) للفترة. كقيمة منفصلة هنحسبها من تاريخ بدري لأبعد:
+  // كاش كلي تراكمي (lifetime cash position):
+  const allInvoicesAll = getInvoices();
+  const allExpensesAll = getExpenses();
+  let allPurchasesAll: any[] = [];
+  try { allPurchasesAll = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]'); } catch {}
+  const lifetimeCashIn =
+    allInvoicesAll.reduce((s, inv) => s + (inv.paid || 0), 0) +
+    customerPaymentsAll.reduce((s: number, p: any) => s + (p.amount || 0), 0);
+  const lifetimeCashOut =
+    allPurchasesAll.reduce((s, p: any) => s + (p.paid || 0), 0) +
+    supplierPaymentsAll.reduce((s: number, p: any) => s + (p.amount || 0), 0) +
+    allExpensesAll.reduce((s, e) => s + (e.amount || 0), 0);
+  const cashOnHand = lifetimeCashIn - lifetimeCashOut;
+
   return {
     totalSales,
     totalCost,
@@ -683,6 +708,55 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     bestCustomers,
     staleProducts,
     totalStaleValue,
+    // === جديد: تحليل المخزون والكاش ===
+    currentInventoryValueCost,
+    currentInventoryValueSell,
+    expectedGrossProfitFromStock,
+    totalSKUs,
+    totalUnitsInStock,
+    lowStockCount,
+    outOfStockCount,
+    cashOnHand,
+    lifetimeCashIn,
+    lifetimeCashOut,
   };
+}
+
+// === فلتر المنتجات الراكدة بفترة قابلة للتخصيص ===
+export function getStaleProductsByDays(days: number) {
+  const allInvoicesUnfiltered = getInvoices();
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  const recentlySoldIds = new Set<string>();
+  allInvoicesUnfiltered.forEach(inv => {
+    if (new Date(inv.createdAt) >= cutoff) {
+      inv.items.forEach(it => recentlySoldIds.add(it.productId));
+    }
+  });
+  const lastSaleMap: Record<string, string> = {};
+  allInvoicesUnfiltered.forEach(inv => {
+    inv.items.forEach(it => {
+      if (!lastSaleMap[it.productId] || new Date(inv.createdAt) > new Date(lastSaleMap[it.productId])) {
+        lastSaleMap[it.productId] = inv.createdAt;
+      }
+    });
+  });
+  const allProductsList = getProducts();
+  const staleProducts = allProductsList
+    .filter(p => p.quantity > 0 && !recentlySoldIds.has(p.id))
+    .map(p => ({
+      id: p.id,
+      name: p.name,
+      code: p.code || '—',
+      quantity: p.quantity,
+      stockValue: p.quantity * p.costPrice,
+      lastSale: lastSaleMap[p.id] || null,
+      daysSinceLastSale: lastSaleMap[p.id]
+        ? Math.floor((Date.now() - new Date(lastSaleMap[p.id]).getTime()) / (1000 * 60 * 60 * 24))
+        : null,
+    }))
+    .sort((a, b) => b.stockValue - a.stockValue);
+  const totalStaleValue = staleProducts.reduce((s, p) => s + p.stockValue, 0);
+  return { staleProducts, totalStaleValue, days };
 }
 

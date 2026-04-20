@@ -1,28 +1,7 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Almarai:wght@400;700;800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@font-face {
-  font-family: 'Tajawal';
-  src: url('./assets/fonts/Tajawal-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Tajawal';
-  src: url('./assets/fonts/Tajawal-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Tajawal';
-  src: url('./assets/fonts/Tajawal-ExtraBold.ttf') format('truetype');
-  font-weight: 800;
-  font-style: normal;
-  font-display: swap;
-}
 
 @layer base {
   :root {
@@ -94,7 +73,15 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Tajawal', sans-serif;
+    font-family: 'Cairo', 'Almarai', system-ui, sans-serif;
+    font-feature-settings: 'kern', 'liga', 'calt';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Cairo', 'Almarai', sans-serif;
+    letter-spacing: -0.01em;
   }
 }
 

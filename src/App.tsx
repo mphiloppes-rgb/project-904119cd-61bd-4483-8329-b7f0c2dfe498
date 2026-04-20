@@ -3,6 +3,7 @@ import { HashRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import AppLayout from "@/components/AppLayout";
+import PinLock from "@/components/PinLock";
 import DashboardPage from "@/pages/DashboardPage";
 import POSPage from "@/pages/POSPage";
 import ProductsPage from "@/pages/ProductsPage";
@@ -22,21 +23,23 @@ const App = () => (
     <TooltipProvider>
       <Toaster />
       <HashRouter>
-        <AppLayout>
-          <Routes>
-            <Route path="/" element={<DashboardPage />} />
-            <Route path="/pos" element={<POSPage />} />
-            <Route path="/products" element={<ProductsPage />} />
-            <Route path="/customers" element={<CustomersPage />} />
-            <Route path="/suppliers" element={<SuppliersPage />} />
-            <Route path="/purchases" element={<PurchasesPage />} />
-            <Route path="/invoices" element={<InvoicesPage />} />
-            <Route path="/expenses" element={<ExpensesPage />} />
-            <Route path="/reports" element={<ReportsPage />} />
-            <Route path="/settings" element={<SettingsPage />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AppLayout>
+        <PinLock>
+          <AppLayout>
+            <Routes>
+              <Route path="/" element={<DashboardPage />} />
+              <Route path="/pos" element={<POSPage />} />
+              <Route path="/products" element={<ProductsPage />} />
+              <Route path="/customers" element={<CustomersPage />} />
+              <Route path="/suppliers" element={<SuppliersPage />} />
+              <Route path="/purchases" element={<PurchasesPage />} />
+              <Route path="/invoices" element={<InvoicesPage />} />
+              <Route path="/expenses" element={<ExpensesPage />} />
+              <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AppLayout>
+        </PinLock>
       </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>
