@@ -238,7 +238,95 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {tab === "sales" && (
+        {tab === "inventory" && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <Boxes className="text-primary" size={20} />
+              <h3 className="font-extrabold">المخزون والكاش (الوضع الحالي)</h3>
+            </div>
+
+            {/* Hero KPIs */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <Boxes className="text-primary" size={18} />
+                  <p className="text-xs font-extrabold text-muted-foreground">قيمة المخزون (تكلفة)</p>
+                </div>
+                <p className="text-2xl font-extrabold text-primary">{report.currentInventoryValueCost.toLocaleString()} <span className="text-sm">ج.م</span></p>
+                <p className="text-xs text-muted-foreground mt-1">{report.totalUnitsInStock.toLocaleString()} قطعة • {report.totalSKUs} منتج</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-success/10 to-success/5 border-2 border-success/20">
+                <div className="flex items-center gap-2 mb-2">
+                  <TrendingUp className="text-success" size={18} />
+                  <p className="text-xs font-extrabold text-muted-foreground">قيمة المخزون (بيع)</p>
+                </div>
+                <p className="text-2xl font-extrabold text-success">{report.currentInventoryValueSell.toLocaleString()} <span className="text-sm">ج.م</span></p>
+                <p className="text-xs text-muted-foreground mt-1">لو بعت كل اللي في المخزن</p>
+              </div>
+
+              <div className={`p-4 rounded-2xl bg-gradient-to-br border-2 ${report.cashOnHand >= 0 ? 'from-emerald-500/10 to-emerald-500/5 border-emerald-500/20' : 'from-destructive/10 to-destructive/5 border-destructive/20'}`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Coins className={report.cashOnHand >= 0 ? 'text-emerald-600' : 'text-destructive'} size={18} />
+                  <p className="text-xs font-extrabold text-muted-foreground">الكاش الحالي (تقديري)</p>
+                </div>
+                <p className={`text-2xl font-extrabold ${report.cashOnHand >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                  {report.cashOnHand.toLocaleString()} <span className="text-sm">ج.م</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">داخل {report.lifetimeCashIn.toLocaleString()} − خارج {report.lifetimeCashOut.toLocaleString()}</p>
+              </div>
+            </div>
+
+            {/* Profit forecast from stock */}
+            <div className="p-4 rounded-2xl bg-accent/40 mb-5">
+              <p className="text-sm font-extrabold mb-2">📈 الربح المتوقع من تصريف المخزون الحالي</p>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">قيمة بيع - قيمة شراء</span>
+                <span className={`text-2xl font-extrabold ${report.expectedGrossProfitFromStock >= 0 ? 'text-success' : 'text-destructive'}`}>
+                  {report.expectedGrossProfitFromStock.toLocaleString()} ج.م
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">
+                ده الـ Gross Profit المتوقع لو بعت كل المخزون بسعر القطاعي العادي (مش بالجملة).
+              </p>
+            </div>
+
+            {/* Stock alerts */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+              <div className="p-4 rounded-xl bg-warning/10 border border-warning/20">
+                <p className="text-xs font-bold text-muted-foreground">منتجات قاربت تخلص (low stock)</p>
+                <p className="text-2xl font-extrabold text-warning mt-1">{report.lowStockCount}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-destructive/10 border border-destructive/20">
+                <p className="text-xs font-bold text-muted-foreground">منتجات نفدت (out of stock)</p>
+                <p className="text-2xl font-extrabold text-destructive mt-1">{report.outOfStockCount}</p>
+              </div>
+            </div>
+
+            {/* Equation walkthrough */}
+            <div className="p-4 rounded-2xl border-2 border-dashed border-border">
+              <p className="text-sm font-extrabold mb-3">🧮 إزاي طلعت الأرقام دي؟</p>
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between p-2 bg-accent/30 rounded-lg">
+                  <span>+ كل اللي قبضته (مدفوع على فواتير + سداد عملاء)</span>
+                  <span className="font-extrabold text-success">+{report.lifetimeCashIn.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-accent/30 rounded-lg">
+                  <span>− مدفوعات للموردين (شراء + سداد)</span>
+                  <span className="font-extrabold text-destructive">-{(report.lifetimeCashOut - 0).toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between p-2 bg-accent/30 rounded-lg border-t-2 border-primary/30 mt-1">
+                  <span className="font-extrabold">= الكاش المتاح حاليًا</span>
+                  <span className={`font-extrabold ${report.cashOnHand >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>{report.cashOnHand.toLocaleString()}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                💡 مفهوم: لما تشتري بضاعة وتدفع كاش، الفلوس بتتحول لـ "مخزون" مش بتختفي — كل اللي اشتريته متراكم في قيمة المخزون الحالية.
+              </p>
+            </div>
+          </div>
+        )}
+
           <DataTable
             title="تفاصيل فواتير المبيعات"
             empty="لا توجد فواتير"
