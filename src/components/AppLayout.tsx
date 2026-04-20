@@ -112,31 +112,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               );
             })}
           </nav>
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 animate-slide-in ${
-                    isActive
-                      ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-lg"
-                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hover:translate-x-[-4px]"
-                  }`}
-                  style={{ animationDelay: `${idx * 0.05}s` }}
-                >
-                  <item.icon size={20} className={isActive ? "animate-float" : ""} />
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <div className="mr-auto w-2 h-2 rounded-full bg-sidebar-primary-foreground animate-pulse" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
 
           {/* Footer */}
-          <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/40">
+          <div className="p-4 border-t border-sidebar-border text-xs text-sidebar-foreground/40 space-y-2">
+            {currentUser && (
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <span className="text-sidebar-foreground/80 font-extrabold">
+                  {currentUser.name} • {currentUser.role === 'admin' ? 'مدير' : 'كاشير'}
+                </span>
+                <LogoutButton />
+              </div>
+            )}
             <p className="font-bold">إدارة: أ/ مينا عيد</p>
-            <p className="mt-1" dir="ltr">📞 01210004358</p>
+            <p dir="ltr">📞 01210004358</p>
           </div>
         </div>
       </aside>
