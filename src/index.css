@@ -150,23 +150,24 @@
       inset 0 1px 0 hsla(0 0% 100% / 0.7);
   }
 
-  /* Modal overlay — scrollable, perfectly centered, with strong backdrop */
+  /* Modal overlay — scrollable, perfectly centered, with strong backdrop.
+     Works with or without an inner .modal-content wrapper. */
   .modal-overlay {
-    @apply fixed inset-0 z-50 overflow-y-auto;
+    @apply fixed inset-0 z-50 overflow-y-auto flex items-start justify-center;
     background: hsla(215 40% 10% / 0.55);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
+    padding: clamp(1rem, 5vh, 4rem) clamp(0.75rem, 3vw, 2rem);
     animation: overlayFadeIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
   }
   .modal-overlay > .modal-content {
-    @apply min-h-full flex items-start justify-center p-3 sm:p-6;
-    padding-top: clamp(1rem, 5vh, 4rem);
-    padding-bottom: clamp(1rem, 5vh, 4rem);
+    @apply min-h-full w-full flex items-start justify-center;
   }
   /* Make modal containers grow on tablet/desktop */
   .modal-overlay .glass-modal {
     @apply w-full;
     animation: modalPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin: auto 0;
   }
 
   @keyframes overlayFadeIn {
