@@ -69,7 +69,7 @@ export default function ExpensesPage() {
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-lg">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="font-extrabold text-lg">إضافة مصروف</h3>
                 <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>

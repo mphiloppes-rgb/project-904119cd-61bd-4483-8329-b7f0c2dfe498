@@ -94,50 +94,50 @@ export default function ProductsPage() {
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl animate-scale-in">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="font-extrabold text-lg">{editId ? "تعديل المنتج" : "إضافة منتج جديد"}</h3>
-                <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-2xl md:max-w-3xl">
+              <div className="flex justify-between items-center mb-5 pb-4 border-b border-border/50">
+                <h3 className="font-extrabold text-xl sm:text-2xl">{editId ? "✏️ تعديل المنتج" : "➕ إضافة منتج جديد"}</h3>
+                <button onClick={() => setShowForm(false)} className="p-2.5 hover:bg-destructive/10 hover:text-destructive rounded-xl transition-all hover:rotate-90 duration-300"><X size={22} /></button>
               </div>
-              <div className="space-y-3">
-                <div><label className="text-sm font-bold text-muted-foreground">الاسم *</label><input className="input-field w-full mt-1" value={form.name} onChange={(e) => setField("name", e.target.value)} autoFocus /></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><label className="text-sm font-bold text-muted-foreground">الكود / الباركود</label><input className="input-field w-full mt-1" value={form.code} onChange={(e) => setField("code", e.target.value)} /></div>
-                  <div><label className="text-sm font-bold text-muted-foreground">الماركة</label><input className="input-field w-full mt-1" value={form.brand} onChange={(e) => setField("brand", e.target.value)} /></div>
+              <div className="space-y-4">
+                <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">الاسم *</label><input className="input-field w-full" value={form.name} onChange={(e) => setField("name", e.target.value)} autoFocus /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">الكود / الباركود</label><input className="input-field w-full" value={form.code} onChange={(e) => setField("code", e.target.value)} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">الماركة</label><input className="input-field w-full" value={form.brand} onChange={(e) => setField("brand", e.target.value)} /></div>
                 </div>
-                <div><label className="text-sm font-bold text-muted-foreground">الموديل</label><input className="input-field w-full mt-1" value={form.model} onChange={(e) => setField("model", e.target.value)} /></div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><label className="text-sm font-bold text-muted-foreground">سعر الشراء</label><input type="number" className="input-field w-full mt-1" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} /></div>
-                  <div><label className="text-sm font-bold text-muted-foreground">سعر القطاعي *</label><input type="number" className="input-field w-full mt-1" value={form.sellPrice || ""} onChange={(e) => setField("sellPrice", Number(e.target.value))} /></div>
-                </div>
-
-                <div className="bg-accent/30 rounded-xl p-3 space-y-3">
-                  <p className="text-xs font-extrabold text-muted-foreground">أسعار متعددة (اختياري)</p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div><label className="text-xs font-bold">سعر نص جملة</label><input type="number" className="input-field w-full mt-1" value={form.halfWholesalePrice || ""} onChange={(e) => setField("halfWholesalePrice", Number(e.target.value))} /></div>
-                    <div><label className="text-xs font-bold">يبدأ من كمية</label><input type="number" className="input-field w-full mt-1" value={form.halfWholesaleMinQty || ""} onChange={(e) => setField("halfWholesaleMinQty", Number(e.target.value))} /></div>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div><label className="text-xs font-bold">سعر الجملة</label><input type="number" className="input-field w-full mt-1" value={form.wholesalePrice || ""} onChange={(e) => setField("wholesalePrice", Number(e.target.value))} /></div>
-                    <div><label className="text-xs font-bold">يبدأ من كمية</label><input type="number" className="input-field w-full mt-1" value={form.wholesaleMinQty || ""} onChange={(e) => setField("wholesaleMinQty", Number(e.target.value))} /></div>
-                  </div>
+                <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">الموديل</label><input className="input-field w-full" value={form.model} onChange={(e) => setField("model", e.target.value)} /></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر الشراء</label><input type="number" className="input-field w-full" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر القطاعي *</label><input type="number" className="input-field w-full" value={form.sellPrice || ""} onChange={(e) => setField("sellPrice", Number(e.target.value))} /></div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div><label className="text-sm font-bold text-muted-foreground">الكمية</label><input type="number" className="input-field w-full mt-1" value={form.quantity || ""} onChange={(e) => setField("quantity", Number(e.target.value))} /></div>
-                  <div><label className="text-sm font-bold text-muted-foreground">حد التنبيه</label><input type="number" className="input-field w-full mt-1" value={form.lowStockThreshold || ""} onChange={(e) => setField("lowStockThreshold", Number(e.target.value))} /></div>
+                <div className="bg-accent/40 rounded-2xl p-4 space-y-3 border border-accent">
+                  <p className="text-sm font-extrabold text-accent-foreground">💰 أسعار متعددة (اختياري)</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div><label className="text-xs font-bold mb-1 block">سعر نص جملة</label><input type="number" className="input-field w-full" value={form.halfWholesalePrice || ""} onChange={(e) => setField("halfWholesalePrice", Number(e.target.value))} /></div>
+                    <div><label className="text-xs font-bold mb-1 block">يبدأ من كمية</label><input type="number" className="input-field w-full" value={form.halfWholesaleMinQty || ""} onChange={(e) => setField("halfWholesaleMinQty", Number(e.target.value))} /></div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div><label className="text-xs font-bold mb-1 block">سعر الجملة</label><input type="number" className="input-field w-full" value={form.wholesalePrice || ""} onChange={(e) => setField("wholesalePrice", Number(e.target.value))} /></div>
+                    <div><label className="text-xs font-bold mb-1 block">يبدأ من كمية</label><input type="number" className="input-field w-full" value={form.wholesaleMinQty || ""} onChange={(e) => setField("wholesaleMinQty", Number(e.target.value))} /></div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">الكمية</label><input type="number" className="input-field w-full" value={form.quantity || ""} onChange={(e) => setField("quantity", Number(e.target.value))} /></div>
+                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">حد التنبيه</label><input type="number" className="input-field w-full" value={form.lowStockThreshold || ""} onChange={(e) => setField("lowStockThreshold", Number(e.target.value))} /></div>
                 </div>
                 <div>
-                  <label className="text-sm font-bold text-muted-foreground">المورد المفضل</label>
-                  <select className="input-field w-full mt-1" value={form.preferredSupplierId} onChange={(e) => setField("preferredSupplierId", e.target.value)}>
+                  <label className="text-sm font-bold text-muted-foreground mb-1.5 block">المورد المفضل</label>
+                  <select className="input-field w-full" value={form.preferredSupplierId} onChange={(e) => setField("preferredSupplierId", e.target.value)}>
                     <option value="">— بدون —</option>
                     {suppliers.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                   </select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <button onClick={handleSave} className="btn-primary py-3"><Check size={18} /> {editId ? "تحديث" : "إضافة"}</button>
-                <button onClick={() => setShowForm(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold hover:opacity-90 transition-all">إلغاء</button>
+              <div className="grid grid-cols-2 gap-3 mt-6 pt-5 border-t border-border/50">
+                <button onClick={handleSave} className="btn-primary py-3.5 text-base"><Check size={20} /> {editId ? "تحديث" : "إضافة"}</button>
+                <button onClick={() => setShowForm(false)} className="bg-secondary text-secondary-foreground py-3.5 rounded-xl font-extrabold hover:bg-muted transition-all text-base">إلغاء</button>
               </div>
             </div>
           </div>
