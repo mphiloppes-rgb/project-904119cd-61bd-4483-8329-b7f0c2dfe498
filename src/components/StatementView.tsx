@@ -91,7 +91,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/20 backdrop-blur-sm animate-fade-in-up p-4">
-      <div className="glass-modal rounded-2xl p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-scale-in">
+      <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-3xl md:max-w-4xl max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className="font-extrabold text-lg flex items-center gap-2"><Receipt size={20} className="text-primary" /> {label}</h3>

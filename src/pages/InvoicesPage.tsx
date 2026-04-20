@@ -155,7 +155,7 @@ export default function InvoicesPage() {
         {selectedInvoice && (
           <div className="modal-overlay">
             <div className="modal-content">
-              <div className="glass-modal rounded-2xl p-6 w-full max-w-lg animate-scale-in">
+              <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-extrabold text-lg">تفاصيل الفاتورة</h3>
                   <button onClick={() => setSelectedInvoice(null)} className="p-2 hover:bg-muted rounded-xl transition-colors text-muted-foreground">✕</button>
@@ -207,7 +207,7 @@ export default function InvoicesPage() {
         {showReturnDialog && returnInvoice && (
           <div className="modal-overlay" style={{ zIndex: 60 }}>
             <div className="modal-content">
-              <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
+              <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-lg">
                 <h3 className="font-extrabold text-lg mb-4 flex items-center gap-2"><RotateCcw size={20} className="text-amber-500" /> مرتجع فاتورة #{returnInvoice.invoiceNumber}</h3>
                 
                 <div className="space-y-4">
@@ -253,7 +253,7 @@ export default function InvoicesPage() {
         {showAssignDialog && assignInvoice && (
           <div className="modal-overlay" style={{ zIndex: 60 }}>
             <div className="modal-content">
-              <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+              <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
                 <h3 className="font-extrabold text-lg mb-4 flex items-center gap-2"><UserPlus size={20} className="text-emerald-500" /> إسناد فاتورة لعميل</h3>
                 <p className="text-sm text-muted-foreground mb-4">فاتورة رقم: <span className="font-mono font-bold">{assignInvoice.invoiceNumber}</span></p>
                 
@@ -283,7 +283,7 @@ export default function InvoicesPage() {
         {showPayDialog && payInv && (
           <div className="modal-overlay" style={{ zIndex: 60 }}>
             <div className="modal-content">
-              <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+              <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
                 <h3 className="font-extrabold text-lg mb-4 flex items-center gap-2"><Banknote size={20} className="text-success" /> تسجيل دفع</h3>
                 <div className="bg-accent/50 rounded-xl p-4 mb-4 space-y-2 text-sm">
                   <div className="flex justify-between"><span>فاتورة رقم</span><span className="font-mono font-bold">{payInv.invoiceNumber}</span></div>

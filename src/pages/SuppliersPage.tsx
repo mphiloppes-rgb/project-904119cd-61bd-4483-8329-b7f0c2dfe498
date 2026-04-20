@@ -214,7 +214,7 @@ export default function SuppliersPage() {
       {showForm && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-lg">
               <h3 className="font-extrabold text-lg mb-4">{editing ? "تعديل المورد" : "إضافة مورد جديد"}</h3>
               <div className="space-y-3">
                 <input className="input-field w-full" placeholder="الاسم *" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} autoFocus />
@@ -234,7 +234,7 @@ export default function SuppliersPage() {
       {payOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
               <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
                 <Banknote size={20} className="text-success" /> دفع للمورد
               </h3>
@@ -257,7 +257,7 @@ export default function SuppliersPage() {
       {viewOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl animate-scale-in">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-2xl md:max-w-3xl">
               <div className="flex justify-between items-start mb-4">
                 <div>
                   <h3 className="font-extrabold text-lg">{viewOpen.name}</h3>

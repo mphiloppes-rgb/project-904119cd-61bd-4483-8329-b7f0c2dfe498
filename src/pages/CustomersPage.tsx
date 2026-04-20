@@ -78,7 +78,7 @@ export default function CustomersPage() {
         {showForm && (
           <div className="modal-overlay">
             <div className="modal-content">
-              <div className="glass-modal rounded-2xl p-6 w-full max-w-md animate-scale-in">
+              <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-lg">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-extrabold text-lg">{editId ? "تعديل العميل" : "إضافة عميل"}</h3>
                   <button onClick={() => setShowForm(false)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
@@ -101,7 +101,7 @@ export default function CustomersPage() {
         {showPayDialog && payCustomer && (
           <div className="modal-overlay">
             <div className="modal-content">
-              <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+              <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-extrabold text-lg flex items-center gap-2"><Banknote size={20} className="text-success" /> تسديد مديونية</h3>
                   <button onClick={() => { setShowPayDialog(false); setConfirmPay(false); }} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
@@ -136,7 +136,7 @@ export default function CustomersPage() {
         {selectedCustomer && (
           <div className="modal-overlay">
             <div className="modal-content">
-              <div className="glass-modal rounded-2xl p-6 w-full max-w-2xl animate-scale-in">
+              <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-2xl md:max-w-3xl">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-extrabold text-lg">فواتير {customers.find(c => c.id === selectedCustomer)?.name}</h3>
                   <button onClick={() => setSelectedCustomer(null)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>

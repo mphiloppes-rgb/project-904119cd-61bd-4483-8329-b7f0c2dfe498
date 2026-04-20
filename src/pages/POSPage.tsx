@@ -297,7 +297,7 @@ export default function POSPage() {
       {discountItemId && editingItem && (
         <div className="modal-overlay no-print">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-extrabold text-lg flex items-center gap-2"><Tag size={20} className="text-primary" /> خصم على المنتج</h3>
                 <button onClick={() => setDiscountItemId(null)} className="p-1 rounded-lg hover:bg-muted"><X size={18} /></button>
@@ -327,7 +327,7 @@ export default function POSPage() {
       {showNoCustomerDialog && (
         <div className="modal-overlay no-print">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in text-center">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md text-center">
               <div className="w-14 h-14 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto mb-4">
                 <AlertTriangle className="text-amber-500" size={28} />
               </div>
@@ -345,7 +345,7 @@ export default function POSPage() {
       {showConfirmSale && (
         <div className="modal-overlay no-print">
           <div className="modal-content">
-            <div className="glass-modal rounded-2xl p-6 w-full max-w-sm animate-scale-in text-center">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md text-center">
               <h3 className="font-extrabold text-lg mb-2">{pendingAction === 'print' ? 'تأكيد البيع والطباعة' : 'تأكيد حفظ الفاتورة'}</h3>
               <div className="bg-accent/50 rounded-xl p-4 mb-4 space-y-2 text-sm">
                 <div className="flex justify-between"><span>عدد الأصناف</span><span className="font-extrabold">{cart.length}</span></div>
