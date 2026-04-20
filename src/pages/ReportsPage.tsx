@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown } from "lucide-react";
-import { getReport } from "@/lib/store";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins } from "lucide-react";
+import { getReport, getStaleProductsByDays } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
+import { isCashier } from "@/lib/auth";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
@@ -12,13 +13,27 @@ const periods: { key: Period; label: string }[] = [
   { key: "yearly", label: "سنوي" },
 ];
 
-type Tab = "summary" | "financial" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
+type Tab = "summary" | "financial" | "inventory" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
+type StaleDays = 30 | 60 | 90 | 180;
 
 export default function ReportsPage() {
   const { refreshKey } = useStoreRefresh();
   const [period, setPeriod] = useState<Period>("daily");
   const [tab, setTab] = useState<Tab>("summary");
+  const [staleDays, setStaleDays] = useState<StaleDays>(30);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
+  const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
+
+  // الكاشير ميقدرش يدخل التقارير
+  if (isCashier()) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <BarChart3 size={56} className="text-muted-foreground mb-4" />
+        <h2 className="text-xl font-extrabold mb-2">مفيش صلاحية</h2>
+        <p className="text-sm text-muted-foreground">صفحة التقارير للمدير فقط</p>
+      </div>
+    );
+  }
 
   const stats = [
     { label: "إجمالي المبيعات (صافي)", value: report.totalSales, icon: BarChart3, iconBg: "bg-primary/10", iconColor: "text-primary" },
@@ -31,10 +46,11 @@ export default function ReportsPage() {
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "summary", label: "ملخص" },
-    { key: "financial", label: "الموقف المالي" },
+    { key: "financial", label: "💰 الموقف المالي" },
+    { key: "inventory", label: "📦 المخزون والكاش" },
     { key: "sales", label: `المبيعات (${report.salesDetails.length})` },
     { key: "bestCustomers", label: `أفضل العملاء (${report.bestCustomers.length})` },
-    { key: "staleProducts", label: `منتجات راكدة (${report.staleProducts.length})` },
+    { key: "staleProducts", label: `منتجات راكدة` },
     { key: "returns", label: `المرتجعات (${report.returnsDetails.length})` },
     { key: "expenses", label: `المصاريف (${report.expensesDetails.length})` },
     { key: "purchases", label: `المشتريات (${report.purchaseDetails.length})` },
