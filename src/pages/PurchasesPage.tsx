@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X } from "lucide-react";
+import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles } from "lucide-react";
 import {
   getPurchaseInvoices,
   addPurchaseInvoice,
@@ -9,9 +9,10 @@ import {
   type PurchaseInvoiceItem,
   type PurchaseInvoice,
 } from "@/lib/suppliers";
-import { getProducts } from "@/lib/store";
+import { getProducts, type Product } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
+import QuickAddProduct from "@/components/QuickAddProduct";
 
 export default function PurchasesPage() {
   const { refreshKey, refresh } = useStoreRefresh();
@@ -33,6 +34,17 @@ export default function PurchasesPage() {
   const [viewing, setViewing] = useState<PurchaseInvoice | null>(null);
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+
+  const handleQuickAddCreated = (p: Product) => {
+    refresh();
+    // add to invoice immediately
+    setItems((prev) => {
+      if (prev.find((i) => i.productId === p.id)) return prev;
+      return [...prev, { productId: p.id, productName: p.name, quantity: 1, unitCost: p.costPrice, total: p.costPrice }];
+    });
+    setProductSearch("");
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return invoices;
@@ -237,10 +249,19 @@ export default function PurchasesPage() {
             </div>
 
             <div className="mb-3">
-              <label className="text-sm font-bold mb-1 block">إضافة منتج</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-bold">إضافة منتج</label>
+                <button
+                  type="button"
+                  onClick={() => setQuickAddOpen(true)}
+                  className="flex items-center gap-1.5 text-xs font-extrabold px-3 py-1.5 rounded-lg bg-gradient-to-r from-success to-success/70 text-success-foreground shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                >
+                  <Sparkles size={14} /> منتج جديد
+                </button>
+              </div>
               <input
                 className="input-field w-full"
-                placeholder="ابحث عن منتج..."
+                placeholder="ابحث عن منتج بالاسم أو الكود..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
               />
@@ -252,7 +273,17 @@ export default function PurchasesPage() {
                       <span className="text-xs text-muted-foreground">المخزون: {p.quantity}</span>
                     </button>
                   ))}
-                  {filteredProducts.length === 0 && <p className="p-3 text-center text-muted-foreground text-sm">لا توجد نتائج</p>}
+                  {filteredProducts.length === 0 && (
+                    <div className="p-3 text-center">
+                      <p className="text-muted-foreground text-sm mb-2">لا توجد نتائج</p>
+                      <button
+                        onClick={() => setQuickAddOpen(true)}
+                        className="text-xs font-extrabold text-primary hover:underline"
+                      >
+                        + إضافة "{productSearch}" كمنتج جديد
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -358,6 +389,13 @@ export default function PurchasesPage() {
           </div>
         </div>
       )}
+
+      <QuickAddProduct
+        open={quickAddOpen}
+        onClose={() => setQuickAddOpen(false)}
+        onCreated={handleQuickAddCreated}
+        defaultName={productSearch}
+      />
     </div>
   );
 }
