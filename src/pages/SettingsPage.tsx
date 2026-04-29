@@ -301,6 +301,8 @@ export default function SettingsPage() {
 function SnapshotsCard() {
   const [snaps, setSnaps] = useState<Snapshot[]>(() => getSnapshots());
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [diffRows, setDiffRows] = useState<SnapshotDiffRow[] | null>(null);
+  const [intervalMs, setIntervalMsState] = useState<number>(() => getAutoBackupInterval());
 
   const reload = () => setSnaps(getSnapshots());
 
@@ -319,6 +321,11 @@ function SnapshotsCard() {
     }
   };
 
+  const openConfirm = (id: string) => {
+    setConfirmId(id);
+    setDiffRows(diffSnapshotWithCurrent(id));
+  };
+
   const handleRestore = () => {
     if (!confirmId) return;
     const ok = restoreSnapshot(confirmId);
@@ -329,6 +336,7 @@ function SnapshotsCard() {
       toast({ title: "فشل الاسترجاع", variant: "destructive" });
     }
     setConfirmId(null);
+    setDiffRows(null);
   };
 
   const handleDelete = (id: string) => {
@@ -337,9 +345,23 @@ function SnapshotsCard() {
     toast({ title: "تم حذف اللقطة" });
   };
 
+  const intervals: { label: string; value: number }[] = [
+    { label: '15 ثانية', value: 15_000 },
+    { label: '30 ثانية', value: 30_000 },
+    { label: '1 دقيقة', value: 60_000 },
+    { label: '5 دقايق', value: 300_000 },
+    { label: '15 دقيقة', value: 900_000 },
+  ];
+
+  const applyInterval = (ms: number) => {
+    setAutoBackupInterval(ms);
+    setIntervalMsState(ms);
+    toast({ title: '✅ تم تعديل تكرار الحفظ التلقائي' });
+  };
+
   return (
     <div className="stat-card animate-fade-in-up stagger-2 sm:col-span-2">
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center"><History className="text-success" size={22} /></div>
           <div>
@@ -350,6 +372,26 @@ function SnapshotsCard() {
         <button onClick={handleManual} className="btn-primary text-xs px-3 py-2">
           <Clock size={14} /> حفظ لقطة الآن
         </button>
+      </div>
+
+      {/* Interval picker */}
+      <div className="bg-accent/30 rounded-xl p-3 mb-4">
+        <p className="text-xs font-extrabold mb-2">⏱️ تكرار الحفظ التلقائي</p>
+        <div className="flex flex-wrap gap-2">
+          {intervals.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => applyInterval(opt.value)}
+              className={`text-xs font-extrabold px-3 py-2 rounded-lg transition-all ${
+                intervalMs === opt.value
+                  ? 'bg-primary text-primary-foreground shadow-md scale-105'
+                  : 'bg-background border border-border hover:bg-accent'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       {snaps.length === 0 ? (
@@ -373,9 +415,9 @@ function SnapshotsCard() {
               </div>
               <div className="flex gap-1 flex-shrink-0">
                 <button
-                  onClick={() => setConfirmId(s.id)}
+                  onClick={() => openConfirm(s.id)}
                   className="p-2 rounded-lg bg-primary/15 text-primary hover:bg-primary hover:text-primary-foreground transition-all"
-                  title="استرجاع هذه اللقطة"
+                  title="معاينة الفروقات واسترجاع"
                 >
                   <RotateCcw size={14} />
                 </button>
@@ -395,23 +437,58 @@ function SnapshotsCard() {
       <div className="mt-3 p-3 bg-success/10 rounded-xl flex items-start gap-2">
         <Database className="text-success shrink-0 mt-0.5" size={16} />
         <p className="text-xs text-muted-foreground font-bold">
-          النظام بيحفظ لقطة كل 30 ثانية + بعد كل عملية بيع/إضافة/تعديل + قبل قفل البرنامج. أقصى 30 لقطة بترجع لأقدم نقطة في الذاكرة.
+          النظام بيحفظ لقطة كل {intervals.find(i => i.value === intervalMs)?.label || 'فترة'} + بعد كل عملية + قبل قفل البرنامج. أقصى 30 لقطة.
         </p>
       </div>
 
+      {/* Compare & restore confirmation */}
       {confirmId && (
         <div className="modal-overlay">
-          <div className="glass-modal rounded-3xl p-6 w-full max-w-[95vw] sm:max-w-md">
+          <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-2xl max-h-[88vh] overflow-y-auto">
             <div className="flex items-center gap-3 mb-4">
               <AlertTriangle className="text-warning" size={24} />
-              <h3 className="font-extrabold text-lg">استرجاع نسخة سابقة؟</h3>
+              <h3 className="font-extrabold text-lg">معاينة الفروقات قبل الاسترجاع</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
-              هيتم استبدال كل البيانات الحالية بالنسخة دي. هتتحفظ لقطة سلامة من الوضع الحالي قبل التغيير عشان تقدر ترجع ليه.
+              ده مقارنة بين البيانات الحالية واللقطة اللى هترجعها. الأرقام بتعد العناصر في كل قسم.
             </p>
+
+            {diffRows && (
+              <div className="overflow-x-auto rounded-xl border border-border mb-4">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40">
+                    <tr>
+                      <th className="text-right p-3 font-extrabold">القسم</th>
+                      <th className="text-center p-3 font-extrabold">الحالى</th>
+                      <th className="text-center p-3 font-extrabold">في اللقطة</th>
+                      <th className="text-center p-3 font-extrabold">الفرق</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {diffRows.map(r => (
+                      <tr key={r.key} className="border-t border-border/50">
+                        <td className="p-3 font-bold">{r.label}</td>
+                        <td className="p-3 text-center">{r.before.toLocaleString()}</td>
+                        <td className="p-3 text-center">{r.after.toLocaleString()}</td>
+                        <td className={`p-3 text-center font-extrabold ${
+                          r.delta > 0 ? 'text-success' : r.delta < 0 ? 'text-destructive' : 'text-muted-foreground'
+                        }`}>
+                          {r.delta > 0 ? `+${r.delta}` : r.delta}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div className="bg-warning/10 border border-warning/30 rounded-xl p-3 mb-4 text-xs text-foreground">
+              ⚠️ هيتم استبدال كل البيانات الحالية. هتتحفظ لقطة سلامة من الوضع الحالي قبل التغيير عشان تقدر ترجع لها.
+            </div>
+
             <div className="grid grid-cols-2 gap-3">
               <button onClick={handleRestore} className="btn-primary py-3">تأكيد الاسترجاع</button>
-              <button onClick={() => setConfirmId(null)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
+              <button onClick={() => { setConfirmId(null); setDiffRows(null); }} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
             </div>
           </div>
         </div>
@@ -419,3 +496,111 @@ function SnapshotsCard() {
     </div>
   );
 }
+
+function PriceHistoryCard() {
+  const [tick, setTick] = useState(0);
+  const history = useMemo(() => getPriceHistory(), [tick]);
+  const [filter, setFilter] = useState<'all' | 'up' | 'down'>('all');
+
+  const filtered = useMemo(() => {
+    if (filter === 'all') return history;
+    return history.filter(h => h.direction === filter);
+  }, [history, filter]);
+
+  const ups = history.filter(h => h.direction === 'up').length;
+  const downs = history.filter(h => h.direction === 'down').length;
+
+  const handleClear = () => {
+    if (!confirm('مسح كل سجل تغييرات الأسعار؟')) return;
+    clearPriceHistory();
+    setTick(t => t + 1);
+    toast({ title: 'تم المسح' });
+  };
+
+  return (
+    <div className="stat-card animate-fade-in-up stagger-3 sm:col-span-2">
+      <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-warning/15 flex items-center justify-center"><TrendingUp className="text-warning" size={22} /></div>
+          <div>
+            <h3 className="font-extrabold text-lg">سجل تغييرات أسعار الشراء</h3>
+            <p className="text-xs text-muted-foreground">
+              {history.length} تغيير • <span className="text-destructive font-extrabold">{ups} رفع</span> • <span className="text-success font-extrabold">{downs} تخفيض</span>
+            </p>
+          </div>
+        </div>
+        {history.length > 0 && (
+          <button onClick={handleClear} className="text-xs px-3 py-2 rounded-xl bg-destructive/15 text-destructive font-extrabold">
+            <Trash2 size={14} className="inline ml-1" /> مسح السجل
+          </button>
+        )}
+      </div>
+
+      {/* Filter chips */}
+      <div className="flex gap-2 mb-3 flex-wrap">
+        {([
+          { key: 'all', label: `الكل (${history.length})` },
+          { key: 'up', label: `↑ ارتفاع (${ups})` },
+          { key: 'down', label: `↓ انخفاض (${downs})` },
+        ] as const).map(opt => (
+          <button
+            key={opt.key}
+            onClick={() => setFilter(opt.key)}
+            className={`text-xs font-extrabold px-3 py-1.5 rounded-lg transition-all ${
+              filter === opt.key ? 'bg-primary text-primary-foreground shadow-md' : 'bg-accent hover:bg-accent/70'
+            }`}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {filtered.length === 0 ? (
+        <p className="text-center py-8 text-sm text-muted-foreground bg-accent/30 rounded-xl">
+          لا يوجد تغييرات في الأسعار. أي فاتورة شراء بسعر مختلف هتتسجل هنا تلقائياً.
+        </p>
+      ) : (
+        <div className="max-h-96 overflow-y-auto space-y-2">
+          {filtered.map(p => (
+            <PriceChangeRow key={p.id} change={p} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function PriceChangeRow({ change }: { change: PriceChange }) {
+  const isUp = change.direction === 'up';
+  const Icon = isUp ? TrendingUp : TrendingDown;
+  const color = isUp ? 'text-destructive' : 'text-success';
+  const bg = isUp ? 'bg-destructive/10' : 'bg-success/10';
+  const note = isUp
+    ? `⚠️ السعر ارتفع بنسبة ${Math.abs(change.percent).toFixed(1)}٪ — راجع سعر البيع`
+    : `✅ السعر انخفض بنسبة ${Math.abs(change.percent).toFixed(1)}٪ — فرصة كويسة للربح`;
+
+  return (
+    <div className={`p-3 rounded-xl border border-border/50 ${bg}`}>
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <Icon className={color} size={18} />
+          <div className="min-w-0">
+            <p className="font-extrabold text-sm truncate">{change.productName}</p>
+            <p className="text-[11px] text-muted-foreground">{change.reason}</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className="text-xs text-muted-foreground line-through">{change.oldCost.toLocaleString()}</span>
+          <ArrowRight size={14} className="text-muted-foreground" />
+          <span className={`text-sm font-extrabold ${color}`}>{change.newCost.toLocaleString()} ج.م</span>
+          <span className={`text-xs font-extrabold px-2 py-0.5 rounded-full ${color} ${bg}`}>
+            {change.diff > 0 ? '+' : ''}{change.diff.toFixed(2)} ({change.percent > 0 ? '+' : ''}{change.percent.toFixed(1)}٪)
+          </span>
+        </div>
+      </div>
+      <p className={`text-[11px] mt-2 font-bold ${color}`}>{note}</p>
+      <p className="text-[10px] text-muted-foreground mt-1">{new Date(change.date).toLocaleString('ar-EG')}</p>
+    </div>
+  );
+}
+
