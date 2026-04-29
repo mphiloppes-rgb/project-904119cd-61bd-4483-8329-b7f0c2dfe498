@@ -255,6 +255,9 @@ export default function SettingsPage() {
         {/* Auto Snapshots */}
         <SnapshotsCard />
 
+        {/* Price changes log */}
+        {admin && <PriceHistoryCard />}
+
         <div className="stat-card animate-fade-in-up stagger-3">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center"><FileSpreadsheet className="text-success" size={22} /></div>
