@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X } from "lucide-react";
+import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles } from "lucide-react";
 import {
   getPurchaseInvoices,
   addPurchaseInvoice,
@@ -9,9 +9,10 @@ import {
   type PurchaseInvoiceItem,
   type PurchaseInvoice,
 } from "@/lib/suppliers";
-import { getProducts } from "@/lib/store";
+import { getProducts, type Product } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
+import QuickAddProduct from "@/components/QuickAddProduct";
 
 export default function PurchasesPage() {
   const { refreshKey, refresh } = useStoreRefresh();
