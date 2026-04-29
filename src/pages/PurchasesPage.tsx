@@ -34,6 +34,17 @@ export default function PurchasesPage() {
   const [viewing, setViewing] = useState<PurchaseInvoice | null>(null);
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+
+  const handleQuickAddCreated = (p: Product) => {
+    refresh();
+    // add to invoice immediately
+    setItems((prev) => {
+      if (prev.find((i) => i.productId === p.id)) return prev;
+      return [...prev, { productId: p.id, productName: p.name, quantity: 1, unitCost: p.costPrice, total: p.costPrice }];
+    });
+    setProductSearch("");
+  };
 
   const filtered = useMemo(() => {
     if (!search.trim()) return invoices;
