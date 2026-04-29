@@ -114,22 +114,39 @@ export function clearSnapshots(): void {
 }
 
 // === مراقبة تلقائية ===
-// يبدأ المراقبة: كل 30 ثانية + عند أي تغيير في DATA_KEYS عبر storage event.
+// يبدأ المراقبة: كل X ثانية + عند أي تغيير في DATA_KEYS عبر storage event.
+// التكرار يتم تحميله من الإعدادات ويتغير حياً عند التحديث.
+
+const INTERVAL_KEY = 'pos_auto_backup_interval_ms';
+const DEFAULT_INTERVAL = 30_000;
+
+export function getAutoBackupInterval(): number {
+  try {
+    const v = parseInt(localStorage.getItem(INTERVAL_KEY) || '');
+    if (!isNaN(v) && v >= 5_000) return v;
+  } catch {}
+  return DEFAULT_INTERVAL;
+}
+
+export function setAutoBackupInterval(ms: number) {
+  try { localStorage.setItem(INTERVAL_KEY, String(ms)); } catch {}
+  if (started && timer) {
+    window.clearInterval(timer);
+    timer = window.setInterval(() => takeSnapshot('حفظ تلقائي دوري'), ms);
+  }
+}
 
 let started = false;
 let timer: number | null = null;
 
-export function startAutoBackup(intervalMs = 30_000) {
+export function startAutoBackup(intervalMs?: number) {
   if (started) return;
   started = true;
+  const ms = intervalMs ?? getAutoBackupInterval();
 
-  // Snapshot أولي
   takeSnapshot('بداية الجلسة');
+  timer = window.setInterval(() => takeSnapshot('حفظ تلقائي دوري'), ms);
 
-  // مؤقت دوري
-  timer = window.setInterval(() => takeSnapshot('حفظ تلقائي دوري'), intervalMs);
-
-  // Hook على setItem عشان أي كتابة لمفاتيح البيانات تطلق snapshot debounced
   const origSetItem = localStorage.setItem.bind(localStorage);
   let pending: number | null = null;
   let pendingTrigger = 'تحديث بيانات';
@@ -155,7 +172,6 @@ export function startAutoBackup(intervalMs = 30_000) {
     }
   };
 
-  // قبل ما المستخدم يقفل التبويب — لقطة نهائية
   window.addEventListener('beforeunload', () => takeSnapshot('قبل الإغلاق'));
 }
 
@@ -164,3 +180,46 @@ export function stopAutoBackup() {
   timer = null;
   started = false;
 }
+
+// مقارنة بين لقطة معينة والوضع الحالي
+export interface SnapshotDiffRow {
+  key: string;
+  label: string;
+  before: number;
+  after: number;
+  delta: number;
+}
+
+const KEY_LABELS: Record<string, string> = {
+  pos_products: 'منتجات',
+  pos_customers: 'عملاء',
+  pos_invoices: 'فواتير بيع',
+  pos_expenses: 'مصاريف',
+  pos_suppliers: 'موردين',
+  pos_purchase_invoices: 'فواتير شراء',
+  pos_supplier_payments: 'مدفوعات للموردين',
+  pos_customer_payments: 'مدفوعات من العملاء',
+};
+
+export function diffSnapshotWithCurrent(snapshotId: string): SnapshotDiffRow[] | null {
+  const list = readSnapshots();
+  const snap = list.find(s => s.id === snapshotId);
+  if (!snap) return null;
+  const current = buildDataPayload();
+  const rows: SnapshotDiffRow[] = [];
+  DATA_KEYS.forEach(k => {
+    let beforeCount = 0;
+    let afterCount = 0;
+    try { beforeCount = JSON.parse(current[k] || '[]').length || 0; } catch {}
+    try { afterCount = JSON.parse(snap.data[k] || '[]').length || 0; } catch {}
+    rows.push({
+      key: k,
+      label: KEY_LABELS[k] || k,
+      before: beforeCount,
+      after: afterCount,
+      delta: afterCount - beforeCount,
+    });
+  });
+  return rows;
+}
+

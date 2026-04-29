@@ -31,6 +31,7 @@ export interface PurchaseInvoice {
 }
 
 import { getProducts, saveProducts } from './store';
+import { logPriceChange } from './price-history';
 
 function generateId(): string {
   return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
@@ -105,14 +106,24 @@ export function addPurchaseInvoice(inv: Omit<PurchaseInvoice, 'id' | 'createdAt'
   list.push(invoice);
   savePurchaseInvoices(list);
 
-  // Add stock to products
+  // Add stock to products + log price changes
   const products = getProducts();
   inv.items.forEach(item => {
     const idx = products.findIndex(p => p.id === item.productId);
     if (idx !== -1) {
+      const oldCost = products[idx].costPrice;
       products[idx].quantity += item.quantity;
-      // Update cost price to latest
       products[idx].costPrice = item.unitCost;
+      if (oldCost !== item.unitCost) {
+        logPriceChange({
+          productId: products[idx].id,
+          productName: products[idx].name,
+          oldCost,
+          newCost: item.unitCost,
+          reason: `فاتورة شراء #${invoice.invoiceNumber} — ${invoice.supplierName}`,
+          source: invoice.id,
+        });
+      }
     }
   });
   saveProducts(products);
