@@ -93,27 +93,90 @@ export default function ReportsPage() {
         ))}
       </div>
 
-      {/* Quick debt overview — current snapshot (live, not period-bound) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
-        <div className="stat-card flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-destructive/10 flex items-center justify-center flex-shrink-0">
-            <AlertCircle className="text-destructive" size={22} />
+      {/* === صافي ثروة المحل (Net Worth Snapshot) — الكل في كارت واحد === */}
+      {(() => {
+        const inventoryAtCost = report.currentInventoryValueCost;
+        const cash = report.cashOnHand;
+        const owedToShop = report.currentCustomerDebt;
+        const owedByShop = report.currentSupplierDebt;
+        const grandTotal = inventoryAtCost + cash + owedToShop - owedByShop;
+        const positive = grandTotal >= 0;
+        return (
+          <div className="mb-6 p-5 sm:p-6 rounded-3xl bg-gradient-to-br from-primary/10 via-success/5 to-primary/5 border-2 border-primary/20 shadow-lg animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-md animate-float">
+                <Crown className="text-primary-foreground" size={24} />
+              </div>
+              <div>
+                <h3 className="font-extrabold text-lg sm:text-xl">📊 صافي ثروة المحل (الوضع الكلي الآن)</h3>
+                <p className="text-xs text-muted-foreground">صورة لحظية بكل أصول والتزامات المحل</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+              <div className="p-4 rounded-2xl bg-card/80 border border-primary/20 hover:scale-105 transition-transform">
+                <div className="flex items-center gap-2 mb-1">
+                  <Boxes className="text-primary" size={16} />
+                  <span className="text-[11px] font-bold text-muted-foreground">قيمة المخزون</span>
+                </div>
+                <p className="text-lg sm:text-xl font-extrabold text-primary">+{inventoryAtCost.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground">بسعر التكلفة</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-card/80 border border-emerald-500/20 hover:scale-105 transition-transform">
+                <div className="flex items-center gap-2 mb-1">
+                  <Coins className="text-emerald-600" size={16} />
+                  <span className="text-[11px] font-bold text-muted-foreground">كاش في المحل</span>
+                </div>
+                <p className={`text-lg sm:text-xl font-extrabold ${cash >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
+                  {cash >= 0 ? '+' : ''}{cash.toLocaleString()}
+                </p>
+                <p className="text-[10px] text-muted-foreground">تقديري تراكمي</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-card/80 border border-warning/20 hover:scale-105 transition-transform">
+                <div className="flex items-center gap-2 mb-1">
+                  <Users className="text-warning" size={16} />
+                  <span className="text-[11px] font-bold text-muted-foreground">ديون ليّا (عند العملاء)</span>
+                </div>
+                <p className="text-lg sm:text-xl font-extrabold text-warning">+{owedToShop.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground">هتدخل المحل</p>
+              </div>
+
+              <div className="p-4 rounded-2xl bg-card/80 border border-destructive/20 hover:scale-105 transition-transform">
+                <div className="flex items-center gap-2 mb-1">
+                  <AlertCircle className="text-destructive" size={16} />
+                  <span className="text-[11px] font-bold text-muted-foreground">ديون عليّ (للموردين)</span>
+                </div>
+                <p className="text-lg sm:text-xl font-extrabold text-destructive">−{owedByShop.toLocaleString()}</p>
+                <p className="text-[10px] text-muted-foreground">واجبة الدفع</p>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-xl bg-muted/40 mb-3 text-xs sm:text-sm font-bold text-center text-muted-foreground overflow-x-auto whitespace-nowrap">
+              <span className="text-primary">{inventoryAtCost.toLocaleString()}</span>
+              <span className="mx-2">+</span>
+              <span className="text-emerald-600">{cash.toLocaleString()}</span>
+              <span className="mx-2">+</span>
+              <span className="text-warning">{owedToShop.toLocaleString()}</span>
+              <span className="mx-2">−</span>
+              <span className="text-destructive">{owedByShop.toLocaleString()}</span>
+              <span className="mx-2">=</span>
+              <span className={positive ? 'text-success' : 'text-destructive'}>{grandTotal.toLocaleString()}</span>
+            </div>
+
+            <div className={`p-5 rounded-2xl border-2 ${positive ? 'bg-success/10 border-success/30' : 'bg-destructive/10 border-destructive/30'} flex items-center justify-between flex-wrap gap-3`}>
+              <div>
+                <p className="text-xs font-bold text-muted-foreground mb-1">💎 إجمالي صافي ثروة المحل</p>
+                <p className="text-[10px] text-muted-foreground">مخزون + كاش + ديون ليّا − ديون عليّ</p>
+              </div>
+              <p className={`text-2xl sm:text-3xl font-extrabold ${positive ? 'text-success' : 'text-destructive'}`}>
+                {grandTotal.toLocaleString()} <span className="text-base">ج.م</span>
+              </p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-muted-foreground mb-0.5">مديونية المحل للموردين (الآن)</p>
-            <p className="text-xl font-extrabold text-destructive truncate">{report.currentSupplierDebt.toLocaleString()} <span className="text-xs">ج.م</span></p>
-          </div>
-        </div>
-        <div className="stat-card flex items-center gap-3">
-          <div className="w-11 h-11 rounded-xl bg-warning/10 flex items-center justify-center flex-shrink-0">
-            <Users className="text-warning" size={22} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-muted-foreground mb-0.5">مديونية العملاء للمحل (الآن)</p>
-            <p className="text-xl font-extrabold text-warning truncate">{report.currentCustomerDebt.toLocaleString()} <span className="text-xs">ج.م</span></p>
-          </div>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Tabs */}
       <div className="flex gap-2 mb-4 flex-wrap overflow-x-auto pb-1">
