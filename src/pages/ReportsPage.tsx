@@ -90,8 +90,14 @@ export default function ReportsPage() {
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap items-center">
-        <button onClick={() => exportReportToExcel(period)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-success text-success-foreground hover:opacity-90 transition-all">
+        <button onClick={() => exportReportToExcel(period)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-success text-success-foreground hover:opacity-90 transition-all hover:scale-105">
           <Download size={16} /> تصدير Excel
+        </button>
+        <button onClick={handleExportPDF} disabled={exportingPDF} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:opacity-90 transition-all hover:scale-105 disabled:opacity-50">
+          <FileText size={16} /> {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+        </button>
+        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all hover:scale-105">
+          🖨️ طباعة
         </button>
         {periods.map((p) => (
           <button key={p.key} onClick={() => setPeriod(p.key)} className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${period === p.key ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
@@ -99,6 +105,9 @@ export default function ReportsPage() {
           </button>
         ))}
       </div>
+
+      {/* المنطقة القابلة للتصدير/الطباعة */}
+      <div ref={reportRef}>
 
       {/* Stats — uniform sized cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
