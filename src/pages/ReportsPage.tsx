@@ -608,6 +608,8 @@ export default function ReportsPage() {
           </div>
         )}
       </div>
+      {/* end report ref wrapper */}
+      </div>
     </div>
   );
 }
