@@ -1,9 +1,11 @@
-import { useState, useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText } from "lucide-react";
 import { getReport, getStaleProductsByDays } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
+import { exportElementToPDF } from "@/lib/pdf-export";
 import { isCashier } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
