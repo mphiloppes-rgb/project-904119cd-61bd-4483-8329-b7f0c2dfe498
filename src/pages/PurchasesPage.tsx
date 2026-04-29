@@ -389,6 +389,13 @@ export default function PurchasesPage() {
           </div>
         </div>
       )}
+
+      <QuickAddProduct
+        open={quickAddOpen}
+        onClose={() => setQuickAddOpen(false)}
+        onCreated={handleQuickAddCreated}
+        defaultName={productSearch}
+      />
     </div>
   );
 }
