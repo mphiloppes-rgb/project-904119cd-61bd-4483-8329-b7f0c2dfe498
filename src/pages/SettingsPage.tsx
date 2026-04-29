@@ -1,7 +1,8 @@
 import { useRef, useState, useMemo, useEffect } from "react";
-import { Download, Upload, FileSpreadsheet, Database, AlertTriangle, Settings, Shield, UserPlus, Trash2, Edit2, Hash, Grid3x3, X, Check } from "lucide-react";
+import { Download, Upload, FileSpreadsheet, Database, AlertTriangle, Settings, Shield, UserPlus, Trash2, Edit2, Hash, Grid3x3, X, Check, History, RotateCcw, Clock } from "lucide-react";
 import { downloadBackup, restoreBackup } from "@/lib/backup";
 import { exportAllDataToExcel, exportProductsToExcel, exportCustomersToExcel, exportInvoicesToExcel, exportExpensesToExcel } from "@/lib/excel-export";
+import { getSnapshots, restoreSnapshot, deleteSnapshot, takeSnapshot, type Snapshot } from "@/lib/auto-backup";
 import { toast } from "@/hooks/use-toast";
 import {
   isAuthEnabled, setAuthEnabled, getUsers, addUser, updateUser, deleteUser,
@@ -246,6 +247,9 @@ export default function SettingsPage() {
           </div>
         </div>
 
+        {/* Auto Snapshots */}
+        <SnapshotsCard />
+
         <div className="stat-card animate-fade-in-up stagger-3">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center"><FileSpreadsheet className="text-success" size={22} /></div>
@@ -279,6 +283,128 @@ export default function SettingsPage() {
               </div>
             ))}
             {getAuditLog().length === 0 && <p className="text-center text-sm text-muted-foreground py-4">لا يوجد سجل</p>}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SnapshotsCard() {
+  const [snaps, setSnaps] = useState<Snapshot[]>(() => getSnapshots());
+  const [confirmId, setConfirmId] = useState<string | null>(null);
+
+  const reload = () => setSnaps(getSnapshots());
+
+  useEffect(() => {
+    const t = setInterval(reload, 5000);
+    return () => clearInterval(t);
+  }, []);
+
+  const handleManual = () => {
+    const s = takeSnapshot('حفظ يدوي');
+    if (s) {
+      toast({ title: "تم حفظ لقطة جديدة ✅" });
+      reload();
+    } else {
+      toast({ title: "مفيش تغييرات جديدة لحفظها" });
+    }
+  };
+
+  const handleRestore = () => {
+    if (!confirmId) return;
+    const ok = restoreSnapshot(confirmId);
+    if (ok) {
+      toast({ title: "تم استرجاع البيانات ✅", description: "هيتم تحديث الصفحة" });
+      setTimeout(() => window.location.reload(), 1200);
+    } else {
+      toast({ title: "فشل الاسترجاع", variant: "destructive" });
+    }
+    setConfirmId(null);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteSnapshot(id);
+    reload();
+    toast({ title: "تم حذف اللقطة" });
+  };
+
+  return (
+    <div className="stat-card animate-fade-in-up stagger-2 sm:col-span-2">
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center"><History className="text-success" size={22} /></div>
+          <div>
+            <h3 className="font-extrabold text-lg">الحفظ التلقائي (Offline)</h3>
+            <p className="text-xs text-muted-foreground">آخر {snaps.length} لقطة محفوظة محلياً • أي عملية بتُحفظ فوراً</p>
+          </div>
+        </div>
+        <button onClick={handleManual} className="btn-primary text-xs px-3 py-2">
+          <Clock size={14} /> حفظ لقطة الآن
+        </button>
+      </div>
+
+      {snaps.length === 0 ? (
+        <p className="text-center py-6 text-sm text-muted-foreground bg-accent/30 rounded-xl">
+          لا توجد لقطات بعد. هتتسجل تلقائياً مع أي عملية.
+        </p>
+      ) : (
+        <div className="max-h-72 overflow-y-auto space-y-2">
+          {snaps.map((s, idx) => (
+            <div key={s.id} className="flex items-center justify-between gap-2 p-3 bg-accent/40 rounded-xl hover:bg-accent transition-all">
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <span className="text-xs font-extrabold w-7 h-7 rounded-lg bg-success/15 text-success flex items-center justify-center flex-shrink-0">
+                  {idx + 1}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-extrabold truncate">{s.trigger}</p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {new Date(s.timestamp).toLocaleString("ar-EG")} • {(s.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-1 flex-shrink-0">
+                <button
+                  onClick={() => setConfirmId(s.id)}
+                  className="p-2 rounded-lg bg-primary/15 text-primary hover:bg-primary hover:text-primary-foreground transition-all"
+                  title="استرجاع هذه اللقطة"
+                >
+                  <RotateCcw size={14} />
+                </button>
+                <button
+                  onClick={() => handleDelete(s.id)}
+                  className="p-2 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-all"
+                  title="حذف"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-3 p-3 bg-success/10 rounded-xl flex items-start gap-2">
+        <Database className="text-success shrink-0 mt-0.5" size={16} />
+        <p className="text-xs text-muted-foreground font-bold">
+          النظام بيحفظ لقطة كل 30 ثانية + بعد كل عملية بيع/إضافة/تعديل + قبل قفل البرنامج. أقصى 30 لقطة بترجع لأقدم نقطة في الذاكرة.
+        </p>
+      </div>
+
+      {confirmId && (
+        <div className="modal-overlay">
+          <div className="glass-modal rounded-3xl p-6 w-full max-w-[95vw] sm:max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <AlertTriangle className="text-warning" size={24} />
+              <h3 className="font-extrabold text-lg">استرجاع نسخة سابقة؟</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              هيتم استبدال كل البيانات الحالية بالنسخة دي. هتتحفظ لقطة سلامة من الوضع الحالي قبل التغيير عشان تقدر ترجع ليه.
+            </p>
+            <div className="grid grid-cols-2 gap-3">
+              <button onClick={handleRestore} className="btn-primary py-3">تأكيد الاسترجاع</button>
+              <button onClick={() => setConfirmId(null)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
+            </div>
           </div>
         </div>
       )}

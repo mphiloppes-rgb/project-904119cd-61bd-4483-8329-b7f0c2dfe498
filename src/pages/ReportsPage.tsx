@@ -1,9 +1,11 @@
-import { useState, useMemo } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins } from "lucide-react";
+import { useState, useMemo, useRef } from "react";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText } from "lucide-react";
 import { getReport, getStaleProductsByDays } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
+import { exportElementToPDF } from "@/lib/pdf-export";
 import { isCashier } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
@@ -21,8 +23,28 @@ export default function ReportsPage() {
   const [period, setPeriod] = useState<Period>("daily");
   const [tab, setTab] = useState<Tab>("summary");
   const [staleDays, setStaleDays] = useState<StaleDays>(30);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
   const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
+
+  const handleExportPDF = async () => {
+    if (!reportRef.current) return;
+    setExportingPDF(true);
+    try {
+      const periodLabel = periods.find(p => p.key === period)?.label || '';
+      await exportElementToPDF(
+        reportRef.current,
+        `تقرير_${periodLabel}_${new Date().toISOString().split('T')[0]}.pdf`,
+        `تقرير ${periodLabel} — الراعي للعدد والآلات`
+      );
+      toast({ title: "تم تصدير PDF ✅" });
+    } catch (e: any) {
+      toast({ title: "فشل التصدير", description: e?.message || 'حصل خطأ', variant: "destructive" });
+    } finally {
+      setExportingPDF(false);
+    }
+  };
 
   // الكاشير ميقدرش يدخل التقارير
   if (isCashier()) {
@@ -68,8 +90,14 @@ export default function ReportsPage() {
       </div>
 
       <div className="flex gap-2 mb-4 flex-wrap items-center">
-        <button onClick={() => exportReportToExcel(period)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-success text-success-foreground hover:opacity-90 transition-all">
+        <button onClick={() => exportReportToExcel(period)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-success text-success-foreground hover:opacity-90 transition-all hover:scale-105">
           <Download size={16} /> تصدير Excel
+        </button>
+        <button onClick={handleExportPDF} disabled={exportingPDF} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:opacity-90 transition-all hover:scale-105 disabled:opacity-50">
+          <FileText size={16} /> {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
+        </button>
+        <button onClick={() => window.print()} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-primary text-primary-foreground hover:opacity-90 transition-all hover:scale-105">
+          🖨️ طباعة
         </button>
         {periods.map((p) => (
           <button key={p.key} onClick={() => setPeriod(p.key)} className={`px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${period === p.key ? "bg-primary text-primary-foreground shadow-lg" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
@@ -77,6 +105,9 @@ export default function ReportsPage() {
           </button>
         ))}
       </div>
+
+      {/* المنطقة القابلة للتصدير/الطباعة */}
+      <div ref={reportRef}>
 
       {/* Stats — uniform sized cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
@@ -576,6 +607,8 @@ export default function ReportsPage() {
             )}
           </div>
         )}
+      </div>
+      {/* end report ref wrapper */}
       </div>
     </div>
   );
