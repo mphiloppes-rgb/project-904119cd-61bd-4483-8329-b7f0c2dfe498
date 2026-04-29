@@ -249,10 +249,19 @@ export default function PurchasesPage() {
             </div>
 
             <div className="mb-3">
-              <label className="text-sm font-bold mb-1 block">إضافة منتج</label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-sm font-bold">إضافة منتج</label>
+                <button
+                  type="button"
+                  onClick={() => setQuickAddOpen(true)}
+                  className="flex items-center gap-1.5 text-xs font-extrabold px-3 py-1.5 rounded-lg bg-gradient-to-r from-success to-success/70 text-success-foreground shadow-md hover:shadow-lg hover:scale-105 transition-all"
+                >
+                  <Sparkles size={14} /> منتج جديد
+                </button>
+              </div>
               <input
                 className="input-field w-full"
-                placeholder="ابحث عن منتج..."
+                placeholder="ابحث عن منتج بالاسم أو الكود..."
                 value={productSearch}
                 onChange={(e) => setProductSearch(e.target.value)}
               />
@@ -264,7 +273,17 @@ export default function PurchasesPage() {
                       <span className="text-xs text-muted-foreground">المخزون: {p.quantity}</span>
                     </button>
                   ))}
-                  {filteredProducts.length === 0 && <p className="p-3 text-center text-muted-foreground text-sm">لا توجد نتائج</p>}
+                  {filteredProducts.length === 0 && (
+                    <div className="p-3 text-center">
+                      <p className="text-muted-foreground text-sm mb-2">لا توجد نتائج</p>
+                      <button
+                        onClick={() => setQuickAddOpen(true)}
+                        className="text-xs font-extrabold text-primary hover:underline"
+                      >
+                        + إضافة "{productSearch}" كمنتج جديد
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
