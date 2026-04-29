@@ -23,8 +23,28 @@ export default function ReportsPage() {
   const [period, setPeriod] = useState<Period>("daily");
   const [tab, setTab] = useState<Tab>("summary");
   const [staleDays, setStaleDays] = useState<StaleDays>(30);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const reportRef = useRef<HTMLDivElement>(null);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
   const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
+
+  const handleExportPDF = async () => {
+    if (!reportRef.current) return;
+    setExportingPDF(true);
+    try {
+      const periodLabel = periods.find(p => p.key === period)?.label || '';
+      await exportElementToPDF(
+        reportRef.current,
+        `تقرير_${periodLabel}_${new Date().toISOString().split('T')[0]}.pdf`,
+        `تقرير ${periodLabel} — الراعي للعدد والآلات`
+      );
+      toast({ title: "تم تصدير PDF ✅" });
+    } catch (e: any) {
+      toast({ title: "فشل التصدير", description: e?.message || 'حصل خطأ', variant: "destructive" });
+    } finally {
+      setExportingPDF(false);
+    }
+  };
 
   // الكاشير ميقدرش يدخل التقارير
   if (isCashier()) {
