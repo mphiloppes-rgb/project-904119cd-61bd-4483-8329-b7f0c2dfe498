@@ -1,8 +1,13 @@
 import { useRef, useState, useMemo, useEffect } from "react";
-import { Download, Upload, FileSpreadsheet, Database, AlertTriangle, Settings, Shield, UserPlus, Trash2, Edit2, Hash, Grid3x3, X, Check, History, RotateCcw, Clock } from "lucide-react";
+import { Download, Upload, FileSpreadsheet, Database, AlertTriangle, Settings, Shield, UserPlus, Trash2, Edit2, Hash, Grid3x3, X, Check, History, RotateCcw, Clock, TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import { downloadBackup, restoreBackup } from "@/lib/backup";
 import { exportAllDataToExcel, exportProductsToExcel, exportCustomersToExcel, exportInvoicesToExcel, exportExpensesToExcel } from "@/lib/excel-export";
-import { getSnapshots, restoreSnapshot, deleteSnapshot, takeSnapshot, type Snapshot } from "@/lib/auto-backup";
+import {
+  getSnapshots, restoreSnapshot, deleteSnapshot, takeSnapshot,
+  getAutoBackupInterval, setAutoBackupInterval, diffSnapshotWithCurrent,
+  type Snapshot, type SnapshotDiffRow,
+} from "@/lib/auto-backup";
+import { getPriceHistory, clearPriceHistory, type PriceChange } from "@/lib/price-history";
 import { toast } from "@/hooks/use-toast";
 import {
   isAuthEnabled, setAuthEnabled, getUsers, addUser, updateUser, deleteUser,
