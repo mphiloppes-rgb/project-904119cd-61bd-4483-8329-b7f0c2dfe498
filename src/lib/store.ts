@@ -124,8 +124,20 @@ export function addProduct(p: Omit<Product, 'id' | 'createdAt'>): Product {
   return product;
 }
 export function updateProduct(id: string, updates: Partial<Product>) {
+  const before = getProducts().find(p => p.id === id);
   const products = getProducts().map(p => p.id === id ? { ...p, ...updates } : p);
   saveProducts(products);
+  // Log price change if costPrice was updated manually
+  if (before && updates.costPrice !== undefined && updates.costPrice !== before.costPrice) {
+    // dynamic import to avoid circular
+    import('./price-history').then(m => m.logPriceChange({
+      productId: id,
+      productName: before.name,
+      oldCost: before.costPrice,
+      newCost: updates.costPrice as number,
+      reason: 'تعديل يدوي من المنتجات',
+    }));
+  }
 }
 export function deleteProduct(id: string) {
   saveProducts(getProducts().filter(p => p.id !== id));
