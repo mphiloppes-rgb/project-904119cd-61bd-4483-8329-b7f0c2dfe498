@@ -424,8 +424,12 @@ export default function POSPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
               {filtered.map((p, idx) => (
                 <button key={p.id} onClick={() => addToCart(p)} disabled={p.quantity <= 0} className={`stat-card text-right cursor-pointer animate-fade-in-up ${p.quantity <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`} style={{ animationDelay: `${idx * 0.03}s` }}>
-                  <p className="font-extrabold text-sm truncate">{p.name}</p>
-                  {p.brand && <p className="text-xs text-muted-foreground">{p.brand}</p>}
+                  <p className="font-extrabold text-sm leading-tight line-clamp-2">{p.name}</p>
+                  {(p.brand || p.model) && (
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {p.brand}{p.brand && p.model ? ' · ' : ''}{p.model}
+                    </p>
+                  )}
                   <p className="text-primary font-extrabold mt-2">{p.sellPrice.toLocaleString()} ج.م</p>
                   {(p.wholesalePrice || p.halfWholesalePrice) && (
                     <p className="text-[10px] text-muted-foreground">
