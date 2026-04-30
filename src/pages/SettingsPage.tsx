@@ -531,10 +531,11 @@ function PriceHistoryCard() {
   };
 
   const handleRevert = async (change: PriceChange) => {
-    if (!confirm(`إرجاع سعر "${change.productName}" من ${change.newCost.toLocaleString()} إلى ${change.oldCost.toLocaleString()} ج.م؟`)) return;
+    const msg = `⚠️ تأكيد إرجاع السعر\n\nالمنتج: ${change.productName}\nمن: ${change.newCost.toLocaleString()} ج.م\nإلى: ${change.oldCost.toLocaleString()} ج.م\n\nهيتم تحديث سعر المنتج في المخزون فوراً وتسجيل العملية في السجل. هل تريد المتابعة؟`;
+    if (!confirm(msg)) return;
     const res = await revertToOldCost(change.id);
-    toast({ title: res.ok ? 'تم ✅' : 'تعذر', description: res.message, variant: res.ok ? 'default' : 'destructive' });
-    if (res.ok) setTick(t => t + 1);
+    toast({ title: res.ok ? '✅ تم إرجاع السعر' : 'تعذر', description: res.message, variant: res.ok ? 'default' : 'destructive' });
+    if (res.ok) { setTick(t => t + 1); window.dispatchEvent(new Event('store-changed')); }
   };
 
   return (
@@ -674,6 +675,9 @@ function PriceChangeRow({ change, onRevert }: { change: PriceChange; onRevert: (
       )}
       <p className={`text-[11px] mt-2 font-bold ${color}`}>{note}</p>
       <p className="text-[10px] text-muted-foreground mt-1">{new Date(change.date).toLocaleString('ar-EG')}</p>
+      {change.userName && (
+        <p className="text-[10px] text-muted-foreground mt-0.5">👤 بواسطة: <span className="font-bold">{change.userName}</span></p>
+      )}
     </div>
   );
 }
