@@ -123,12 +123,12 @@ export function addProduct(p: Omit<Product, 'id' | 'createdAt'>): Product {
   saveProducts(products);
   return product;
 }
-export function updateProduct(id: string, updates: Partial<Product>) {
+export function updateProduct(id: string, updates: Partial<Product>, opts?: { reason?: string; skipPriceLog?: boolean }) {
   const before = getProducts().find(p => p.id === id);
   const products = getProducts().map(p => p.id === id ? { ...p, ...updates } : p);
   saveProducts(products);
   // Log price change if costPrice was updated manually
-  if (before && updates.costPrice !== undefined && updates.costPrice !== before.costPrice) {
+  if (!opts?.skipPriceLog && before && updates.costPrice !== undefined && updates.costPrice !== before.costPrice) {
     // dynamic import to avoid circular
     import('./price-history').then(m => m.logPriceChange({
       productId: id,
@@ -136,6 +136,7 @@ export function updateProduct(id: string, updates: Partial<Product>) {
       oldCost: before.costPrice,
       newCost: updates.costPrice as number,
       reason: 'تعديل يدوي من المنتجات',
+      userReason: opts?.reason,
     }));
   }
 }
