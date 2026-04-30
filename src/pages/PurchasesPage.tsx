@@ -110,6 +110,14 @@ export default function PurchasesPage() {
       toast({ title: "خطأ", description: "أضف منتجات للفاتورة", variant: "destructive" });
       return;
     }
+    if (hasPriceChanges && !priceReason.trim()) {
+      toast({
+        title: "اكتب سبب تغيير الأسعار",
+        description: "في أصناف اتغير سعرها — لازم تكتب السبب علشان يتسجل في السجل",
+        variant: "destructive",
+      });
+      return;
+    }
     const supplier = suppliers.find((s) => s.id === supplierId);
     if (!supplier) return;
 
@@ -121,7 +129,7 @@ export default function PurchasesPage() {
       paid,
       remaining,
       notes,
-    });
+    }, { priceChangeReason: priceReason.trim() || undefined });
 
     toast({ title: "تم ✅", description: `تم تسجيل فاتورة شراء #${inv.invoiceNumber}` });
     setShowForm(false);
@@ -129,6 +137,7 @@ export default function PurchasesPage() {
     setNotes("");
     setItems([]);
     setPaid(0);
+    setPriceReason("");
     refresh();
   };
 
