@@ -7,7 +7,7 @@ import {
   getAutoBackupInterval, setAutoBackupInterval, diffSnapshotWithCurrent,
   type Snapshot, type SnapshotDiffRow,
 } from "@/lib/auto-backup";
-import { getPriceHistory, clearPriceHistory, revertToOldCost, type PriceChange } from "@/lib/price-history";
+import { getPriceHistory, clearPriceHistory, revertToOldCost, exportPriceHistoryCSV, type PriceChange } from "@/lib/price-history";
 import { Search as SearchIcon, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -549,11 +549,21 @@ function PriceHistoryCard() {
             </p>
           </div>
         </div>
-        {history.length > 0 && (
-          <button onClick={handleClear} className="text-xs px-3 py-2 rounded-xl bg-destructive/15 text-destructive font-extrabold">
-            <Trash2 size={14} className="inline ml-1" /> مسح السجل
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {history.length > 0 && (
+            <>
+              <button onClick={() => exportPriceHistoryCSV(filtered)} className="text-xs px-3 py-2 rounded-xl bg-success/15 text-success font-extrabold">
+                <Download size={14} className="inline ml-1" /> تصدير CSV
+              </button>
+              <button onClick={() => window.print()} className="text-xs px-3 py-2 rounded-xl bg-primary/15 text-primary font-extrabold">
+                🖨️ طباعة
+              </button>
+              <button onClick={handleClear} className="text-xs px-3 py-2 rounded-xl bg-destructive/15 text-destructive font-extrabold">
+                <Trash2 size={14} className="inline ml-1" /> مسح
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Search + date filters */}
