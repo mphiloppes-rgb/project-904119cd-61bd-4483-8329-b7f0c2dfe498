@@ -293,9 +293,12 @@ export default function PurchasesPage() {
               {productSearch && (
                 <div className="mt-2 max-h-48 overflow-y-auto bg-card border border-border rounded-xl">
                   {filteredProducts.map((p) => (
-                    <button key={p.id} onClick={() => addItem(p.id)} className="w-full text-right p-3 hover:bg-accent border-b last:border-0 flex justify-between items-center">
-                      <span className="font-bold text-sm">{p.name}</span>
-                      <span className="text-xs text-muted-foreground">المخزون: {p.quantity}</span>
+                    <button key={p.id} onClick={() => addItem(p.id)} className="w-full text-right p-3 hover:bg-accent border-b last:border-0 flex justify-between items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-sm truncate">{p.name}</p>
+                        {(p.brand || p.model) && <p className="text-[11px] text-muted-foreground truncate">{p.brand}{p.brand && p.model ? ' · ' : ''}{p.model}</p>}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">المخزون: {p.quantity}</span>
                     </button>
                   ))}
                   {filteredProducts.length === 0 && (
