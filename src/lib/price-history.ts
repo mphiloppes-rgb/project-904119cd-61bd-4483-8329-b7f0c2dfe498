@@ -123,3 +123,38 @@ export async function revertToOldCost(changeId: string): Promise<{ ok: boolean; 
   return { ok: true, message: `تم إرجاع السعر إلى ${change.oldCost.toLocaleString()} ج.م` };
 }
 
+
+/** تصدير سجل تغييرات الأسعار كـ CSV (يدعم العربى عبر BOM) */
+export function exportPriceHistoryCSV(rows?: PriceChange[]) {
+  const data = rows || getPriceHistory();
+  const headers = ['التاريخ', 'المنتج', 'سعر قديم', 'سعر جديد', 'الفرق', 'النسبة %', 'اتجاه', 'مصدر التغيير', 'السبب', 'المستخدم'];
+  const lines = [headers.join(',')];
+  data.forEach(r => {
+    const cells = [
+      new Date(r.date).toLocaleString('ar-EG'),
+      r.productName,
+      r.oldCost,
+      r.newCost,
+      r.diff.toFixed(2),
+      r.percent.toFixed(1),
+      r.direction === 'up' ? 'ارتفاع' : r.direction === 'down' ? 'انخفاض' : 'ثابت',
+      r.reason,
+      r.userReason || '—',
+      r.userName || '—',
+    ].map(v => {
+      const s = String(v ?? '').replace(/"/g, '""');
+      return /[",\n]/.test(s) ? `"${s}"` : s;
+    });
+    lines.push(cells.join(','));
+  });
+  const csv = '\uFEFF' + lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `سجل_الأسعار_${new Date().toISOString().split('T')[0]}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
