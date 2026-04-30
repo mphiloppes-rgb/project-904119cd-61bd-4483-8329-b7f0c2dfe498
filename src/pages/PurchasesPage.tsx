@@ -82,10 +82,11 @@ export default function PurchasesPage() {
     const p = products.find((x) => x.id === productId);
     if (!p) return;
     const existing = items.find((i) => i.productId === productId);
+    const displayName = `${p.name}${p.brand || p.model ? ` — ${[p.brand, p.model].filter(Boolean).join(' · ')}` : ''}`;
     if (existing) {
       setItems(items.map((i) => i.productId === productId ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.unitCost } : i));
     } else {
-      setItems([...items, { productId: p.id, productName: p.name, quantity: 1, unitCost: p.costPrice, total: p.costPrice }]);
+      setItems([...items, { productId: p.id, productName: displayName, quantity: 1, unitCost: p.costPrice, total: p.costPrice }]);
     }
     setProductSearch("");
   };
@@ -292,9 +293,12 @@ export default function PurchasesPage() {
               {productSearch && (
                 <div className="mt-2 max-h-48 overflow-y-auto bg-card border border-border rounded-xl">
                   {filteredProducts.map((p) => (
-                    <button key={p.id} onClick={() => addItem(p.id)} className="w-full text-right p-3 hover:bg-accent border-b last:border-0 flex justify-between items-center">
-                      <span className="font-bold text-sm">{p.name}</span>
-                      <span className="text-xs text-muted-foreground">المخزون: {p.quantity}</span>
+                    <button key={p.id} onClick={() => addItem(p.id)} className="w-full text-right p-3 hover:bg-accent border-b last:border-0 flex justify-between items-center gap-3">
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-sm truncate">{p.name}</p>
+                        {(p.brand || p.model) && <p className="text-[11px] text-muted-foreground truncate">{p.brand}{p.brand && p.model ? ' · ' : ''}{p.model}</p>}
+                      </div>
+                      <span className="text-xs text-muted-foreground flex-shrink-0">المخزون: {p.quantity}</span>
                     </button>
                   ))}
                   {filteredProducts.length === 0 && (

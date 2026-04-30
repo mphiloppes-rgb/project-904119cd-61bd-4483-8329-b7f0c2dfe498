@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan } from "lucide-react";
 import { getProducts, getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
-import { logAction, canViewCostPrice } from "@/lib/auth";
+import { logAction, canViewCostPrice, isCashier } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
+import { fullProductLabel } from "@/lib/product-display";
 import InvoicePrint from "@/components/InvoicePrint";
 import ThermalPrint from "@/components/ThermalPrint";
 
@@ -82,6 +83,8 @@ export default function POSPage() {
     return product.quantity - (inCart ? inCart.quantity : 0);
   };
 
+  const cashier = isCashier();
+
   const addToCart = (product: typeof products[0]) => {
     if (product.quantity <= 0) {
       toast({ title: "⚠️ نفد المخزون", description: `${product.name} غير متاح حالياً`, variant: "destructive" });
@@ -93,13 +96,16 @@ export default function POSPage() {
       toast({ title: "⚠️ لا يمكن", description: `الكمية المتاحة في المخزون: ${product.quantity}`, variant: "destructive" });
       return;
     }
+    // تكلفة الشراء بتتسجل دايماً علشان حسابات الربح، بس الكاشير ميشوفهاش
+    const safeCost = product.costPrice;
+    const displayName = fullProductLabel(product);
     if (existing) {
       const newQty = existing.quantity + 1;
       const newPrice = getTierPrice(product, newQty);
       setCart(cart.map((i) => i.productId === product.id ? { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice } : i));
     } else {
       const price = getTierPrice(product, 1);
-      setCart([...cart, { productId: product.id, productName: product.name, quantity: 1, unitPrice: price, costPrice: product.costPrice, total: price }]);
+      setCart([...cart, { productId: product.id, productName: displayName, quantity: 1, unitPrice: price, costPrice: safeCost, total: price }]);
     }
   };
 
@@ -418,8 +424,12 @@ export default function POSPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
               {filtered.map((p, idx) => (
                 <button key={p.id} onClick={() => addToCart(p)} disabled={p.quantity <= 0} className={`stat-card text-right cursor-pointer animate-fade-in-up ${p.quantity <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`} style={{ animationDelay: `${idx * 0.03}s` }}>
-                  <p className="font-extrabold text-sm truncate">{p.name}</p>
-                  {p.brand && <p className="text-xs text-muted-foreground">{p.brand}</p>}
+                  <p className="font-extrabold text-sm leading-tight line-clamp-2">{p.name}</p>
+                  {(p.brand || p.model) && (
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {p.brand}{p.brand && p.model ? ' · ' : ''}{p.model}
+                    </p>
+                  )}
                   <p className="text-primary font-extrabold mt-2">{p.sellPrice.toLocaleString()} ج.م</p>
                   {(p.wholesalePrice || p.halfWholesalePrice) && (
                     <p className="text-[10px] text-muted-foreground">

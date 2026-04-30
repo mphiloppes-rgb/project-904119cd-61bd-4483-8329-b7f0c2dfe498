@@ -7,7 +7,7 @@ import {
   getAutoBackupInterval, setAutoBackupInterval, diffSnapshotWithCurrent,
   type Snapshot, type SnapshotDiffRow,
 } from "@/lib/auto-backup";
-import { getPriceHistory, clearPriceHistory, revertToOldCost, type PriceChange } from "@/lib/price-history";
+import { getPriceHistory, clearPriceHistory, revertToOldCost, exportPriceHistoryCSV, type PriceChange } from "@/lib/price-history";
 import { Search as SearchIcon, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -531,10 +531,11 @@ function PriceHistoryCard() {
   };
 
   const handleRevert = async (change: PriceChange) => {
-    if (!confirm(`إرجاع سعر "${change.productName}" من ${change.newCost.toLocaleString()} إلى ${change.oldCost.toLocaleString()} ج.م؟`)) return;
+    const msg = `⚠️ تأكيد إرجاع السعر\n\nالمنتج: ${change.productName}\nمن: ${change.newCost.toLocaleString()} ج.م\nإلى: ${change.oldCost.toLocaleString()} ج.م\n\nهيتم تحديث سعر المنتج في المخزون فوراً وتسجيل العملية في السجل. هل تريد المتابعة؟`;
+    if (!confirm(msg)) return;
     const res = await revertToOldCost(change.id);
-    toast({ title: res.ok ? 'تم ✅' : 'تعذر', description: res.message, variant: res.ok ? 'default' : 'destructive' });
-    if (res.ok) setTick(t => t + 1);
+    toast({ title: res.ok ? '✅ تم إرجاع السعر' : 'تعذر', description: res.message, variant: res.ok ? 'default' : 'destructive' });
+    if (res.ok) { setTick(t => t + 1); window.dispatchEvent(new Event('store-changed')); }
   };
 
   return (
@@ -549,11 +550,21 @@ function PriceHistoryCard() {
             </p>
           </div>
         </div>
-        {history.length > 0 && (
-          <button onClick={handleClear} className="text-xs px-3 py-2 rounded-xl bg-destructive/15 text-destructive font-extrabold">
-            <Trash2 size={14} className="inline ml-1" /> مسح السجل
-          </button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {history.length > 0 && (
+            <>
+              <button onClick={() => exportPriceHistoryCSV(filtered)} className="text-xs px-3 py-2 rounded-xl bg-success/15 text-success font-extrabold">
+                <Download size={14} className="inline ml-1" /> تصدير CSV
+              </button>
+              <button onClick={() => window.print()} className="text-xs px-3 py-2 rounded-xl bg-primary/15 text-primary font-extrabold">
+                🖨️ طباعة
+              </button>
+              <button onClick={handleClear} className="text-xs px-3 py-2 rounded-xl bg-destructive/15 text-destructive font-extrabold">
+                <Trash2 size={14} className="inline ml-1" /> مسح
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Search + date filters */}
@@ -664,6 +675,9 @@ function PriceChangeRow({ change, onRevert }: { change: PriceChange; onRevert: (
       )}
       <p className={`text-[11px] mt-2 font-bold ${color}`}>{note}</p>
       <p className="text-[10px] text-muted-foreground mt-1">{new Date(change.date).toLocaleString('ar-EG')}</p>
+      {change.userName && (
+        <p className="text-[10px] text-muted-foreground mt-0.5">👤 بواسطة: <span className="font-bold">{change.userName}</span></p>
+      )}
     </div>
   );
 }
