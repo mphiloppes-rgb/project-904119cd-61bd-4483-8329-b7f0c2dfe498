@@ -30,11 +30,26 @@ export default function PurchasesPage() {
   const [items, setItems] = useState<PurchaseInvoiceItem[]>([]);
   const [paid, setPaid] = useState(0);
   const [productSearch, setProductSearch] = useState("");
+  const [priceReason, setPriceReason] = useState("");
 
   const [viewing, setViewing] = useState<PurchaseInvoice | null>(null);
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+
+  // مقارنة بين سعر الفاتورة الجديد وسعر الشراء الحالي للمنتج
+  const priceDiffs = useMemo(() => {
+    return items.map((it) => {
+      const current = products.find((p) => p.id === it.productId);
+      const oldCost = current?.costPrice ?? 0;
+      const changed = oldCost > 0 && oldCost !== it.unitCost;
+      const direction: 'up' | 'down' | 'same' = it.unitCost > oldCost ? 'up' : it.unitCost < oldCost ? 'down' : 'same';
+      const percent = oldCost > 0 ? ((it.unitCost - oldCost) / oldCost) * 100 : 0;
+      return { productId: it.productId, productName: it.productName, oldCost, newCost: it.unitCost, changed, direction, percent };
+    });
+  }, [items, products]);
+
+  const hasPriceChanges = priceDiffs.some((d) => d.changed);
 
   const handleQuickAddCreated = (p: Product) => {
     refresh();
