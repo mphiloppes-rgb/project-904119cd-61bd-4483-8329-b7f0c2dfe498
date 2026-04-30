@@ -82,10 +82,11 @@ export default function PurchasesPage() {
     const p = products.find((x) => x.id === productId);
     if (!p) return;
     const existing = items.find((i) => i.productId === productId);
+    const displayName = `${p.name}${p.brand || p.model ? ` — ${[p.brand, p.model].filter(Boolean).join(' · ')}` : ''}`;
     if (existing) {
       setItems(items.map((i) => i.productId === productId ? { ...i, quantity: i.quantity + 1, total: (i.quantity + 1) * i.unitCost } : i));
     } else {
-      setItems([...items, { productId: p.id, productName: p.name, quantity: 1, unitCost: p.costPrice, total: p.costPrice }]);
+      setItems([...items, { productId: p.id, productName: displayName, quantity: 1, unitCost: p.costPrice, total: p.costPrice }]);
     }
     setProductSearch("");
   };
