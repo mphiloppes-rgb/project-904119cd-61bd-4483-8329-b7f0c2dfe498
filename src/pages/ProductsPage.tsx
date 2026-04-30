@@ -23,6 +23,8 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [originalCost, setOriginalCost] = useState<number>(0); // عشان نقارن
+  const [costReason, setCostReason] = useState<string>("");
   const showCost = canViewCostPrice();
   const cashierMode = isCashier();
 
@@ -32,7 +34,7 @@ export default function ProductsPage() {
     return products.filter((p) => p.name.toLowerCase().includes(s) || p.code?.toLowerCase().includes(s) || p.brand?.toLowerCase().includes(s));
   }, [search, products]);
 
-  const openAdd = () => { setForm(emptyForm); setEditId(null); setShowForm(true); };
+  const openAdd = () => { setForm(emptyForm); setEditId(null); setOriginalCost(0); setCostReason(""); setShowForm(true); };
   const openEdit = (p: Product) => {
     setForm({
       name: p.name, code: p.code || "", brand: p.brand || "", model: p.model || "",
@@ -45,11 +47,18 @@ export default function ProductsPage() {
       preferredSupplierId: p.preferredSupplierId || "",
     });
     setEditId(p.id);
+    setOriginalCost(p.costPrice);
+    setCostReason("");
     setShowForm(true);
   };
 
   const handleSave = () => {
     if (!form.name.trim()) { toast({ title: "خطأ", description: "اسم المنتج مطلوب", variant: "destructive" }); return; }
+    const costChanged = editId && Number(form.costPrice) !== originalCost;
+    if (costChanged && !costReason.trim()) {
+      toast({ title: "اكتب سبب تغيير سعر الشراء", description: "مطلوب تكتب سبب علشان يتسجل في السجل", variant: "destructive" });
+      return;
+    }
     const payload = {
       ...form,
       wholesalePrice: form.wholesalePrice || undefined,
@@ -58,7 +67,7 @@ export default function ProductsPage() {
       halfWholesaleMinQty: form.halfWholesaleMinQty || undefined,
       preferredSupplierId: form.preferredSupplierId || undefined,
     };
-    if (editId) { updateProduct(editId, payload); toast({ title: "تم التحديث ✅" }); }
+    if (editId) { updateProduct(editId, payload, { reason: costReason.trim() || undefined }); toast({ title: "تم التحديث ✅" }); }
     else { addProduct(payload); toast({ title: "تمت الإضافة ✅" }); }
     refresh(); setShowForm(false);
   };
