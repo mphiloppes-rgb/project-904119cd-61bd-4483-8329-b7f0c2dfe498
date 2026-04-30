@@ -83,6 +83,8 @@ export default function POSPage() {
     return product.quantity - (inCart ? inCart.quantity : 0);
   };
 
+  const cashier = isCashier();
+
   const addToCart = (product: typeof products[0]) => {
     if (product.quantity <= 0) {
       toast({ title: "⚠️ نفد المخزون", description: `${product.name} غير متاح حالياً`, variant: "destructive" });
@@ -94,13 +96,16 @@ export default function POSPage() {
       toast({ title: "⚠️ لا يمكن", description: `الكمية المتاحة في المخزون: ${product.quantity}`, variant: "destructive" });
       return;
     }
+    // تكلفة الشراء بتتسجل دايماً علشان حسابات الربح، بس الكاشير ميشوفهاش
+    const safeCost = product.costPrice;
+    const displayName = fullProductLabel(product);
     if (existing) {
       const newQty = existing.quantity + 1;
       const newPrice = getTierPrice(product, newQty);
       setCart(cart.map((i) => i.productId === product.id ? { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice } : i));
     } else {
       const price = getTierPrice(product, 1);
-      setCart([...cart, { productId: product.id, productName: product.name, quantity: 1, unitPrice: price, costPrice: product.costPrice, total: price }]);
+      setCart([...cart, { productId: product.id, productName: displayName, quantity: 1, unitPrice: price, costPrice: safeCost, total: price }]);
     }
   };
 
