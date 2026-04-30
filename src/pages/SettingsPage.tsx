@@ -502,11 +502,23 @@ function PriceHistoryCard() {
   const [tick, setTick] = useState(0);
   const history = useMemo(() => getPriceHistory(), [tick]);
   const [filter, setFilter] = useState<'all' | 'up' | 'down'>('all');
+  const [query, setQuery] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
 
   const filtered = useMemo(() => {
-    if (filter === 'all') return history;
-    return history.filter(h => h.direction === filter);
-  }, [history, filter]);
+    return history.filter(h => {
+      if (filter !== 'all' && h.direction !== filter) return false;
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        if (!h.productName.toLowerCase().includes(q) && !(h.userReason || '').toLowerCase().includes(q) && !h.reason.toLowerCase().includes(q)) return false;
+      }
+      const t = new Date(h.date).getTime();
+      if (fromDate && t < new Date(fromDate).getTime()) return false;
+      if (toDate && t > new Date(toDate).getTime() + 24 * 3600 * 1000) return false;
+      return true;
+    });
+  }, [history, filter, query, fromDate, toDate]);
 
   const ups = history.filter(h => h.direction === 'up').length;
   const downs = history.filter(h => h.direction === 'down').length;
@@ -516,6 +528,13 @@ function PriceHistoryCard() {
     clearPriceHistory();
     setTick(t => t + 1);
     toast({ title: 'تم المسح' });
+  };
+
+  const handleRevert = async (change: PriceChange) => {
+    if (!confirm(`إرجاع سعر "${change.productName}" من ${change.newCost.toLocaleString()} إلى ${change.oldCost.toLocaleString()} ج.م؟`)) return;
+    const res = await revertToOldCost(change.id);
+    toast({ title: res.ok ? 'تم ✅' : 'تعذر', description: res.message, variant: res.ok ? 'default' : 'destructive' });
+    if (res.ok) setTick(t => t + 1);
   };
 
   return (
@@ -537,8 +556,29 @@ function PriceHistoryCard() {
         )}
       </div>
 
+      {/* Search + date filters */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+        <div className="relative md:col-span-1">
+          <SearchIcon className="absolute right-3 top-3 text-muted-foreground" size={16} />
+          <input
+            className="input-field w-full pr-9 text-sm"
+            placeholder="بحث باسم منتج أو سبب..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+          />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-muted-foreground block mb-0.5">من</label>
+          <input type="date" className="input-field w-full text-sm" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+        </div>
+        <div>
+          <label className="text-[10px] font-bold text-muted-foreground block mb-0.5">إلى</label>
+          <input type="date" className="input-field w-full text-sm" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+        </div>
+      </div>
+
       {/* Filter chips */}
-      <div className="flex gap-2 mb-3 flex-wrap">
+      <div className="flex gap-2 mb-3 flex-wrap items-center">
         {([
           { key: 'all', label: `الكل (${history.length})` },
           { key: 'up', label: `↑ ارتفاع (${ups})` },
@@ -554,16 +594,27 @@ function PriceHistoryCard() {
             {opt.label}
           </button>
         ))}
+        {(query || fromDate || toDate) && (
+          <button
+            onClick={() => { setQuery(""); setFromDate(""); setToDate(""); }}
+            className="text-xs font-extrabold px-3 py-1.5 rounded-lg bg-muted hover:bg-muted/70"
+          >
+            مسح الفلاتر ✕
+          </button>
+        )}
+        <span className="text-xs text-muted-foreground mr-auto">عرض {filtered.length}</span>
       </div>
 
       {filtered.length === 0 ? (
         <p className="text-center py-8 text-sm text-muted-foreground bg-accent/30 rounded-xl">
-          لا يوجد تغييرات في الأسعار. أي فاتورة شراء بسعر مختلف هتتسجل هنا تلقائياً.
+          {history.length === 0
+            ? 'لا يوجد تغييرات في الأسعار. أي فاتورة شراء بسعر مختلف هتتسجل هنا تلقائياً.'
+            : 'مفيش نتائج للفلتر ده'}
         </p>
       ) : (
-        <div className="max-h-96 overflow-y-auto space-y-2">
+        <div className="max-h-[28rem] overflow-y-auto space-y-2">
           {filtered.map(p => (
-            <PriceChangeRow key={p.id} change={p} />
+            <PriceChangeRow key={p.id} change={p} onRevert={handleRevert} />
           ))}
         </div>
       )}
@@ -571,7 +622,7 @@ function PriceHistoryCard() {
   );
 }
 
-function PriceChangeRow({ change }: { change: PriceChange }) {
+function PriceChangeRow({ change, onRevert }: { change: PriceChange; onRevert: (c: PriceChange) => void }) {
   const isUp = change.direction === 'up';
   const Icon = isUp ? TrendingUp : TrendingDown;
   const color = isUp ? 'text-destructive' : 'text-success';
@@ -597,8 +648,20 @@ function PriceChangeRow({ change }: { change: PriceChange }) {
           <span className={`text-xs font-extrabold px-2 py-0.5 rounded-full ${color} ${bg}`}>
             {change.diff > 0 ? '+' : ''}{change.diff.toFixed(2)} ({change.percent > 0 ? '+' : ''}{change.percent.toFixed(1)}٪)
           </span>
+          <button
+            onClick={() => onRevert(change)}
+            title={`إرجاع للسعر القديم ${change.oldCost.toLocaleString()}`}
+            className="text-xs font-extrabold px-2 py-1 rounded-lg bg-primary/15 text-primary hover:bg-primary/25 transition-all flex items-center gap-1"
+          >
+            <RotateCw size={12} /> إرجاع
+          </button>
         </div>
       </div>
+      {change.userReason && (
+        <p className="text-[11px] mt-1.5 bg-card/60 px-2 py-1 rounded-lg">
+          📝 <span className="font-bold">السبب:</span> {change.userReason}
+        </p>
+      )}
       <p className={`text-[11px] mt-2 font-bold ${color}`}>{note}</p>
       <p className="text-[10px] text-muted-foreground mt-1">{new Date(change.date).toLocaleString('ar-EG')}</p>
     </div>
