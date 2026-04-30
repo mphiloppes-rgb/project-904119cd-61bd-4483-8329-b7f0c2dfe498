@@ -116,9 +116,29 @@ export default function ProductsPage() {
                 </div>
                 <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">الموديل</label><input className="input-field w-full" value={form.model} onChange={(e) => setField("model", e.target.value)} /></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر الشراء</label><input type="number" className="input-field w-full" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} /></div>
+                  <div>
+                    <label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر الشراء</label>
+                    <input type="number" className="input-field w-full" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} />
+                  </div>
                   <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر القطاعي *</label><input type="number" className="input-field w-full" value={form.sellPrice || ""} onChange={(e) => setField("sellPrice", Number(e.target.value))} /></div>
                 </div>
+
+                {editId && Number(form.costPrice) !== originalCost && originalCost > 0 && (
+                  <div className={`rounded-2xl p-4 border-2 ${Number(form.costPrice) > originalCost ? 'bg-destructive/10 border-destructive/30' : 'bg-success/10 border-success/30'} animate-fade-in-up`}>
+                    <p className={`font-extrabold text-sm mb-2 ${Number(form.costPrice) > originalCost ? 'text-destructive' : 'text-success'}`}>
+                      {Number(form.costPrice) > originalCost ? '⚠️ السعر ارتفع' : '✅ السعر انخفض'} من {originalCost.toLocaleString()} إلى {Number(form.costPrice).toLocaleString()} ج.م
+                      {' '}({((Number(form.costPrice) - originalCost) / originalCost * 100).toFixed(1)}٪)
+                    </p>
+                    <label className="text-xs font-bold text-foreground mb-1 block">السبب (مطلوب) *</label>
+                    <input
+                      className="input-field w-full"
+                      placeholder="مثلاً: زيادة من المورد / عرض خصم / تصحيح خطأ"
+                      value={costReason}
+                      onChange={(e) => setCostReason(e.target.value)}
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">السبب هيتسجل في سجل تغييرات الأسعار.</p>
+                  </div>
+                )}
 
                 <div className="bg-accent/40 rounded-2xl p-4 space-y-3 border border-accent">
                   <p className="text-sm font-extrabold text-accent-foreground">💰 أسعار متعددة (اختياري)</p>
