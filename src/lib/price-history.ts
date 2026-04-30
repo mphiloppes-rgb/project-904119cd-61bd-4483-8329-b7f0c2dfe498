@@ -49,6 +49,7 @@ export function logPriceChange(args: {
     percent,
     direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'same',
     reason: args.reason,
+    userReason: args.userReason,
     source: args.source,
     date: new Date().toISOString(),
   };
