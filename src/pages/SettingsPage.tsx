@@ -7,7 +7,8 @@ import {
   getAutoBackupInterval, setAutoBackupInterval, diffSnapshotWithCurrent,
   type Snapshot, type SnapshotDiffRow,
 } from "@/lib/auto-backup";
-import { getPriceHistory, clearPriceHistory, type PriceChange } from "@/lib/price-history";
+import { getPriceHistory, clearPriceHistory, revertToOldCost, type PriceChange } from "@/lib/price-history";
+import { Search as SearchIcon, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   isAuthEnabled, setAuthEnabled, getUsers, addUser, updateUser, deleteUser,
