@@ -32,6 +32,7 @@ export function logPriceChange(args: {
   newCost: number;
   reason: string;
   source?: string;
+  userReason?: string;
 }): PriceChange | null {
   const { oldCost, newCost } = args;
   if (oldCost === newCost) return null;
