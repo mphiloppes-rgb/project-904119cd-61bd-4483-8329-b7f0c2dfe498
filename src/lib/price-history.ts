@@ -14,6 +14,7 @@ export interface PriceChange {
   percent: number;       // ((newCost - oldCost) / oldCost) * 100
   direction: 'up' | 'down' | 'same';
   reason: string;        // "فاتورة شراء P-000001" / "تعديل يدوي"
+  userReason?: string;   // السبب اللي المستخدم كتبه
   source?: string;       // invoice id
   date: string;
 }
