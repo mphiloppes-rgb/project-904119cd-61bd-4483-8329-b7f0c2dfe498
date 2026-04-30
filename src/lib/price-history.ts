@@ -16,6 +16,8 @@ export interface PriceChange {
   reason: string;        // "فاتورة شراء P-000001" / "تعديل يدوي"
   userReason?: string;   // السبب اللي المستخدم كتبه
   source?: string;       // invoice id
+  userId?: string;       // اللي عمل التغيير (لو الـ auth مفعّل)
+  userName?: string;     // اسمه
   date: string;
 }
 
@@ -39,6 +41,22 @@ export function logPriceChange(args: {
   if (oldCost === newCost) return null;
   const diff = newCost - oldCost;
   const percent = oldCost > 0 ? (diff / oldCost) * 100 : 100;
+
+  // اقرأ المستخدم الحالى لو فيه
+  let userId: string | undefined;
+  let userName: string | undefined;
+  try {
+    const enabled = localStorage.getItem('pos_auth_enabled') === '1';
+    if (enabled) {
+      const session = JSON.parse(localStorage.getItem('pos_session_user') || 'null');
+      if (session?.userId) {
+        const users = JSON.parse(localStorage.getItem('pos_users') || '[]');
+        const u = users.find((x: any) => x.id === session.userId);
+        if (u) { userId = u.id; userName = u.name; }
+      }
+    }
+  } catch {}
+
   const entry: PriceChange = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     productId: args.productId,
@@ -51,6 +69,8 @@ export function logPriceChange(args: {
     reason: args.reason,
     userReason: args.userReason,
     source: args.source,
+    userId,
+    userName,
     date: new Date().toISOString(),
   };
   const list = read();
