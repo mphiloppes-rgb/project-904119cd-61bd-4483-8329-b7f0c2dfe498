@@ -1,9 +1,10 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan } from "lucide-react";
 import { getProducts, getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
-import { logAction, canViewCostPrice } from "@/lib/auth";
+import { logAction, canViewCostPrice, isCashier } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
+import { fullProductLabel } from "@/lib/product-display";
 import InvoicePrint from "@/components/InvoicePrint";
 import ThermalPrint from "@/components/ThermalPrint";
 
