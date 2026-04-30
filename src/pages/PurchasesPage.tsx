@@ -340,6 +340,36 @@ export default function PurchasesPage() {
               {items.length === 0 && <p className="text-center text-muted-foreground py-6 text-sm">أضف منتجات للفاتورة</p>}
             </div>
 
+            {hasPriceChanges && (
+              <div className="mb-4 rounded-2xl border-2 border-warning/40 bg-warning/10 p-4 animate-fade-in-up">
+                <p className="font-extrabold text-sm text-warning mb-3 flex items-center gap-2">
+                  ⚠️ في {priceDiffs.filter(d => d.changed).length} صنف اتغير سعر شراءه
+                </p>
+                <div className="space-y-2 max-h-40 overflow-y-auto mb-3">
+                  {priceDiffs.filter(d => d.changed).map(d => {
+                    const up = d.direction === 'up';
+                    return (
+                      <div key={d.productId} className={`text-xs p-2 rounded-lg ${up ? 'bg-destructive/10' : 'bg-success/10'}`}>
+                        <p className="font-extrabold">{d.productName}</p>
+                        <p className={up ? 'text-destructive' : 'text-success'}>
+                          {up ? '↑ السعر ارتفع' : '↓ السعر انخفض'} من {d.oldCost.toLocaleString()} إلى {d.newCost.toLocaleString()} ج.م
+                          {' '}({d.percent > 0 ? '+' : ''}{d.percent.toFixed(1)}٪)
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <label className="text-xs font-extrabold mb-1 block">السبب (مطلوب) *</label>
+                <input
+                  className="input-field w-full"
+                  placeholder="مثلاً: زيادة من المورد / دولار طلع / عرض تخفيض"
+                  value={priceReason}
+                  onChange={(e) => setPriceReason(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">السبب هيتسجل تلقائياً في سجل تغييرات الأسعار لكل صنف.</p>
+              </div>
+            )}
+
             <div className="border-t pt-3 space-y-2">
               <div className="flex justify-between text-lg font-extrabold">
                 <span>الإجمالي</span>
