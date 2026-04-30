@@ -95,7 +95,10 @@ function generatePurchaseInvoiceNumber(): string {
   return 'P-' + String(lastNum + 1).padStart(6, '0');
 }
 
-export function addPurchaseInvoice(inv: Omit<PurchaseInvoice, 'id' | 'createdAt' | 'invoiceNumber'>): PurchaseInvoice {
+export function addPurchaseInvoice(
+  inv: Omit<PurchaseInvoice, 'id' | 'createdAt' | 'invoiceNumber'>,
+  opts?: { priceChangeReason?: string }
+): PurchaseInvoice {
   const list = getPurchaseInvoices();
   const invoice: PurchaseInvoice = {
     ...inv,
@@ -122,6 +125,7 @@ export function addPurchaseInvoice(inv: Omit<PurchaseInvoice, 'id' | 'createdAt'
           newCost: item.unitCost,
           reason: `فاتورة شراء #${invoice.invoiceNumber} — ${invoice.supplierName}`,
           source: invoice.id,
+          userReason: opts?.priceChangeReason,
         });
       }
     }

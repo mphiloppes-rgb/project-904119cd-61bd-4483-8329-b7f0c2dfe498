@@ -17,6 +17,7 @@ import SettingsPage from "@/pages/SettingsPage";
 import SuppliersPage from "@/pages/SuppliersPage";
 import PurchasesPage from "@/pages/PurchasesPage";
 import NotFound from "@/pages/NotFound";
+import RequireAdmin from "@/components/RequireAdmin";
 
 const queryClient = new QueryClient();
 
@@ -30,16 +31,16 @@ const App = () => {
           <PinLock>
             <AppLayout>
               <Routes>
-                <Route path="/" element={<DashboardPage />} />
+                <Route path="/" element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
                 <Route path="/pos" element={<POSPage />} />
-                <Route path="/products" element={<ProductsPage />} />
+                <Route path="/products" element={<RequireAdmin><ProductsPage /></RequireAdmin>} />
                 <Route path="/customers" element={<CustomersPage />} />
-                <Route path="/suppliers" element={<SuppliersPage />} />
-                <Route path="/purchases" element={<PurchasesPage />} />
+                <Route path="/suppliers" element={<RequireAdmin><SuppliersPage /></RequireAdmin>} />
+                <Route path="/purchases" element={<RequireAdmin><PurchasesPage /></RequireAdmin>} />
                 <Route path="/invoices" element={<InvoicesPage />} />
-                <Route path="/expenses" element={<ExpensesPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
+                <Route path="/expenses" element={<RequireAdmin><ExpensesPage /></RequireAdmin>} />
+                <Route path="/reports" element={<RequireAdmin><ReportsPage /></RequireAdmin>} />
+                <Route path="/settings" element={<RequireAdmin><SettingsPage /></RequireAdmin>} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </AppLayout>

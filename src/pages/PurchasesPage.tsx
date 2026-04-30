@@ -30,11 +30,26 @@ export default function PurchasesPage() {
   const [items, setItems] = useState<PurchaseInvoiceItem[]>([]);
   const [paid, setPaid] = useState(0);
   const [productSearch, setProductSearch] = useState("");
+  const [priceReason, setPriceReason] = useState("");
 
   const [viewing, setViewing] = useState<PurchaseInvoice | null>(null);
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+
+  // مقارنة بين سعر الفاتورة الجديد وسعر الشراء الحالي للمنتج
+  const priceDiffs = useMemo(() => {
+    return items.map((it) => {
+      const current = products.find((p) => p.id === it.productId);
+      const oldCost = current?.costPrice ?? 0;
+      const changed = oldCost > 0 && oldCost !== it.unitCost;
+      const direction: 'up' | 'down' | 'same' = it.unitCost > oldCost ? 'up' : it.unitCost < oldCost ? 'down' : 'same';
+      const percent = oldCost > 0 ? ((it.unitCost - oldCost) / oldCost) * 100 : 0;
+      return { productId: it.productId, productName: it.productName, oldCost, newCost: it.unitCost, changed, direction, percent };
+    });
+  }, [items, products]);
+
+  const hasPriceChanges = priceDiffs.some((d) => d.changed);
 
   const handleQuickAddCreated = (p: Product) => {
     refresh();
@@ -95,6 +110,14 @@ export default function PurchasesPage() {
       toast({ title: "خطأ", description: "أضف منتجات للفاتورة", variant: "destructive" });
       return;
     }
+    if (hasPriceChanges && !priceReason.trim()) {
+      toast({
+        title: "اكتب سبب تغيير الأسعار",
+        description: "في أصناف اتغير سعرها — لازم تكتب السبب علشان يتسجل في السجل",
+        variant: "destructive",
+      });
+      return;
+    }
     const supplier = suppliers.find((s) => s.id === supplierId);
     if (!supplier) return;
 
@@ -106,7 +129,7 @@ export default function PurchasesPage() {
       paid,
       remaining,
       notes,
-    });
+    }, { priceChangeReason: priceReason.trim() || undefined });
 
     toast({ title: "تم ✅", description: `تم تسجيل فاتورة شراء #${inv.invoiceNumber}` });
     setShowForm(false);
@@ -114,6 +137,7 @@ export default function PurchasesPage() {
     setNotes("");
     setItems([]);
     setPaid(0);
+    setPriceReason("");
     refresh();
   };
 
@@ -315,6 +339,36 @@ export default function PurchasesPage() {
               ))}
               {items.length === 0 && <p className="text-center text-muted-foreground py-6 text-sm">أضف منتجات للفاتورة</p>}
             </div>
+
+            {hasPriceChanges && (
+              <div className="mb-4 rounded-2xl border-2 border-warning/40 bg-warning/10 p-4 animate-fade-in-up">
+                <p className="font-extrabold text-sm text-warning mb-3 flex items-center gap-2">
+                  ⚠️ في {priceDiffs.filter(d => d.changed).length} صنف اتغير سعر شراءه
+                </p>
+                <div className="space-y-2 max-h-40 overflow-y-auto mb-3">
+                  {priceDiffs.filter(d => d.changed).map(d => {
+                    const up = d.direction === 'up';
+                    return (
+                      <div key={d.productId} className={`text-xs p-2 rounded-lg ${up ? 'bg-destructive/10' : 'bg-success/10'}`}>
+                        <p className="font-extrabold">{d.productName}</p>
+                        <p className={up ? 'text-destructive' : 'text-success'}>
+                          {up ? '↑ السعر ارتفع' : '↓ السعر انخفض'} من {d.oldCost.toLocaleString()} إلى {d.newCost.toLocaleString()} ج.م
+                          {' '}({d.percent > 0 ? '+' : ''}{d.percent.toFixed(1)}٪)
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <label className="text-xs font-extrabold mb-1 block">السبب (مطلوب) *</label>
+                <input
+                  className="input-field w-full"
+                  placeholder="مثلاً: زيادة من المورد / دولار طلع / عرض تخفيض"
+                  value={priceReason}
+                  onChange={(e) => setPriceReason(e.target.value)}
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">السبب هيتسجل تلقائياً في سجل تغييرات الأسعار لكل صنف.</p>
+              </div>
+            )}
 
             <div className="border-t pt-3 space-y-2">
               <div className="flex justify-between text-lg font-extrabold">

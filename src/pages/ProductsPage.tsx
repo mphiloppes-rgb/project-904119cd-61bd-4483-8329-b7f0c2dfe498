@@ -23,6 +23,8 @@ export default function ProductsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [originalCost, setOriginalCost] = useState<number>(0); // عشان نقارن
+  const [costReason, setCostReason] = useState<string>("");
   const showCost = canViewCostPrice();
   const cashierMode = isCashier();
 
@@ -32,7 +34,7 @@ export default function ProductsPage() {
     return products.filter((p) => p.name.toLowerCase().includes(s) || p.code?.toLowerCase().includes(s) || p.brand?.toLowerCase().includes(s));
   }, [search, products]);
 
-  const openAdd = () => { setForm(emptyForm); setEditId(null); setShowForm(true); };
+  const openAdd = () => { setForm(emptyForm); setEditId(null); setOriginalCost(0); setCostReason(""); setShowForm(true); };
   const openEdit = (p: Product) => {
     setForm({
       name: p.name, code: p.code || "", brand: p.brand || "", model: p.model || "",
@@ -45,11 +47,18 @@ export default function ProductsPage() {
       preferredSupplierId: p.preferredSupplierId || "",
     });
     setEditId(p.id);
+    setOriginalCost(p.costPrice);
+    setCostReason("");
     setShowForm(true);
   };
 
   const handleSave = () => {
     if (!form.name.trim()) { toast({ title: "خطأ", description: "اسم المنتج مطلوب", variant: "destructive" }); return; }
+    const costChanged = editId && Number(form.costPrice) !== originalCost;
+    if (costChanged && !costReason.trim()) {
+      toast({ title: "اكتب سبب تغيير سعر الشراء", description: "مطلوب تكتب سبب علشان يتسجل في السجل", variant: "destructive" });
+      return;
+    }
     const payload = {
       ...form,
       wholesalePrice: form.wholesalePrice || undefined,
@@ -58,7 +67,7 @@ export default function ProductsPage() {
       halfWholesaleMinQty: form.halfWholesaleMinQty || undefined,
       preferredSupplierId: form.preferredSupplierId || undefined,
     };
-    if (editId) { updateProduct(editId, payload); toast({ title: "تم التحديث ✅" }); }
+    if (editId) { updateProduct(editId, payload, { reason: costReason.trim() || undefined }); toast({ title: "تم التحديث ✅" }); }
     else { addProduct(payload); toast({ title: "تمت الإضافة ✅" }); }
     refresh(); setShowForm(false);
   };
@@ -107,9 +116,29 @@ export default function ProductsPage() {
                 </div>
                 <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">الموديل</label><input className="input-field w-full" value={form.model} onChange={(e) => setField("model", e.target.value)} /></div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر الشراء</label><input type="number" className="input-field w-full" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} /></div>
+                  <div>
+                    <label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر الشراء</label>
+                    <input type="number" className="input-field w-full" value={form.costPrice || ""} onChange={(e) => setField("costPrice", Number(e.target.value))} />
+                  </div>
                   <div><label className="text-sm font-bold text-muted-foreground mb-1.5 block">سعر القطاعي *</label><input type="number" className="input-field w-full" value={form.sellPrice || ""} onChange={(e) => setField("sellPrice", Number(e.target.value))} /></div>
                 </div>
+
+                {editId && Number(form.costPrice) !== originalCost && originalCost > 0 && (
+                  <div className={`rounded-2xl p-4 border-2 ${Number(form.costPrice) > originalCost ? 'bg-destructive/10 border-destructive/30' : 'bg-success/10 border-success/30'} animate-fade-in-up`}>
+                    <p className={`font-extrabold text-sm mb-2 ${Number(form.costPrice) > originalCost ? 'text-destructive' : 'text-success'}`}>
+                      {Number(form.costPrice) > originalCost ? '⚠️ السعر ارتفع' : '✅ السعر انخفض'} من {originalCost.toLocaleString()} إلى {Number(form.costPrice).toLocaleString()} ج.م
+                      {' '}({((Number(form.costPrice) - originalCost) / originalCost * 100).toFixed(1)}٪)
+                    </p>
+                    <label className="text-xs font-bold text-foreground mb-1 block">السبب (مطلوب) *</label>
+                    <input
+                      className="input-field w-full"
+                      placeholder="مثلاً: زيادة من المورد / عرض خصم / تصحيح خطأ"
+                      value={costReason}
+                      onChange={(e) => setCostReason(e.target.value)}
+                    />
+                    <p className="text-[11px] text-muted-foreground mt-1">السبب هيتسجل في سجل تغييرات الأسعار.</p>
+                  </div>
+                )}
 
                 <div className="bg-accent/40 rounded-2xl p-4 space-y-3 border border-accent">
                   <p className="text-sm font-extrabold text-accent-foreground">💰 أسعار متعددة (اختياري)</p>

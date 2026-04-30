@@ -14,6 +14,7 @@ export interface PriceChange {
   percent: number;       // ((newCost - oldCost) / oldCost) * 100
   direction: 'up' | 'down' | 'same';
   reason: string;        // "فاتورة شراء P-000001" / "تعديل يدوي"
+  userReason?: string;   // السبب اللي المستخدم كتبه
   source?: string;       // invoice id
   date: string;
 }
@@ -32,6 +33,7 @@ export function logPriceChange(args: {
   newCost: number;
   reason: string;
   source?: string;
+  userReason?: string;
 }): PriceChange | null {
   const { oldCost, newCost } = args;
   if (oldCost === newCost) return null;
@@ -47,6 +49,7 @@ export function logPriceChange(args: {
     percent,
     direction: diff > 0 ? 'up' : diff < 0 ? 'down' : 'same',
     reason: args.reason,
+    userReason: args.userReason,
     source: args.source,
     date: new Date().toISOString(),
   };
@@ -66,3 +69,37 @@ export function getPriceHistoryForProduct(productId: string): PriceChange[] {
 }
 
 export function clearPriceHistory() { write([]); }
+
+/**
+ * إرجاع سعر منتج لقيمة سابقة من سجل التغييرات.
+ * بيرجع للـ oldCost اللي في الإدخال ده، وبيسجل تغيير جديد بسبب "إرجاع يدوي".
+ */
+export async function revertToOldCost(changeId: string): Promise<{ ok: boolean; message: string }> {
+  const list = read();
+  const change = list.find(c => c.id === changeId);
+  if (!change) return { ok: false, message: 'الإدخال مش موجود' };
+
+  const { getProducts, saveProducts } = await import('./store');
+  const products = getProducts();
+  const idx = products.findIndex(p => p.id === change.productId);
+  if (idx === -1) return { ok: false, message: 'المنتج اتمسح' };
+
+  const currentCost = products[idx].costPrice;
+  if (currentCost === change.oldCost) return { ok: false, message: 'السعر الحالي زي اللي بترجعله بالظبط' };
+
+  products[idx].costPrice = change.oldCost;
+  saveProducts(products);
+
+  // سجل العملية
+  logPriceChange({
+    productId: change.productId,
+    productName: change.productName,
+    oldCost: currentCost,
+    newCost: change.oldCost,
+    reason: `إرجاع يدوي لسعر قديم`,
+    userReason: `رجعت من ${currentCost.toLocaleString()} إلى ${change.oldCost.toLocaleString()} (سجل ${new Date(change.date).toLocaleDateString('ar-EG')})`,
+  });
+
+  return { ok: true, message: `تم إرجاع السعر إلى ${change.oldCost.toLocaleString()} ج.م` };
+}
+
