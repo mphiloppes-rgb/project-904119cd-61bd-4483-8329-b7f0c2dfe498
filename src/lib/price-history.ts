@@ -124,28 +124,43 @@ export async function revertToOldCost(changeId: string): Promise<{ ok: boolean; 
 }
 
 
-/** تصدير سجل تغييرات الأسعار كـ CSV (يدعم العربى عبر BOM) */
-export function exportPriceHistoryCSV(rows?: PriceChange[]) {
+/** تصدير سجل تغييرات الأسعار كـ CSV (يدعم العربى عبر BOM)
+ *  افتراضياً: الأعمدة المطلوبة فقط (المنتج/السبب/المستخدم/الوقت/المصدر/قديم→جديد)
+ *  لو detailed=true: كل الأعمدة. */
+export function exportPriceHistoryCSV(rows?: PriceChange[], opts?: { detailed?: boolean }) {
   const data = rows || getPriceHistory();
-  const headers = ['التاريخ', 'المنتج', 'سعر قديم', 'سعر جديد', 'الفرق', 'النسبة %', 'اتجاه', 'مصدر التغيير', 'السبب', 'المستخدم'];
+  const detailed = !!opts?.detailed;
+  const headers = detailed
+    ? ['الوقت', 'المنتج', 'السعر القديم', 'السعر الجديد', 'الفرق', 'النسبة %', 'الاتجاه', 'مصدر التغيير', 'السبب', 'المستخدم']
+    : ['المنتج', 'السبب', 'المستخدم', 'الوقت', 'المصدر', 'قديم → جديد'];
   const lines = [headers.join(',')];
   data.forEach(r => {
-    const cells = [
-      new Date(r.date).toLocaleString('ar-EG'),
-      r.productName,
-      r.oldCost,
-      r.newCost,
-      r.diff.toFixed(2),
-      r.percent.toFixed(1),
-      r.direction === 'up' ? 'ارتفاع' : r.direction === 'down' ? 'انخفاض' : 'ثابت',
-      r.reason,
-      r.userReason || '—',
-      r.userName || '—',
-    ].map(v => {
+    const cells = detailed
+      ? [
+          new Date(r.date).toLocaleString('ar-EG'),
+          r.productName,
+          r.oldCost,
+          r.newCost,
+          r.diff.toFixed(2),
+          r.percent.toFixed(1),
+          r.direction === 'up' ? 'ارتفاع' : r.direction === 'down' ? 'انخفاض' : 'ثابت',
+          r.reason,
+          r.userReason || '—',
+          r.userName || '—',
+        ]
+      : [
+          r.productName,
+          r.userReason || r.reason || '—',
+          r.userName || '—',
+          new Date(r.date).toLocaleString('ar-EG'),
+          r.source || r.reason || '—',
+          `${r.oldCost.toLocaleString()} → ${r.newCost.toLocaleString()} (${r.direction === 'up' ? '↑' : r.direction === 'down' ? '↓' : '='}${r.percent.toFixed(1)}٪)`,
+        ];
+    const safeCells = cells.map(v => {
       const s = String(v ?? '').replace(/"/g, '""');
       return /[",\n]/.test(s) ? `"${s}"` : s;
     });
-    lines.push(cells.join(','));
+    lines.push(safeCells.join(','));
   });
   const csv = '\uFEFF' + lines.join('\n');
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });

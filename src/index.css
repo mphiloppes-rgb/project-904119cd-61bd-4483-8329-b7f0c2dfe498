@@ -174,12 +174,15 @@
       inset 0 1px 0 hsla(0 0% 100% / 0.7);
   }
 
-  /* Modal overlay — full-page dark backdrop, scrollable, perfectly centered.
-     Uses block + auto margin so RTL/LTR center the same way and the bg covers everything. */
+  /* Modal overlay — flex centering. Backdrop covers full viewport, content sits
+     in middle and respects its own max-width (no white empty space). */
   .modal-overlay {
     position: fixed;
     inset: 0;
     z-index: 50;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
     overflow-y: auto;
     overflow-x: hidden;
     background: hsla(215 45% 8% / 0.72);
@@ -187,23 +190,19 @@
     -webkit-backdrop-filter: blur(10px);
     padding: clamp(1rem, 4vh, 3rem) clamp(0.75rem, 3vw, 2rem);
     animation: overlayFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-    /* center the inner card horizontally regardless of RTL */
-    text-align: center;
   }
-  /* Direct child becomes the centered card */
-  .modal-overlay > .glass-modal,
-  .modal-overlay > .modal-content,
-  .modal-overlay > .modal-content > .glass-modal {
-    display: inline-block;
-    text-align: start;
-    vertical-align: middle;
-    width: 100%;
-    margin: 0 auto;
-    animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  /* Ensure inner wrapper layout */
+  /* Inner wrapper — let the card define its own width via max-w-* */
   .modal-overlay > .modal-content {
+    display: flex;
+    justify-content: center;
     width: 100%;
+    margin: auto 0;
+  }
+  /* The card itself: animation only, width comes from utility classes (max-w-*) */
+  .modal-overlay > .glass-modal,
+  .modal-overlay > .modal-content > .glass-modal {
+    animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    margin: auto 0;
   }
 
   @keyframes overlayFadeIn {
