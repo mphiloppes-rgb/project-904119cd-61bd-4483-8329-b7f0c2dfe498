@@ -424,6 +424,21 @@ export default function ReportsPage() {
           </div>
         )}
 
+        {tab === "calculator" && (
+          <ReportCalculator
+            inventoryAtCost={report.currentInventoryValueCost}
+            inventoryAtSell={report.currentInventoryValueSell}
+            cashOnHand={report.cashOnHand}
+            customerDebt={report.currentCustomerDebt}
+            supplierDebt={report.currentSupplierDebt}
+            netProfit={report.netProfit}
+            totalSales={report.totalSales}
+            totalExpenses={report.totalExpenses}
+          />
+        )}
+
+        {tab === "debt" && <DebtReport />}
+
         {tab === "sales" && (
           <DataTable
             title="تفاصيل فواتير المبيعات"
