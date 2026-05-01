@@ -561,8 +561,11 @@ function PriceHistoryCard() {
         <div className="flex items-center gap-2 flex-wrap">
           {history.length > 0 && (
             <>
-              <button onClick={() => exportPriceHistoryCSV(filtered)} className="text-xs px-3 py-2 rounded-xl bg-success/15 text-success font-extrabold">
-                <Download size={14} className="inline ml-1" /> تصدير CSV
+              <button onClick={() => exportPriceHistoryCSV(filtered)} className="text-xs px-3 py-2 rounded-xl bg-success/15 text-success font-extrabold" title="تصدير بالأعمدة الأساسية فقط: المنتج، السبب، المستخدم، الوقت، المصدر، قديم→جديد">
+                <Download size={14} className="inline ml-1" /> CSV (مختصر)
+              </button>
+              <button onClick={() => exportPriceHistoryCSV(filtered, { detailed: true })} className="text-xs px-3 py-2 rounded-xl bg-primary/15 text-primary font-extrabold" title="تصدير بكل الأعمدة">
+                <Download size={14} className="inline ml-1" /> CSV (تفصيلي)
               </button>
               <button onClick={() => window.print()} className="text-xs px-3 py-2 rounded-xl bg-primary/15 text-primary font-extrabold">
                 🖨️ طباعة
