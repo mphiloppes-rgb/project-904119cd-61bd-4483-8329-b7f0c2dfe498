@@ -13,6 +13,7 @@ import { getProducts, type Product } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import QuickAddProduct from "@/components/QuickAddProduct";
+import InlinePriceHistory from "@/components/InlinePriceHistory";
 
 export default function PurchasesPage() {
   const { refreshKey, refresh } = useStoreRefresh();
@@ -349,19 +350,16 @@ export default function PurchasesPage() {
                 <p className="font-extrabold text-sm text-warning mb-3 flex items-center gap-2">
                   ⚠️ في {priceDiffs.filter(d => d.changed).length} صنف اتغير سعر شراءه
                 </p>
-                <div className="space-y-2 max-h-40 overflow-y-auto mb-3">
-                  {priceDiffs.filter(d => d.changed).map(d => {
-                    const up = d.direction === 'up';
-                    return (
-                      <div key={d.productId} className={`text-xs p-2 rounded-lg ${up ? 'bg-destructive/10' : 'bg-success/10'}`}>
-                        <p className="font-extrabold">{d.productName}</p>
-                        <p className={up ? 'text-destructive' : 'text-success'}>
-                          {up ? '↑ السعر ارتفع' : '↓ السعر انخفض'} من {d.oldCost.toLocaleString()} إلى {d.newCost.toLocaleString()} ج.م
-                          {' '}({d.percent > 0 ? '+' : ''}{d.percent.toFixed(1)}٪)
-                        </p>
-                      </div>
-                    );
-                  })}
+                <div className="space-y-3 max-h-72 overflow-y-auto mb-3">
+                  {priceDiffs.filter(d => d.changed).map(d => (
+                    <InlinePriceHistory
+                      key={d.productId}
+                      productId={d.productId}
+                      productName={d.productName}
+                      currentNewPrice={d.newCost}
+                      storedCostPrice={d.oldCost}
+                    />
+                  ))}
                 </div>
                 <label className="text-xs font-extrabold mb-1 block">السبب (مطلوب) *</label>
                 <input
