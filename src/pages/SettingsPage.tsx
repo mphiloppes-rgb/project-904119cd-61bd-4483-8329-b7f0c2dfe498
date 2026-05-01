@@ -16,6 +16,8 @@ import {
   getCurrentUser,
 } from "@/lib/auth";
 import PatternLock from "@/components/PatternLock";
+import CashierPermissionsCard from "@/components/CashierPermissionsCard";
+import LegacyImporter from "@/components/LegacyImporter";
 
 export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -255,6 +257,12 @@ export default function SettingsPage() {
 
         {/* Auto Snapshots */}
         <SnapshotsCard />
+
+        {/* Cashier permissions overview */}
+        {admin && <div className="lg:col-span-2"><CashierPermissionsCard /></div>}
+
+        {/* Legacy data importer */}
+        {admin && <LegacyImporter />}
 
         {/* Price changes log */}
         {admin && <PriceHistoryCard />}
