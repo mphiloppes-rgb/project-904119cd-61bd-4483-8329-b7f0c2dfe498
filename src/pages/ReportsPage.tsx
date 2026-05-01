@@ -1,11 +1,12 @@
 import { useState, useMemo, useRef } from "react";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText } from "lucide-react";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator } from "lucide-react";
 import { getReport, getStaleProductsByDays } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
 import { exportElementToPDF } from "@/lib/pdf-export";
 import { isCashier } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
+import ReportCalculator, { DebtReport } from "@/components/ReportCalculator";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
@@ -15,7 +16,7 @@ const periods: { key: Period; label: string }[] = [
   { key: "yearly", label: "سنوي" },
 ];
 
-type Tab = "summary" | "financial" | "inventory" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
+type Tab = "summary" | "financial" | "inventory" | "calculator" | "debt" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
 type StaleDays = 30 | 60 | 90 | 180;
 
 export default function ReportsPage() {
@@ -70,6 +71,8 @@ export default function ReportsPage() {
     { key: "summary", label: "ملخص" },
     { key: "financial", label: "💰 الموقف المالي" },
     { key: "inventory", label: "📦 المخزون والكاش" },
+    { key: "calculator", label: "🧮 حاسبة بنود" },
+    { key: "debt", label: "📋 تقرير المديونية" },
     { key: "sales", label: `المبيعات (${report.salesDetails.length})` },
     { key: "bestCustomers", label: `أفضل العملاء (${report.bestCustomers.length})` },
     { key: "staleProducts", label: `منتجات راكدة` },
