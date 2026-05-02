@@ -538,7 +538,7 @@ export default function POSPage() {
 
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <button onClick={() => attemptAction('print')} className="btn-primary py-3"><Printer size={18} /> بيع وطباعة</button>
-                <button onClick={() => attemptAction('save')} className="flex items-center justify-center gap-2 bg-emerald-500/90 text-white py-3 rounded-xl font-extrabold hover:bg-emerald-500 transition-all duration-200"><Save size={18} /> حفظ فقط</button>
+                <button onClick={() => attemptAction('save')} className="flex items-center justify-center gap-2 bg-success text-success-foreground py-3 rounded-xl font-extrabold hover:opacity-90 transition-all duration-200"><Save size={18} /> حفظ فقط</button>
               </div>
             </div>
           </div>
