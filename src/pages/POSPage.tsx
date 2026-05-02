@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan } from "lucide-react";
-import { getProducts, getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
+import { getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
 import { logAction, canViewCostPrice, isCashier } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import { fullProductLabel } from "@/lib/product-display";
+import { getProductsSafe, type PublicProduct } from "@/lib/pos-safe";
 import InvoicePrint from "@/components/InvoicePrint";
 import ThermalPrint from "@/components/ThermalPrint";
 
@@ -18,7 +19,7 @@ interface CartItem extends InvoiceItem {
 
 export default function POSPage() {
   const { refreshKey, refresh } = useStoreRefresh();
-  const products = useMemo(() => getProducts(), [refreshKey]);
+  const products = useMemo(() => getProductsSafe(), [refreshKey]);
   const customers = useMemo(() => getCustomers(), [refreshKey]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -80,24 +81,25 @@ export default function POSPage() {
     const product = products.find(p => p.id === productId);
     if (!product) return 0;
     const inCart = cart.find(i => i.productId === productId);
-    return product.quantity - (inCart ? inCart.quantity : 0);
+    return (product.quantity ?? (product.inStock ? 999999 : 0)) - (inCart ? inCart.quantity : 0);
   };
 
   const cashier = isCashier();
 
-  const addToCart = (product: typeof products[0]) => {
-    if (product.quantity <= 0) {
+  const addToCart = (product: PublicProduct) => {
+    const availableQty = product.quantity ?? (product.inStock ? 999999 : 0);
+    if (availableQty <= 0) {
       toast({ title: "⚠️ نفد المخزون", description: `${product.name} غير متاح حالياً`, variant: "destructive" });
       return;
     }
     const existing = cart.find((i) => i.productId === product.id);
     const currentQty = existing ? existing.quantity : 0;
-    if (currentQty >= product.quantity) {
-      toast({ title: "⚠️ لا يمكن", description: `الكمية المتاحة في المخزون: ${product.quantity}`, variant: "destructive" });
+    if (currentQty >= availableQty) {
+      toast({ title: "⚠️ لا يمكن", description: cashier ? `الكمية المطلوبة غير متاحة` : `الكمية المتاحة في المخزون: ${availableQty}`, variant: "destructive" });
       return;
     }
     // تكلفة الشراء بتتسجل دايماً علشان حسابات الربح، بس الكاشير ميشوفهاش
-    const safeCost = product.costPrice;
+    const safeCost = product.costPrice ?? 0;
     const displayName = fullProductLabel(product);
     if (existing) {
       const newQty = existing.quantity + 1;
