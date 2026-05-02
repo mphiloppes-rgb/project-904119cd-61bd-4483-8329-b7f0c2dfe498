@@ -181,13 +181,17 @@ export function saveInvoices(invoices: Invoice[]) {
 }
 export function addInvoice(inv: Omit<Invoice, 'id' | 'createdAt' | 'invoiceNumber'>): Invoice {
   const invoices = getInvoices();
-  const invoice: Invoice = { ...inv, id: generateId(), invoiceNumber: generateInvoiceNumber(), createdAt: new Date().toISOString() };
+  const products = getProducts();
+  const normalizedItems = inv.items.map(item => {
+    const product = products.find(p => p.id === item.productId);
+    return { ...item, costPrice: item.costPrice || product?.costPrice || 0 };
+  });
+  const invoice: Invoice = { ...inv, items: normalizedItems, id: generateId(), invoiceNumber: generateInvoiceNumber(), createdAt: new Date().toISOString() };
   invoices.push(invoice);
   saveInvoices(invoices);
 
   // Update product quantities
-  const products = getProducts();
-  inv.items.forEach(item => {
+  normalizedItems.forEach(item => {
     const idx = products.findIndex(p => p.id === item.productId);
     if (idx !== -1) {
       products[idx].quantity = Math.max(0, products[idx].quantity - item.quantity);
