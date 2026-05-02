@@ -162,6 +162,15 @@
     transform: translateY(-1px);
   }
 
+  .input-emphasis {
+    background: hsl(var(--card));
+    border-color: hsl(var(--primary));
+    box-shadow:
+      0 0 0 4px hsla(200 85% 48% / 0.14),
+      0 10px 26px hsla(200 85% 30% / 0.12);
+    font-weight: 800;
+  }
+
   .glass-modal {
     background: hsl(var(--card));
     backdrop-filter: blur(40px) saturate(200%);
@@ -172,6 +181,10 @@
       0 30px 80px -12px hsla(215 40% 15% / 0.45),
       0 0 0 1px hsla(200 60% 90% / 0.2),
       inset 0 1px 0 hsla(0 0% 100% / 0.7);
+  }
+
+  .modal-panel {
+    @apply glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] max-h-[90vh] overflow-y-auto;
   }
 
   /* Modal overlay — flex centering. Backdrop covers full viewport, content sits
@@ -190,6 +203,7 @@
     -webkit-backdrop-filter: blur(10px);
     padding: clamp(1rem, 4vh, 3rem) clamp(0.75rem, 3vw, 2rem);
     animation: overlayFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    text-align: initial;
   }
   /* Inner wrapper — let the card define its own width via max-w-* */
   .modal-overlay > .modal-content {
@@ -203,6 +217,11 @@
   .modal-overlay > .modal-content > .glass-modal {
     animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     margin: auto 0;
+    max-width: min(var(--modal-max-width, 42rem), 95vw);
+  }
+
+  .modal-overlay > .modal-content > .glass-modal {
+    width: 100%;
   }
 
   @keyframes overlayFadeIn {
