@@ -69,6 +69,8 @@ export default function LegacyImporter() {
         customers: 0, customersSkipped: 0,
         invoices: 0, invoicesSkipped: 0,
         expenses: 0, expensesSkipped: 0,
+        suppliers: 0, suppliersSkipped: 0,
+        purchases: 0, purchasesSkipped: 0,
       };
 
       if (mode === "replace") {
