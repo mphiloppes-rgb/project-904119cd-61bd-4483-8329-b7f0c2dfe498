@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from "react";
-import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan } from "lucide-react";
-import { getProducts, getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
+import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan, Banknote } from "lucide-react";
+import { getCustomers, addInvoice, type InvoiceItem } from "@/lib/store";
 import { logAction, canViewCostPrice, isCashier } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import { fullProductLabel } from "@/lib/product-display";
+import { getProductsSafe, type PublicProduct } from "@/lib/pos-safe";
 import InvoicePrint from "@/components/InvoicePrint";
 import ThermalPrint from "@/components/ThermalPrint";
 
@@ -18,7 +19,7 @@ interface CartItem extends InvoiceItem {
 
 export default function POSPage() {
   const { refreshKey, refresh } = useStoreRefresh();
-  const products = useMemo(() => getProducts(), [refreshKey]);
+  const products = useMemo(() => getProductsSafe(), [refreshKey]);
   const customers = useMemo(() => getCustomers(), [refreshKey]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -80,31 +81,38 @@ export default function POSPage() {
     const product = products.find(p => p.id === productId);
     if (!product) return 0;
     const inCart = cart.find(i => i.productId === productId);
-    return product.quantity - (inCart ? inCart.quantity : 0);
+    return (product.quantity ?? (product.inStock ? 999999 : 0)) - (inCart ? inCart.quantity : 0);
+  };
+
+  const getSafeTierPrice = (p: PublicProduct, qty: number): number => {
+    if (p.wholesalePrice && p.wholesaleMinQty && qty >= p.wholesaleMinQty) return p.wholesalePrice;
+    if (p.halfWholesalePrice && p.halfWholesaleMinQty && qty >= p.halfWholesaleMinQty) return p.halfWholesalePrice;
+    return p.sellPrice;
   };
 
   const cashier = isCashier();
 
-  const addToCart = (product: typeof products[0]) => {
-    if (product.quantity <= 0) {
+  const addToCart = (product: PublicProduct) => {
+    const availableQty = product.quantity ?? (product.inStock ? 999999 : 0);
+    if (availableQty <= 0) {
       toast({ title: "⚠️ نفد المخزون", description: `${product.name} غير متاح حالياً`, variant: "destructive" });
       return;
     }
     const existing = cart.find((i) => i.productId === product.id);
     const currentQty = existing ? existing.quantity : 0;
-    if (currentQty >= product.quantity) {
-      toast({ title: "⚠️ لا يمكن", description: `الكمية المتاحة في المخزون: ${product.quantity}`, variant: "destructive" });
+    if (currentQty >= availableQty) {
+      toast({ title: "⚠️ لا يمكن", description: cashier ? `الكمية المطلوبة غير متاحة` : `الكمية المتاحة في المخزون: ${availableQty}`, variant: "destructive" });
       return;
     }
     // تكلفة الشراء بتتسجل دايماً علشان حسابات الربح، بس الكاشير ميشوفهاش
-    const safeCost = product.costPrice;
+    const safeCost = product.costPrice ?? 0;
     const displayName = fullProductLabel(product);
     if (existing) {
       const newQty = existing.quantity + 1;
-      const newPrice = getTierPrice(product, newQty);
+      const newPrice = getSafeTierPrice(product, newQty);
       setCart(cart.map((i) => i.productId === product.id ? { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice } : i));
     } else {
-      const price = getTierPrice(product, 1);
+      const price = getSafeTierPrice(product, 1);
       setCart([...cart, { productId: product.id, productName: displayName, quantity: 1, unitPrice: price, costPrice: safeCost, total: price }]);
     }
   };
@@ -112,7 +120,8 @@ export default function POSPage() {
   // Barcode handler: لو الـ search match exact code -> add مباشر
   const handleSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && search.trim()) {
-      const product = findProductByCode(search.trim());
+      const code = search.trim().toLowerCase();
+      const product = products.find((p) => p.code?.toLowerCase() === code);
       if (product) {
         addToCart(product);
         setSearch("");
@@ -139,7 +148,7 @@ export default function POSPage() {
       const newQty = i.quantity + delta;
       if (newQty <= 0) return null;
       const product = products.find(p => p.id === productId);
-      const newPrice = product ? getTierPrice(product, newQty) : i.unitPrice;
+      const newPrice = product ? getSafeTierPrice(product, newQty) : i.unitPrice;
       return { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice };
     }).filter(Boolean) as CartItem[]);
   };
@@ -423,7 +432,7 @@ export default function POSPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
               {filtered.map((p, idx) => (
-                <button key={p.id} onClick={() => addToCart(p)} disabled={p.quantity <= 0} className={`stat-card text-right cursor-pointer animate-fade-in-up ${p.quantity <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`} style={{ animationDelay: `${idx * 0.03}s` }}>
+                <button key={p.id} onClick={() => addToCart(p)} disabled={(p.quantity ?? (p.inStock ? 1 : 0)) <= 0} className={`stat-card text-right cursor-pointer animate-fade-in-up ${(p.quantity ?? (p.inStock ? 1 : 0)) <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`} style={{ animationDelay: `${idx * 0.03}s` }}>
                   <p className="font-extrabold text-sm leading-tight line-clamp-2">{p.name}</p>
                   {(p.brand || p.model) && (
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
@@ -438,8 +447,8 @@ export default function POSPage() {
                       {p.wholesalePrice && p.wholesaleMinQty ? `جملة: ${p.wholesalePrice}@${p.wholesaleMinQty}` : ''}
                     </p>
                   )}
-                  <p className={`text-xs ${p.quantity <= 0 ? 'text-destructive font-extrabold' : 'text-muted-foreground'}`}>
-                    المخزون: {p.quantity} {p.quantity <= 0 && '(نفد)'}
+                  <p className={`text-xs ${(p.quantity ?? (p.inStock ? 1 : 0)) <= 0 ? 'text-destructive font-extrabold' : 'text-muted-foreground'}`}>
+                    {cashier ? (p.inStock ? 'متاح للبيع' : 'غير متاح') : `المخزون: ${p.quantity} ${Number(p.quantity) <= 0 ? '(نفد)' : ''}`}
                   </p>
                 </button>
               ))}
@@ -520,13 +529,16 @@ export default function POSPage() {
                     <span className={`font-extrabold ${liveProfit >= 0 ? 'text-success' : 'text-destructive'}`}>{liveProfit.toLocaleString()} ج.م</span>
                   </div>
                 )}
-                <div className="flex items-center gap-3"><label className="text-sm text-muted-foreground min-w-[60px] font-bold">المدفوع</label><input ref={paidRef} type="number" value={paid || ""} onChange={(e) => setPaid(Number(e.target.value))} className="input-field flex-1" placeholder="0" /></div>
+                <div className="rounded-2xl border-2 border-primary/40 bg-primary/10 p-3 shadow-lg shadow-primary/10">
+                  <label className="text-sm font-extrabold text-primary mb-2 flex items-center gap-2"><Banknote size={17} /> المدفوع من العميل</label>
+                  <input ref={paidRef} type="number" value={paid || ""} onChange={(e) => setPaid(Number(e.target.value))} className="input-field input-emphasis w-full text-xl text-center" placeholder="0" />
+                </div>
                 <div className="flex justify-between font-extrabold text-destructive"><span>المتبقي</span><span>{remaining.toLocaleString()} ج.م</span></div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 mt-4">
                 <button onClick={() => attemptAction('print')} className="btn-primary py-3"><Printer size={18} /> بيع وطباعة</button>
-                <button onClick={() => attemptAction('save')} className="flex items-center justify-center gap-2 bg-emerald-500/90 text-white py-3 rounded-xl font-extrabold hover:bg-emerald-500 transition-all duration-200"><Save size={18} /> حفظ فقط</button>
+                <button onClick={() => attemptAction('save')} className="flex items-center justify-center gap-2 bg-success text-success-foreground py-3 rounded-xl font-extrabold hover:opacity-90 transition-all duration-200"><Save size={18} /> حفظ فقط</button>
               </div>
             </div>
           </div>

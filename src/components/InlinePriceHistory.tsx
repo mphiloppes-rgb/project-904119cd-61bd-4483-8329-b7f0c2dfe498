@@ -1,6 +1,6 @@
 // تبويب يعرض السجل التاريخي لتغير سعر شراء صنف محدد داخل فاتورة الشراء
-import { useMemo } from "react";
-import { History, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { History, TrendingUp, TrendingDown, Minus, Filter } from "lucide-react";
 import { getPriceHistoryForProduct } from "@/lib/price-history";
 
 interface Props {
@@ -11,7 +11,14 @@ interface Props {
 }
 
 export default function InlinePriceHistory({ productId, productName, currentNewPrice, storedCostPrice }: Props) {
-  const history = useMemo(() => getPriceHistoryForProduct(productId).slice(0, 8), [productId]);
+  const [days, setDays] = useState<0 | 30 | 90 | 180>(0);
+  const history = useMemo(() => {
+    const all = getPriceHistoryForProduct(productId);
+    if (!days) return all.slice(0, 8);
+    const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
+    return all.filter((h) => new Date(h.date).getTime() >= cutoff).slice(0, 8);
+  }, [productId, days]);
+  const lastReason = history[0]?.userReason || history[0]?.reason;
 
   const direction =
     currentNewPrice > storedCostPrice ? "up" : currentNewPrice < storedCostPrice ? "down" : "same";
@@ -22,6 +29,20 @@ export default function InlinePriceHistory({ productId, productName, currentNewP
       <div className="flex items-center gap-2 mb-3 pb-2 border-b border-border">
         <History className="text-primary" size={16} />
         <p className="font-extrabold text-xs">سجل أسعار "{productName}"</p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-1 mb-2">
+        <Filter size={13} className="text-muted-foreground" />
+        {([0, 30, 90, 180] as const).map((d) => (
+          <button
+            key={d}
+            type="button"
+            onClick={() => setDays(d)}
+            className={`px-2 py-1 rounded-lg text-[10px] font-extrabold transition-all ${days === d ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}
+          >
+            {d === 0 ? "كل المدة" : d === 180 ? "6 شهور" : `${d} يوم`}
+          </button>
+        ))}
       </div>
 
       {/* المقارنة الفورية */}
@@ -52,6 +73,12 @@ export default function InlinePriceHistory({ productId, productName, currentNewP
           {storedCostPrice.toLocaleString()} → {currentNewPrice.toLocaleString()}
         </span>
       </div>
+
+      {lastReason && (
+        <p className="text-[11px] mb-2 rounded-lg bg-muted/40 px-2 py-1 text-muted-foreground">
+          آخر سبب للتغيير: <span className="font-extrabold text-foreground">{lastReason}</span>
+        </p>
+      )}
 
       {/* السجل التاريخي */}
       {history.length === 0 ? (

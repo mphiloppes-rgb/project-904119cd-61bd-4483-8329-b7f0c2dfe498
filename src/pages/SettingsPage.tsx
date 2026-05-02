@@ -7,7 +7,7 @@ import {
   getAutoBackupInterval, setAutoBackupInterval, diffSnapshotWithCurrent,
   type Snapshot, type SnapshotDiffRow,
 } from "@/lib/auto-backup";
-import { getPriceHistory, clearPriceHistory, revertToOldCost, exportPriceHistoryCSV, type PriceChange } from "@/lib/price-history";
+import { getPriceHistory, clearPriceHistory, revertToOldCost, exportPriceHistoryCSV, printPriceHistory, type PriceChange } from "@/lib/price-history";
 import { Search as SearchIcon, RotateCw } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
@@ -561,13 +561,10 @@ function PriceHistoryCard() {
         <div className="flex items-center gap-2 flex-wrap">
           {history.length > 0 && (
             <>
-              <button onClick={() => exportPriceHistoryCSV(filtered)} className="text-xs px-3 py-2 rounded-xl bg-success/15 text-success font-extrabold" title="تصدير بالأعمدة الأساسية فقط: المنتج، السبب، المستخدم، الوقت، المصدر، قديم→جديد">
-                <Download size={14} className="inline ml-1" /> CSV (مختصر)
+              <button onClick={() => exportPriceHistoryCSV(filtered)} className="text-xs px-3 py-2 rounded-xl bg-success/15 text-success font-extrabold" title="تصدير نتائج البحث والفلاتر بالأعمدة: المنتج، السبب، المستخدم، الوقت، المصدر">
+                <Download size={14} className="inline ml-1" /> CSV
               </button>
-              <button onClick={() => exportPriceHistoryCSV(filtered, { detailed: true })} className="text-xs px-3 py-2 rounded-xl bg-primary/15 text-primary font-extrabold" title="تصدير بكل الأعمدة">
-                <Download size={14} className="inline ml-1" /> CSV (تفصيلي)
-              </button>
-              <button onClick={() => window.print()} className="text-xs px-3 py-2 rounded-xl bg-primary/15 text-primary font-extrabold">
+              <button onClick={() => printPriceHistory(filtered)} className="text-xs px-3 py-2 rounded-xl bg-primary/15 text-primary font-extrabold" title="طباعة نتائج البحث والفلاتر الحالية">
                 🖨️ طباعة
               </button>
               <button onClick={handleClear} className="text-xs px-3 py-2 rounded-xl bg-destructive/15 text-destructive font-extrabold">

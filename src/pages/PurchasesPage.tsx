@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles } from "lucide-react";
+import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles, History, Filter } from "lucide-react";
 import {
   getPurchaseInvoices,
   addPurchaseInvoice,
@@ -14,6 +14,7 @@ import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import QuickAddProduct from "@/components/QuickAddProduct";
 import InlinePriceHistory from "@/components/InlinePriceHistory";
+import { getPriceHistoryForProduct } from "@/lib/price-history";
 
 export default function PurchasesPage() {
   const { refreshKey, refresh } = useStoreRefresh();
@@ -32,6 +33,9 @@ export default function PurchasesPage() {
   const [paid, setPaid] = useState(0);
   const [productSearch, setProductSearch] = useState("");
   const [priceReason, setPriceReason] = useState("");
+  const [purchaseTab, setPurchaseTab] = useState<'items' | 'history'>('items');
+  const [historyProductId, setHistoryProductId] = useState("");
+  const [historyDays, setHistoryDays] = useState<0 | 30 | 90 | 180>(0);
 
   const [viewing, setViewing] = useState<PurchaseInvoice | null>(null);
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
@@ -78,6 +82,16 @@ export default function PurchasesPage() {
 
   const total = items.reduce((s, i) => s + i.total, 0);
   const remaining = Math.max(0, total - paid);
+  const selectedHistoryProductId = historyProductId || items[0]?.productId || "";
+  const selectedHistoryProduct = products.find((p) => p.id === selectedHistoryProductId);
+  const selectedHistoryRows = useMemo(() => {
+    if (!selectedHistoryProductId) return [];
+    const all = getPriceHistoryForProduct(selectedHistoryProductId);
+    if (!historyDays) return all;
+    const cutoff = Date.now() - historyDays * 24 * 60 * 60 * 1000;
+    return all.filter((h) => new Date(h.date).getTime() >= cutoff);
+  }, [selectedHistoryProductId, historyDays, refreshKey]);
+  const lastHistoryReason = selectedHistoryRows[0]?.userReason || selectedHistoryRows[0]?.reason;
 
   const addItem = (productId: string) => {
     const p = products.find((x) => x.id === productId);
@@ -317,33 +331,67 @@ export default function PurchasesPage() {
               )}
             </div>
 
-            <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
-              {items.map((it) => (
-                <div key={it.productId} className="bg-accent/40 rounded-xl p-3">
-                  <div className="flex justify-between items-center mb-2">
-                    <p className="font-bold text-sm">{it.productName}</p>
-                    <button onClick={() => removeItem(it.productId)} className="p-1 text-destructive hover:bg-destructive/10 rounded-lg">
-                      <Trash2 size={14} />
-                    </button>
+            <div className="flex gap-2 mb-3 rounded-2xl bg-muted/50 p-1">
+              <button type="button" onClick={() => setPurchaseTab('items')} className={`flex-1 py-2 rounded-xl text-sm font-extrabold transition-all ${purchaseTab === 'items' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-accent'}`}>الأصناف</button>
+              <button type="button" onClick={() => setPurchaseTab('history')} className={`flex-1 py-2 rounded-xl text-sm font-extrabold transition-all ${purchaseTab === 'history' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-accent'}`}><History size={15} className="inline ml-1" /> سجل الأسعار</button>
+            </div>
+
+            {purchaseTab === 'items' && (
+              <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+                {items.map((it) => (
+                  <div key={it.productId} className="bg-accent/40 rounded-xl p-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <p className="font-bold text-sm">{it.productName}</p>
+                      <button onClick={() => removeItem(it.productId)} className="p-1 text-destructive hover:bg-destructive/10 rounded-lg">
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground">الكمية</label>
+                        <input type="number" min={1} className="input-field w-full text-sm py-1.5" value={it.quantity} onChange={(e) => updateItem(it.productId, "quantity", Math.max(1, Number(e.target.value)))} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">سعر الوحدة</label>
+                        <input type="number" min={0} className="input-field w-full text-sm py-1.5" value={it.unitCost} onChange={(e) => updateItem(it.productId, "unitCost", Math.max(0, Number(e.target.value)))} />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground">الإجمالي</label>
+                        <p className="font-extrabold mt-1.5">{it.total.toLocaleString()} ج.م</p>
+                      </div>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div>
-                      <label className="text-xs text-muted-foreground">الكمية</label>
-                      <input type="number" min={1} className="input-field w-full text-sm py-1.5" value={it.quantity} onChange={(e) => updateItem(it.productId, "quantity", Math.max(1, Number(e.target.value)))} />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">سعر الوحدة</label>
-                      <input type="number" min={0} className="input-field w-full text-sm py-1.5" value={it.unitCost} onChange={(e) => updateItem(it.productId, "unitCost", Math.max(0, Number(e.target.value)))} />
-                    </div>
-                    <div>
-                      <label className="text-xs text-muted-foreground">الإجمالي</label>
-                      <p className="font-extrabold mt-1.5">{it.total.toLocaleString()} ج.م</p>
-                    </div>
+                ))}
+                {items.length === 0 && <p className="text-center text-muted-foreground py-6 text-sm">أضف منتجات للفاتورة</p>}
+              </div>
+            )}
+
+            {purchaseTab === 'history' && (
+              <div className="mb-4 rounded-2xl border border-border bg-card/70 p-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+                  <select className="input-field w-full" value={selectedHistoryProductId} onChange={(e) => setHistoryProductId(e.target.value)}>
+                    <option value="">اختر منتج من الفاتورة</option>
+                    {items.map((it) => <option key={it.productId} value={it.productId}>{it.productName}</option>)}
+                  </select>
+                  <div className="flex items-center gap-1 rounded-xl bg-muted/40 p-1">
+                    <Filter size={14} className="text-muted-foreground mx-1" />
+                    {([0, 30, 90, 180] as const).map((d) => (
+                      <button key={d} type="button" onClick={() => setHistoryDays(d)} className={`flex-1 px-2 py-2 rounded-lg text-[11px] font-extrabold ${historyDays === d ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-accent'}`}>
+                        {d === 0 ? 'الكل' : d === 180 ? '6 شهور' : `${d} يوم`}
+                      </button>
+                    ))}
                   </div>
                 </div>
-              ))}
-              {items.length === 0 && <p className="text-center text-muted-foreground py-6 text-sm">أضف منتجات للفاتورة</p>}
-            </div>
+                {selectedHistoryProduct ? (
+                  <>
+                    <InlinePriceHistory productId={selectedHistoryProduct.id} productName={selectedHistoryProduct.name} currentNewPrice={items.find(i => i.productId === selectedHistoryProduct.id)?.unitCost ?? selectedHistoryProduct.costPrice} storedCostPrice={selectedHistoryProduct.costPrice} />
+                    <p className="mt-2 text-[11px] text-muted-foreground">آخر سبب للتغيير: <span className="font-extrabold text-foreground">{lastHistoryReason || 'لا يوجد سبب سابق'}</span></p>
+                  </>
+                ) : (
+                  <p className="text-center text-sm text-muted-foreground py-6">اختار منتج الأول علشان يظهر سجل أسعاره</p>
+                )}
+              </div>
+            )}
 
             {hasPriceChanges && (
               <div className="mb-4 rounded-2xl border-2 border-warning/40 bg-warning/10 p-4 animate-fade-in-up">

@@ -125,14 +125,14 @@ export async function revertToOldCost(changeId: string): Promise<{ ok: boolean; 
 
 
 /** تصدير سجل تغييرات الأسعار كـ CSV (يدعم العربى عبر BOM)
- *  افتراضياً: الأعمدة المطلوبة فقط (المنتج/السبب/المستخدم/الوقت/المصدر/قديم→جديد)
+ *  افتراضياً: الأعمدة المطلوبة فقط (المنتج/السبب/المستخدم/الوقت/المصدر)
  *  لو detailed=true: كل الأعمدة. */
 export function exportPriceHistoryCSV(rows?: PriceChange[], opts?: { detailed?: boolean }) {
   const data = rows || getPriceHistory();
   const detailed = !!opts?.detailed;
   const headers = detailed
     ? ['الوقت', 'المنتج', 'السعر القديم', 'السعر الجديد', 'الفرق', 'النسبة %', 'الاتجاه', 'مصدر التغيير', 'السبب', 'المستخدم']
-    : ['المنتج', 'السبب', 'المستخدم', 'الوقت', 'المصدر', 'قديم → جديد'];
+    : ['المنتج', 'السبب', 'المستخدم', 'الوقت', 'المصدر'];
   const lines = [headers.join(',')];
   data.forEach(r => {
     const cells = detailed
@@ -154,7 +154,6 @@ export function exportPriceHistoryCSV(rows?: PriceChange[], opts?: { detailed?: 
           r.userName || '—',
           new Date(r.date).toLocaleString('ar-EG'),
           r.source || r.reason || '—',
-          `${r.oldCost.toLocaleString()} → ${r.newCost.toLocaleString()} (${r.direction === 'up' ? '↑' : r.direction === 'down' ? '↓' : '='}${r.percent.toFixed(1)}٪)`,
         ];
     const safeCells = cells.map(v => {
       const s = String(v ?? '').replace(/"/g, '""');
@@ -172,4 +171,43 @@ export function exportPriceHistoryCSV(rows?: PriceChange[], opts?: { detailed?: 
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function escapeHtml(value: unknown): string {
+  return String(value ?? '—')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/** طباعة السجل الحالي بنفس نتائج البحث والفلاتر وبالأعمدة الأساسية فقط. */
+export function printPriceHistory(rows?: PriceChange[]) {
+  const data = rows || getPriceHistory();
+  const body = data.map(r => `
+    <tr>
+      <td>${escapeHtml(r.productName)}</td>
+      <td>${escapeHtml(r.userReason || r.reason || '—')}</td>
+      <td>${escapeHtml(r.userName || '—')}</td>
+      <td>${escapeHtml(new Date(r.date).toLocaleString('ar-EG'))}</td>
+      <td>${escapeHtml(r.source || r.reason || '—')}</td>
+    </tr>
+  `).join('');
+  const win = window.open('', '_blank', 'width=1100,height=800');
+  if (!win) return;
+  win.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8" />
+    <title>سجل تغييرات أسعار الشراء</title>
+    <style>
+      body{font-family:Tahoma,Arial,sans-serif;margin:24px;color:#111827;background:#fff}
+      h1{font-size:20px;margin:0 0 4px;font-weight:800} p{margin:0 0 16px;color:#4b5563;font-size:12px}
+      table{width:100%;border-collapse:collapse;font-size:12px} th,td{border:1px solid #d1d5db;padding:8px;text-align:right;vertical-align:top}
+      th{background:#e5f3fb;font-weight:800} tr:nth-child(even){background:#f9fafb}
+      @media print{body{margin:10mm}}
+    </style></head><body>
+    <h1>سجل تغييرات أسعار الشراء</h1><p>عدد النتائج: ${data.length} • ${new Date().toLocaleString('ar-EG')}</p>
+    <table><thead><tr><th>المنتج</th><th>السبب</th><th>المستخدم</th><th>الوقت</th><th>المصدر</th></tr></thead><tbody>${body || '<tr><td colspan="5">لا توجد نتائج</td></tr>'}</tbody></table>
+    <script>window.onload=()=>{window.print(); setTimeout(()=>window.close(), 300)}</script>
+    </body></html>`);
+  win.document.close();
 }

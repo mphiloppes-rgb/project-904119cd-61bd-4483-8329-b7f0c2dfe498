@@ -1,8 +1,9 @@
 // حاسبة بنود التقارير: اختر بنود (مخزون/كاش/مديونية) وتجمع/تطرح
 // + تقرير مديونية قابل للتجميع لكل عميل.
-import { useMemo, useState } from "react";
-import { Calculator, Plus, Minus, Equal, Users, Filter } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Calculator, Plus, Minus, Equal, Users, Filter, Download, FileText } from "lucide-react";
 import { getCustomers, getInvoices, type Customer } from "@/lib/store";
+import { exportElementToPDF } from "@/lib/pdf-export";
 
 export interface ReportLineItem {
   key: string;
@@ -158,6 +159,7 @@ export default function ReportCalculator(props: Props) {
 type DebtMode = "all" | "byCustomer" | "single";
 
 export function DebtReport() {
+  const reportRef = useRef<HTMLDivElement>(null);
   const customers = useMemo(() => getCustomers(), []);
   const invoices = useMemo(() => getInvoices(), []);
   const [mode, setMode] = useState<DebtMode>("byCustomer");
@@ -200,15 +202,45 @@ export function DebtReport() {
 
   const grandTotal = byCustomer.reduce((s, x) => s + x.total, 0);
 
+  const exportCSV = () => {
+    const rows = mode === "all"
+      ? filteredInvoices.map((inv) => [inv.invoiceNumber, inv.customerName || "—", new Date(inv.createdAt).toLocaleString("ar-EG"), inv.total, inv.remaining])
+      : byCustomer.map(({ customer, total, count }) => [customer.name, customer.phone || "—", count, total, ""]);
+    const headers = mode === "all" ? ["رقم الفاتورة", "العميل", "التاريخ", "الإجمالي", "المتبقي"] : ["العميل", "الهاتف", "عدد الفواتير", "إجمالي المديونية", "ملاحظة"];
+    const csv = "\uFEFF" + [headers, ...rows].map((r) => r.map((v) => `"${String(v ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `تقرير_المديونية_${mode}_${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportPDF = async () => {
+    if (!reportRef.current) return;
+    await exportElementToPDF(reportRef.current, `تقرير_المديونية_${new Date().toISOString().split("T")[0]}.pdf`, "تقرير المديونية");
+  };
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
+    <div className="space-y-4" ref={reportRef}>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-warning/10 flex items-center justify-center">
           <Users className="text-warning" size={22} />
         </div>
         <div>
           <h3 className="font-extrabold text-lg">تقرير المديونية</h3>
           <p className="text-xs text-muted-foreground">جمّع كل البنود أو اعرض كل عميل لوحده</p>
+        </div>
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          <button type="button" onClick={exportCSV} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-success/15 text-success text-xs font-extrabold">
+            <Download size={14} /> CSV
+          </button>
+          <button type="button" onClick={exportPDF} className="flex items-center gap-1 px-3 py-2 rounded-xl bg-primary/15 text-primary text-xs font-extrabold">
+            <FileText size={14} /> PDF
+          </button>
         </div>
       </div>
 
