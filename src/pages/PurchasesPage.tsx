@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles } from "lucide-react";
+import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles, History, Filter } from "lucide-react";
 import {
   getPurchaseInvoices,
   addPurchaseInvoice,
@@ -14,6 +14,7 @@ import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import QuickAddProduct from "@/components/QuickAddProduct";
 import InlinePriceHistory from "@/components/InlinePriceHistory";
+import { getPriceHistoryForProduct } from "@/lib/price-history";
 
 export default function PurchasesPage() {
   const { refreshKey, refresh } = useStoreRefresh();
@@ -32,6 +33,9 @@ export default function PurchasesPage() {
   const [paid, setPaid] = useState(0);
   const [productSearch, setProductSearch] = useState("");
   const [priceReason, setPriceReason] = useState("");
+  const [purchaseTab, setPurchaseTab] = useState<'items' | 'history'>('items');
+  const [historyProductId, setHistoryProductId] = useState("");
+  const [historyDays, setHistoryDays] = useState<0 | 30 | 90 | 180>(0);
 
   const [viewing, setViewing] = useState<PurchaseInvoice | null>(null);
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
@@ -78,6 +82,16 @@ export default function PurchasesPage() {
 
   const total = items.reduce((s, i) => s + i.total, 0);
   const remaining = Math.max(0, total - paid);
+  const selectedHistoryProductId = historyProductId || items[0]?.productId || "";
+  const selectedHistoryProduct = products.find((p) => p.id === selectedHistoryProductId);
+  const selectedHistoryRows = useMemo(() => {
+    if (!selectedHistoryProductId) return [];
+    const all = getPriceHistoryForProduct(selectedHistoryProductId);
+    if (!historyDays) return all;
+    const cutoff = Date.now() - historyDays * 24 * 60 * 60 * 1000;
+    return all.filter((h) => new Date(h.date).getTime() >= cutoff);
+  }, [selectedHistoryProductId, historyDays, refreshKey]);
+  const lastHistoryReason = selectedHistoryRows[0]?.userReason || selectedHistoryRows[0]?.reason;
 
   const addItem = (productId: string) => {
     const p = products.find((x) => x.id === productId);
