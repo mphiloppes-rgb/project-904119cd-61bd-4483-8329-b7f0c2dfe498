@@ -74,13 +74,15 @@ export default function LegacyImporter() {
       };
 
       if (mode === "replace") {
-        if (previewData.products) { saveProducts(previewData.products); r.products = previewData.products.length; }
-        if (previewData.customers) { saveCustomers(previewData.customers); r.customers = previewData.customers.length; }
-        if (previewData.invoices) { saveInvoices(previewData.invoices); r.invoices = previewData.invoices.length; }
-        if (previewData.expenses) { saveExpenses(previewData.expenses); r.expenses = previewData.expenses.length; }
+        if (selectedTypes.products && previewData.products) { saveProducts(previewData.products); r.products = previewData.products.length; }
+        if (selectedTypes.customers && previewData.customers) { saveCustomers(previewData.customers); r.customers = previewData.customers.length; }
+        if (selectedTypes.invoices && previewData.invoices) { saveInvoices(previewData.invoices); r.invoices = previewData.invoices.length; }
+        if (selectedTypes.expenses && previewData.expenses) { saveExpenses(previewData.expenses); r.expenses = previewData.expenses.length; }
+        if (selectedTypes.suppliers && previewData.suppliers) { saveSuppliers(previewData.suppliers); r.suppliers = previewData.suppliers.length; }
+        if (selectedTypes.purchases && previewData.purchases) { savePurchaseInvoices(previewData.purchases); r.purchases = previewData.purchases.length; }
       } else {
         // merge — نتجنب الـ duplicates بالـ id والاسم/الكود
-        if (Array.isArray(previewData.products)) {
+        if (selectedTypes.products && Array.isArray(previewData.products)) {
           const existing = getProducts();
           const idsSet = new Set(existing.map(p => p.id));
           const codeSet = new Set(existing.filter(p => p.code).map(p => p.code!.toLowerCase()));
@@ -94,7 +96,7 @@ export default function LegacyImporter() {
           });
           saveProducts(merged);
         }
-        if (Array.isArray(previewData.customers)) {
+        if (selectedTypes.customers && Array.isArray(previewData.customers)) {
           const existing = getCustomers();
           const idsSet = new Set(existing.map(c => c.id));
           const phoneSet = new Set(existing.filter(c => c.phone).map(c => c.phone));
@@ -108,7 +110,7 @@ export default function LegacyImporter() {
           });
           saveCustomers(merged);
         }
-        if (Array.isArray(previewData.invoices)) {
+        if (selectedTypes.invoices && Array.isArray(previewData.invoices)) {
           const existing = getInvoices();
           const idsSet = new Set(existing.map(i => i.id));
           const numSet = new Set(existing.map(i => i.invoiceNumber));
@@ -122,7 +124,7 @@ export default function LegacyImporter() {
           });
           saveInvoices(merged);
         }
-        if (Array.isArray(previewData.expenses)) {
+        if (selectedTypes.expenses && Array.isArray(previewData.expenses)) {
           const existing = getExpenses();
           const idsSet = new Set(existing.map(e => e.id));
           const merged = [...existing];
@@ -135,11 +137,33 @@ export default function LegacyImporter() {
           });
           saveExpenses(merged);
         }
+        if (selectedTypes.suppliers && Array.isArray(previewData.suppliers)) {
+          const existing = getSuppliers();
+          const idsSet = new Set(existing.map(s => s.id));
+          const phoneSet = new Set(existing.filter(s => s.phone).map(s => s.phone));
+          const merged = [...existing];
+          previewData.suppliers.forEach((s: any) => {
+            if (idsSet.has(s.id) || (s.phone && phoneSet.has(s.phone))) r.suppliersSkipped++;
+            else { merged.push(s); r.suppliers++; }
+          });
+          saveSuppliers(merged);
+        }
+        if (selectedTypes.purchases && Array.isArray(previewData.purchases)) {
+          const existing = getPurchaseInvoices();
+          const idsSet = new Set(existing.map(i => i.id));
+          const numSet = new Set(existing.map(i => i.invoiceNumber));
+          const merged = [...existing];
+          previewData.purchases.forEach((inv: any) => {
+            if (idsSet.has(inv.id) || numSet.has(inv.invoiceNumber)) r.purchasesSkipped++;
+            else { merged.push(inv); r.purchases++; }
+          });
+          savePurchaseInvoices(merged);
+        }
       }
 
       setResult(r);
       setPreviewData(null);
-      toast({ title: "تم الاستيراد ✅", description: `أُضيف ${r.products + r.customers + r.invoices + r.expenses} عنصر` });
+      toast({ title: "تم الاستيراد ✅", description: `أُضيف ${r.products + r.customers + r.invoices + r.expenses + r.suppliers + r.purchases} عنصر` });
     } catch (err: any) {
       toast({ title: "فشل الاستيراد", description: err?.message, variant: "destructive" });
     } finally {
