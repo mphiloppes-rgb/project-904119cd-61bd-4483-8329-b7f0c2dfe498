@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan } from "lucide-react";
-import { getCustomers, addInvoice, getTierPrice, findProductByCode, type InvoiceItem } from "@/lib/store";
+import { getCustomers, addInvoice, type InvoiceItem } from "@/lib/store";
 import { logAction, canViewCostPrice, isCashier } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
@@ -84,6 +84,12 @@ export default function POSPage() {
     return (product.quantity ?? (product.inStock ? 999999 : 0)) - (inCart ? inCart.quantity : 0);
   };
 
+  const getSafeTierPrice = (p: PublicProduct, qty: number): number => {
+    if (p.wholesalePrice && p.wholesaleMinQty && qty >= p.wholesaleMinQty) return p.wholesalePrice;
+    if (p.halfWholesalePrice && p.halfWholesaleMinQty && qty >= p.halfWholesaleMinQty) return p.halfWholesalePrice;
+    return p.sellPrice;
+  };
+
   const cashier = isCashier();
 
   const addToCart = (product: PublicProduct) => {
@@ -103,10 +109,10 @@ export default function POSPage() {
     const displayName = fullProductLabel(product);
     if (existing) {
       const newQty = existing.quantity + 1;
-      const newPrice = getTierPrice(product, newQty);
+      const newPrice = getSafeTierPrice(product, newQty);
       setCart(cart.map((i) => i.productId === product.id ? { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice } : i));
     } else {
-      const price = getTierPrice(product, 1);
+      const price = getSafeTierPrice(product, 1);
       setCart([...cart, { productId: product.id, productName: displayName, quantity: 1, unitPrice: price, costPrice: safeCost, total: price }]);
     }
   };
@@ -114,7 +120,8 @@ export default function POSPage() {
   // Barcode handler: لو الـ search match exact code -> add مباشر
   const handleSearchKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && search.trim()) {
-      const product = findProductByCode(search.trim());
+      const code = search.trim().toLowerCase();
+      const product = products.find((p) => p.code?.toLowerCase() === code);
       if (product) {
         addToCart(product);
         setSearch("");
@@ -141,7 +148,7 @@ export default function POSPage() {
       const newQty = i.quantity + delta;
       if (newQty <= 0) return null;
       const product = products.find(p => p.id === productId);
-      const newPrice = product ? getTierPrice(product, newQty) : i.unitPrice;
+      const newPrice = product ? getSafeTierPrice(product, newQty) : i.unitPrice;
       return { ...i, quantity: newQty, unitPrice: newPrice, total: newQty * newPrice };
     }).filter(Boolean) as CartItem[]);
   };
