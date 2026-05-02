@@ -432,7 +432,7 @@ export default function POSPage() {
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3 max-h-[50vh] sm:max-h-[60vh] overflow-y-auto">
               {filtered.map((p, idx) => (
-                <button key={p.id} onClick={() => addToCart(p)} disabled={p.quantity <= 0} className={`stat-card text-right cursor-pointer animate-fade-in-up ${p.quantity <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`} style={{ animationDelay: `${idx * 0.03}s` }}>
+                <button key={p.id} onClick={() => addToCart(p)} disabled={(p.quantity ?? (p.inStock ? 1 : 0)) <= 0} className={`stat-card text-right cursor-pointer animate-fade-in-up ${(p.quantity ?? (p.inStock ? 1 : 0)) <= 0 ? 'opacity-50 cursor-not-allowed' : 'hover:border-primary'}`} style={{ animationDelay: `${idx * 0.03}s` }}>
                   <p className="font-extrabold text-sm leading-tight line-clamp-2">{p.name}</p>
                   {(p.brand || p.model) && (
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
@@ -447,8 +447,8 @@ export default function POSPage() {
                       {p.wholesalePrice && p.wholesaleMinQty ? `جملة: ${p.wholesalePrice}@${p.wholesaleMinQty}` : ''}
                     </p>
                   )}
-                  <p className={`text-xs ${p.quantity <= 0 ? 'text-destructive font-extrabold' : 'text-muted-foreground'}`}>
-                    المخزون: {p.quantity} {p.quantity <= 0 && '(نفد)'}
+                  <p className={`text-xs ${(p.quantity ?? (p.inStock ? 1 : 0)) <= 0 ? 'text-destructive font-extrabold' : 'text-muted-foreground'}`}>
+                    {cashier ? (p.inStock ? 'متاح للبيع' : 'غير متاح') : `المخزون: ${p.quantity} ${Number(p.quantity) <= 0 ? '(نفد)' : ''}`}
                   </p>
                 </button>
               ))}
@@ -529,7 +529,10 @@ export default function POSPage() {
                     <span className={`font-extrabold ${liveProfit >= 0 ? 'text-success' : 'text-destructive'}`}>{liveProfit.toLocaleString()} ج.م</span>
                   </div>
                 )}
-                <div className="flex items-center gap-3"><label className="text-sm text-muted-foreground min-w-[60px] font-bold">المدفوع</label><input ref={paidRef} type="number" value={paid || ""} onChange={(e) => setPaid(Number(e.target.value))} className="input-field flex-1" placeholder="0" /></div>
+                <div className="rounded-2xl border-2 border-primary/40 bg-primary/10 p-3 shadow-lg shadow-primary/10">
+                  <label className="text-sm font-extrabold text-primary mb-2 flex items-center gap-2"><Banknote size={17} /> المدفوع من العميل</label>
+                  <input ref={paidRef} type="number" value={paid || ""} onChange={(e) => setPaid(Number(e.target.value))} className="input-field input-emphasis w-full text-xl text-center" placeholder="0" />
+                </div>
                 <div className="flex justify-between font-extrabold text-destructive"><span>المتبقي</span><span>{remaining.toLocaleString()} ج.م</span></div>
               </div>
 
