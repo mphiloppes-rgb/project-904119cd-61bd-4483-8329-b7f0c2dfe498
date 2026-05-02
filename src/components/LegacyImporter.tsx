@@ -6,6 +6,7 @@ import {
   getProducts, saveProducts, getCustomers, saveCustomers, getInvoices, saveInvoices,
   getExpenses, saveExpenses,
 } from "@/lib/store";
+import { getSuppliers, saveSuppliers, getPurchaseInvoices, savePurchaseInvoices } from "@/lib/suppliers";
 
 type Mode = "merge" | "replace";
 
@@ -14,7 +15,19 @@ interface ImportResult {
   customers: number; customersSkipped: number;
   invoices: number; invoicesSkipped: number;
   expenses: number; expensesSkipped: number;
+  suppliers: number; suppliersSkipped: number;
+  purchases: number; purchasesSkipped: number;
 }
+
+type DataKey = "products" | "customers" | "invoices" | "expenses" | "suppliers" | "purchases";
+const dataTypes: { key: DataKey; label: string }[] = [
+  { key: "products", label: "المنتجات" },
+  { key: "customers", label: "العملاء" },
+  { key: "invoices", label: "فواتير البيع" },
+  { key: "expenses", label: "المصاريف" },
+  { key: "suppliers", label: "الموردين" },
+  { key: "purchases", label: "فواتير الشراء" },
+];
 
 export default function LegacyImporter() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -22,6 +35,9 @@ export default function LegacyImporter() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [previewData, setPreviewData] = useState<any | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<Record<DataKey, boolean>>({
+    products: true, customers: true, invoices: true, expenses: true, suppliers: true, purchases: true,
+  });
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,10 +46,11 @@ export default function LegacyImporter() {
       const text = await file.text();
       const data = JSON.parse(text);
       // تحقق سريع — يدعم backup الجديد + أي backup قديم له نفس الشكل
-      if (!data.products && !data.customers && !data.invoices && !data.expenses) {
+      if (!data.products && !data.customers && !data.invoices && !data.expenses && !data.suppliers && !data.purchaseInvoices && !data.purchases) {
         toast({ title: "ملف غير صالح", description: "مفيش بيانات يمكن استيرادها", variant: "destructive" });
         return;
       }
+      if (data.purchaseInvoices && !data.purchases) data.purchases = data.purchaseInvoices;
       setPreviewData(data);
       setResult(null);
     } catch (err: any) {
