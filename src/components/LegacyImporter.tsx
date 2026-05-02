@@ -224,13 +224,34 @@ export default function LegacyImporter() {
             <div className="p-2 bg-card rounded">عملاء: <strong>{previewData.customers?.length || 0}</strong></div>
             <div className="p-2 bg-card rounded">فواتير: <strong>{previewData.invoices?.length || 0}</strong></div>
             <div className="p-2 bg-card rounded">مصاريف: <strong>{previewData.expenses?.length || 0}</strong></div>
+            <div className="p-2 bg-card rounded">موردين: <strong>{previewData.suppliers?.length || 0}</strong></div>
+            <div className="p-2 bg-card rounded">فواتير شراء: <strong>{previewData.purchases?.length || 0}</strong></div>
+          </div>
+          <div className="rounded-xl border border-border bg-card/70 p-3">
+            <p className="text-xs font-extrabold mb-2">اختار الجداول اللي هتتنقل فقط:</p>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {dataTypes.map((t) => {
+                const count = previewData[t.key]?.length || 0;
+                return (
+                  <label key={t.key} className={`flex items-center justify-between gap-2 rounded-lg p-2 ${count ? 'bg-accent/50 cursor-pointer' : 'bg-muted/30 opacity-60'}`}>
+                    <span className="font-bold">{t.label}</span>
+                    <input
+                      type="checkbox"
+                      checked={selectedTypes[t.key] && count > 0}
+                      disabled={!count}
+                      onChange={(e) => setSelectedTypes((prev) => ({ ...prev, [t.key]: e.target.checked }))}
+                    />
+                  </label>
+                );
+              })}
+            </div>
           </div>
           {previewData.exportDate && (
             <p className="text-[11px] text-muted-foreground">
               تاريخ الإصدار: {new Date(previewData.exportDate).toLocaleString("ar-EG")}
             </p>
           )}
-          <button onClick={apply} disabled={busy} className="w-full btn-primary py-2.5 text-sm">
+          <button onClick={apply} disabled={busy || !dataTypes.some(t => selectedTypes[t.key] && (previewData[t.key]?.length || 0) > 0)} className="w-full btn-primary py-2.5 text-sm disabled:opacity-50">
             <Check size={16} /> {busy ? "جارٍ..." : `${mode === "merge" ? "دمج البيانات الآن" : "استبدال البيانات الآن"}`}
           </button>
         </div>
@@ -244,6 +265,8 @@ export default function LegacyImporter() {
             <li>عملاء: <strong>+{result.customers}</strong> {result.customersSkipped > 0 && <span className="text-muted-foreground">({result.customersSkipped} مكرر)</span>}</li>
             <li>فواتير: <strong>+{result.invoices}</strong> {result.invoicesSkipped > 0 && <span className="text-muted-foreground">({result.invoicesSkipped} مكرر)</span>}</li>
             <li>مصاريف: <strong>+{result.expenses}</strong> {result.expensesSkipped > 0 && <span className="text-muted-foreground">({result.expensesSkipped} مكرر)</span>}</li>
+            <li>موردين: <strong>+{result.suppliers}</strong> {result.suppliersSkipped > 0 && <span className="text-muted-foreground">({result.suppliersSkipped} مكرر)</span>}</li>
+            <li>فواتير شراء: <strong>+{result.purchases}</strong> {result.purchasesSkipped > 0 && <span className="text-muted-foreground">({result.purchasesSkipped} مكرر)</span>}</li>
           </ul>
         </div>
       )}
