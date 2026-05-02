@@ -1,5 +1,5 @@
 // تبويب يعرض السجل التاريخي لتغير سعر شراء صنف محدد داخل فاتورة الشراء
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { History, TrendingUp, TrendingDown, Minus, Filter } from "lucide-react";
 import { getPriceHistoryForProduct } from "@/lib/price-history";
 
