@@ -1,6 +1,6 @@
-// أداة لاستيراد بيانات من نسخة احتياطية قديمة ودمجها مع الموجود (دون مسح).
+// أداة لاستيراد بيانات من نسخة احتياطية قديمة مع معاينة وتحكم لكل جدول.
 import { useRef, useState } from "react";
-import { Upload, ArrowDown, AlertCircle, Check } from "lucide-react";
+import { Upload, ArrowDown, AlertCircle, Check, X, Eye } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import {
   getProducts, saveProducts, getCustomers, saveCustomers, getInvoices, saveInvoices,
@@ -8,7 +8,7 @@ import {
 } from "@/lib/store";
 import { getSuppliers, saveSuppliers, getPurchaseInvoices, savePurchaseInvoices } from "@/lib/suppliers";
 
-type Mode = "merge" | "replace";
+type Mode = "merge" | "replace" | "skip";
 
 interface ImportResult {
   products: number; productsSkipped: number;
@@ -20,23 +20,26 @@ interface ImportResult {
 }
 
 type DataKey = "products" | "customers" | "invoices" | "expenses" | "suppliers" | "purchases";
-const dataTypes: { key: DataKey; label: string }[] = [
-  { key: "products", label: "المنتجات" },
-  { key: "customers", label: "العملاء" },
-  { key: "invoices", label: "فواتير البيع" },
-  { key: "expenses", label: "المصاريف" },
-  { key: "suppliers", label: "الموردين" },
-  { key: "purchases", label: "فواتير الشراء" },
+const dataTypes: { key: DataKey; label: string; icon: string }[] = [
+  { key: "products", label: "المنتجات", icon: "📦" },
+  { key: "customers", label: "العملاء", icon: "👥" },
+  { key: "invoices", label: "فواتير البيع", icon: "🧾" },
+  { key: "expenses", label: "المصاريف", icon: "💸" },
+  { key: "suppliers", label: "الموردين", icon: "🏭" },
+  { key: "purchases", label: "فواتير الشراء", icon: "📥" },
 ];
 
 export default function LegacyImporter() {
   const fileRef = useRef<HTMLInputElement>(null);
-  const [mode, setMode] = useState<Mode>("merge");
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [previewData, setPreviewData] = useState<any | null>(null);
-  const [selectedTypes, setSelectedTypes] = useState<Record<DataKey, boolean>>({
-    products: true, customers: true, invoices: true, expenses: true, suppliers: true, purchases: true,
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewType, setPreviewType] = useState<DataKey | null>(null);
+  // كل جدول له mode منفصل: merge | replace | skip
+  const [perTypeMode, setPerTypeMode] = useState<Record<DataKey, Mode>>({
+    products: "merge", customers: "merge", invoices: "merge",
+    expenses: "merge", suppliers: "merge", purchases: "merge",
   });
 
   const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -45,7 +48,6 @@ export default function LegacyImporter() {
     try {
       const text = await file.text();
       const data = JSON.parse(text);
-      // تحقق سريع — يدعم backup الجديد + أي backup قديم له نفس الشكل
       if (!data.products && !data.customers && !data.invoices && !data.expenses && !data.suppliers && !data.purchaseInvoices && !data.purchases) {
         toast({ title: "ملف غير صالح", description: "مفيش بيانات يمكن استيرادها", variant: "destructive" });
         return;
@@ -53,6 +55,10 @@ export default function LegacyImporter() {
       if (data.purchaseInvoices && !data.purchases) data.purchases = data.purchaseInvoices;
       setPreviewData(data);
       setResult(null);
+      // أي جدول فاضي اعتبره skip تلقائيًا
+      const next: Record<DataKey, Mode> = { ...perTypeMode };
+      dataTypes.forEach(t => { if (!data[t.key]?.length) next[t.key] = "skip"; });
+      setPerTypeMode(next);
     } catch (err: any) {
       toast({ title: "ملف تالف", description: err?.message || "تعذّر قراءة JSON", variant: "destructive" });
     } finally {
@@ -73,93 +79,51 @@ export default function LegacyImporter() {
         purchases: 0, purchasesSkipped: 0,
       };
 
-      if (mode === "replace") {
-        if (selectedTypes.products && previewData.products) { saveProducts(previewData.products); r.products = previewData.products.length; }
-        if (selectedTypes.customers && previewData.customers) { saveCustomers(previewData.customers); r.customers = previewData.customers.length; }
-        if (selectedTypes.invoices && previewData.invoices) { saveInvoices(previewData.invoices); r.invoices = previewData.invoices.length; }
-        if (selectedTypes.expenses && previewData.expenses) { saveExpenses(previewData.expenses); r.expenses = previewData.expenses.length; }
-        if (selectedTypes.suppliers && previewData.suppliers) { saveSuppliers(previewData.suppliers); r.suppliers = previewData.suppliers.length; }
-        if (selectedTypes.purchases && previewData.purchases) { savePurchaseInvoices(previewData.purchases); r.purchases = previewData.purchases.length; }
-      } else {
-        // merge — نتجنب الـ duplicates بالـ id والاسم/الكود
-        if (selectedTypes.products && Array.isArray(previewData.products)) {
-          const existing = getProducts();
-          const idsSet = new Set(existing.map(p => p.id));
-          const codeSet = new Set(existing.filter(p => p.code).map(p => p.code!.toLowerCase()));
-          const merged = [...existing];
-          previewData.products.forEach((p: any) => {
-            if (idsSet.has(p.id) || (p.code && codeSet.has(String(p.code).toLowerCase()))) {
-              r.productsSkipped++;
-            } else {
-              merged.push(p); r.products++;
-            }
-          });
-          saveProducts(merged);
+      const handleArray = <T extends { id?: string }>(
+        key: DataKey,
+        getFn: () => T[],
+        saveFn: (arr: T[]) => void,
+        dedupe: (item: any, existing: T[]) => boolean,
+        countKey: keyof ImportResult,
+        skipKey: keyof ImportResult
+      ) => {
+        const mode = perTypeMode[key];
+        if (mode === "skip") return;
+        const incoming = previewData[key];
+        if (!Array.isArray(incoming)) return;
+        if (mode === "replace") {
+          saveFn(incoming);
+          (r as any)[countKey] = incoming.length;
+          return;
         }
-        if (selectedTypes.customers && Array.isArray(previewData.customers)) {
-          const existing = getCustomers();
-          const idsSet = new Set(existing.map(c => c.id));
-          const phoneSet = new Set(existing.filter(c => c.phone).map(c => c.phone));
-          const merged = [...existing];
-          previewData.customers.forEach((c: any) => {
-            if (idsSet.has(c.id) || (c.phone && phoneSet.has(c.phone))) {
-              r.customersSkipped++;
-            } else {
-              merged.push(c); r.customers++;
-            }
-          });
-          saveCustomers(merged);
-        }
-        if (selectedTypes.invoices && Array.isArray(previewData.invoices)) {
-          const existing = getInvoices();
-          const idsSet = new Set(existing.map(i => i.id));
-          const numSet = new Set(existing.map(i => i.invoiceNumber));
-          const merged = [...existing];
-          previewData.invoices.forEach((inv: any) => {
-            if (idsSet.has(inv.id) || numSet.has(inv.invoiceNumber)) {
-              r.invoicesSkipped++;
-            } else {
-              merged.push(inv); r.invoices++;
-            }
-          });
-          saveInvoices(merged);
-        }
-        if (selectedTypes.expenses && Array.isArray(previewData.expenses)) {
-          const existing = getExpenses();
-          const idsSet = new Set(existing.map(e => e.id));
-          const merged = [...existing];
-          previewData.expenses.forEach((ex: any) => {
-            if (idsSet.has(ex.id)) {
-              r.expensesSkipped++;
-            } else {
-              merged.push(ex); r.expenses++;
-            }
-          });
-          saveExpenses(merged);
-        }
-        if (selectedTypes.suppliers && Array.isArray(previewData.suppliers)) {
-          const existing = getSuppliers();
-          const idsSet = new Set(existing.map(s => s.id));
-          const phoneSet = new Set(existing.filter(s => s.phone).map(s => s.phone));
-          const merged = [...existing];
-          previewData.suppliers.forEach((s: any) => {
-            if (idsSet.has(s.id) || (s.phone && phoneSet.has(s.phone))) r.suppliersSkipped++;
-            else { merged.push(s); r.suppliers++; }
-          });
-          saveSuppliers(merged);
-        }
-        if (selectedTypes.purchases && Array.isArray(previewData.purchases)) {
-          const existing = getPurchaseInvoices();
-          const idsSet = new Set(existing.map(i => i.id));
-          const numSet = new Set(existing.map(i => i.invoiceNumber));
-          const merged = [...existing];
-          previewData.purchases.forEach((inv: any) => {
-            if (idsSet.has(inv.id) || numSet.has(inv.invoiceNumber)) r.purchasesSkipped++;
-            else { merged.push(inv); r.purchases++; }
-          });
-          savePurchaseInvoices(merged);
-        }
-      }
+        // merge
+        const existing = getFn();
+        const merged = [...existing];
+        incoming.forEach((item: any) => {
+          if (dedupe(item, existing)) (r as any)[skipKey]++;
+          else { merged.push(item); (r as any)[countKey]++; }
+        });
+        saveFn(merged);
+      };
+
+      handleArray("products", getProducts, saveProducts,
+        (p, ex) => ex.some(e => e.id === p.id || (p.code && (e as any).code?.toLowerCase() === String(p.code).toLowerCase())),
+        "products", "productsSkipped");
+      handleArray("customers", getCustomers, saveCustomers,
+        (c, ex) => ex.some(e => e.id === c.id || (c.phone && (e as any).phone === c.phone)),
+        "customers", "customersSkipped");
+      handleArray("invoices", getInvoices, saveInvoices,
+        (i, ex) => ex.some(e => e.id === i.id || (e as any).invoiceNumber === i.invoiceNumber),
+        "invoices", "invoicesSkipped");
+      handleArray("expenses", getExpenses, saveExpenses,
+        (x, ex) => ex.some(e => e.id === x.id),
+        "expenses", "expensesSkipped");
+      handleArray("suppliers", getSuppliers, saveSuppliers,
+        (s, ex) => ex.some(e => e.id === s.id || (s.phone && (e as any).phone === s.phone)),
+        "suppliers", "suppliersSkipped");
+      handleArray("purchases", getPurchaseInvoices, savePurchaseInvoices,
+        (i, ex) => ex.some(e => e.id === i.id || (e as any).invoiceNumber === i.invoiceNumber),
+        "purchases", "purchasesSkipped");
 
       setResult(r);
       setPreviewData(null);
@@ -171,6 +135,12 @@ export default function LegacyImporter() {
     }
   };
 
+  const setMode = (key: DataKey, mode: Mode) => setPerTypeMode(prev => ({ ...prev, [key]: mode }));
+  const hasReplace = dataTypes.some(t => perTypeMode[t.key] === "replace" && (previewData?.[t.key]?.length || 0) > 0);
+  const hasAny = dataTypes.some(t => perTypeMode[t.key] !== "skip" && (previewData?.[t.key]?.length || 0) > 0);
+
+  const previewSample = previewType && previewData?.[previewType] ? (previewData[previewType] as any[]).slice(0, 20) : [];
+
   return (
     <div className="stat-card animate-fade-in-up">
       <div className="flex items-center gap-3 mb-4">
@@ -179,33 +149,9 @@ export default function LegacyImporter() {
         </div>
         <div>
           <h3 className="font-extrabold text-lg">نقل بيانات من إصدار قديم</h3>
-          <p className="text-xs text-muted-foreground">ارفع ملف backup من الإصدار القديم وادمجه مع الإدارة الحالية</p>
+          <p className="text-xs text-muted-foreground">معاينة كل جدول لوحده واختيار: دمج / استبدال / تخطي</p>
         </div>
       </div>
-
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        <button
-          onClick={() => setMode("merge")}
-          className={`py-2.5 rounded-xl font-bold text-sm ${mode === "merge" ? "bg-primary text-primary-foreground shadow" : "bg-accent"}`}
-        >
-          🔗 دمج (يحتفظ بالحالي)
-        </button>
-        <button
-          onClick={() => setMode("replace")}
-          className={`py-2.5 rounded-xl font-bold text-sm ${mode === "replace" ? "bg-destructive text-destructive-foreground shadow" : "bg-accent"}`}
-        >
-          ⚠️ استبدال كامل
-        </button>
-      </div>
-
-      {mode === "replace" && (
-        <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/30 mb-3 flex items-start gap-2">
-          <AlertCircle className="text-destructive flex-shrink-0 mt-0.5" size={16} />
-          <p className="text-xs text-destructive font-bold">
-            تحذير: الاستبدال هيمسح كل البيانات الحالية ويحط بدلها بيانات الملف. متأكد؟
-          </p>
-        </div>
-      )}
 
       <button
         onClick={() => fileRef.current?.click()}
@@ -217,43 +163,74 @@ export default function LegacyImporter() {
       <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={onFile} />
 
       {previewData && (
-        <div className="mt-3 p-3 rounded-xl bg-muted/40 space-y-2">
-          <p className="text-xs font-extrabold">معاينة الملف:</p>
-          <div className="grid grid-cols-2 gap-2 text-xs">
-            <div className="p-2 bg-card rounded">منتجات: <strong>{previewData.products?.length || 0}</strong></div>
-            <div className="p-2 bg-card rounded">عملاء: <strong>{previewData.customers?.length || 0}</strong></div>
-            <div className="p-2 bg-card rounded">فواتير: <strong>{previewData.invoices?.length || 0}</strong></div>
-            <div className="p-2 bg-card rounded">مصاريف: <strong>{previewData.expenses?.length || 0}</strong></div>
-            <div className="p-2 bg-card rounded">موردين: <strong>{previewData.suppliers?.length || 0}</strong></div>
-            <div className="p-2 bg-card rounded">فواتير شراء: <strong>{previewData.purchases?.length || 0}</strong></div>
+        <div className="mt-3 p-3 rounded-xl bg-muted/40 space-y-3">
+          <p className="text-xs font-extrabold">معاينة + اختيار الإجراء لكل جدول:</p>
+
+          <div className="space-y-2">
+            {dataTypes.map((t) => {
+              const count = previewData[t.key]?.length || 0;
+              const mode = perTypeMode[t.key];
+              return (
+                <div key={t.key} className={`rounded-xl border p-3 ${count ? 'bg-card border-border' : 'bg-muted/30 border-muted opacity-60'}`}>
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-lg">{t.icon}</span>
+                      <span className="font-extrabold text-sm truncate">{t.label}</span>
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent">{count}</span>
+                    </div>
+                    {count > 0 && (
+                      <button
+                        onClick={() => { setPreviewType(t.key); setShowPreviewModal(true); }}
+                        className="flex items-center gap-1 text-xs text-primary font-bold hover:underline"
+                      >
+                        <Eye size={14} /> معاينة
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {(["merge", "replace", "skip"] as Mode[]).map(m => (
+                      <button
+                        key={m}
+                        disabled={!count}
+                        onClick={() => setMode(t.key, m)}
+                        className={`py-1.5 rounded-lg text-xs font-bold transition ${
+                          mode === m
+                            ? m === "replace" ? "bg-destructive text-destructive-foreground" : m === "skip" ? "bg-muted text-foreground" : "bg-primary text-primary-foreground"
+                            : "bg-accent/40 text-foreground hover:bg-accent"
+                        } disabled:opacity-40 disabled:cursor-not-allowed`}
+                      >
+                        {m === "merge" ? "🔗 دمج" : m === "replace" ? "⚠️ استبدال" : "⊘ تخطي"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <div className="rounded-xl border border-border bg-card/70 p-3">
-            <p className="text-xs font-extrabold mb-2">اختار الجداول اللي هتتنقل فقط:</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              {dataTypes.map((t) => {
-                const count = previewData[t.key]?.length || 0;
-                return (
-                  <label key={t.key} className={`flex items-center justify-between gap-2 rounded-lg p-2 ${count ? 'bg-accent/50 cursor-pointer' : 'bg-muted/30 opacity-60'}`}>
-                    <span className="font-bold">{t.label}</span>
-                    <input
-                      type="checkbox"
-                      checked={selectedTypes[t.key] && count > 0}
-                      disabled={!count}
-                      onChange={(e) => setSelectedTypes((prev) => ({ ...prev, [t.key]: e.target.checked }))}
-                    />
-                  </label>
-                );
-              })}
+
+          {hasReplace && (
+            <div className="p-3 rounded-xl bg-destructive/10 border border-destructive/30 flex items-start gap-2">
+              <AlertCircle className="text-destructive flex-shrink-0 mt-0.5" size={16} />
+              <p className="text-xs text-destructive font-bold">
+                تنبيه: جداول الاستبدال هتمسح البيانات الحالية فيها وتحط بدلها بيانات الملف.
+              </p>
             </div>
-          </div>
+          )}
+
           {previewData.exportDate && (
             <p className="text-[11px] text-muted-foreground">
               تاريخ الإصدار: {new Date(previewData.exportDate).toLocaleString("ar-EG")}
             </p>
           )}
-          <button onClick={apply} disabled={busy || !dataTypes.some(t => selectedTypes[t.key] && (previewData[t.key]?.length || 0) > 0)} className="w-full btn-primary py-2.5 text-sm disabled:opacity-50">
-            <Check size={16} /> {busy ? "جارٍ..." : `${mode === "merge" ? "دمج البيانات الآن" : "استبدال البيانات الآن"}`}
-          </button>
+
+          <div className="flex gap-2">
+            <button onClick={() => setPreviewData(null)} className="flex-1 py-2.5 rounded-xl bg-muted text-foreground text-sm font-bold">
+              إلغاء
+            </button>
+            <button onClick={apply} disabled={busy || !hasAny} className="flex-[2] btn-primary py-2.5 text-sm disabled:opacity-50">
+              <Check size={16} /> {busy ? "جارٍ..." : "تنفيذ الاستيراد المحدد"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -261,13 +238,56 @@ export default function LegacyImporter() {
         <div className="mt-3 p-3 rounded-xl bg-success/10 border border-success/30">
           <p className="text-xs font-extrabold text-success mb-2">✅ تم الاستيراد بنجاح:</p>
           <ul className="text-xs space-y-1">
-            <li>منتجات: <strong>+{result.products}</strong> {result.productsSkipped > 0 && <span className="text-muted-foreground">({result.productsSkipped} تم تخطيها كمكررة)</span>}</li>
+            <li>منتجات: <strong>+{result.products}</strong> {result.productsSkipped > 0 && <span className="text-muted-foreground">({result.productsSkipped} مكرر)</span>}</li>
             <li>عملاء: <strong>+{result.customers}</strong> {result.customersSkipped > 0 && <span className="text-muted-foreground">({result.customersSkipped} مكرر)</span>}</li>
-            <li>فواتير: <strong>+{result.invoices}</strong> {result.invoicesSkipped > 0 && <span className="text-muted-foreground">({result.invoicesSkipped} مكرر)</span>}</li>
+            <li>فواتير بيع: <strong>+{result.invoices}</strong> {result.invoicesSkipped > 0 && <span className="text-muted-foreground">({result.invoicesSkipped} مكرر)</span>}</li>
             <li>مصاريف: <strong>+{result.expenses}</strong> {result.expensesSkipped > 0 && <span className="text-muted-foreground">({result.expensesSkipped} مكرر)</span>}</li>
             <li>موردين: <strong>+{result.suppliers}</strong> {result.suppliersSkipped > 0 && <span className="text-muted-foreground">({result.suppliersSkipped} مكرر)</span>}</li>
             <li>فواتير شراء: <strong>+{result.purchases}</strong> {result.purchasesSkipped > 0 && <span className="text-muted-foreground">({result.purchasesSkipped} مكرر)</span>}</li>
           </ul>
+        </div>
+      )}
+
+      {/* مودال المعاينة التفصيلية */}
+      {showPreviewModal && previewType && (
+        <div className="modal-overlay" onClick={() => setShowPreviewModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-3xl">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-extrabold text-lg">
+                  معاينة: {dataTypes.find(t => t.key === previewType)?.label}
+                  <span className="text-xs font-normal text-muted-foreground mr-2">
+                    (أول {previewSample.length} من {previewData[previewType]?.length || 0})
+                  </span>
+                </h3>
+                <button onClick={() => setShowPreviewModal(false)} className="p-2 rounded-lg hover:bg-accent">
+                  <X size={18} />
+                </button>
+              </div>
+              <div className="overflow-auto max-h-[60vh] rounded-xl border border-border">
+                <table className="w-full text-xs">
+                  <thead className="bg-accent/50 sticky top-0">
+                    <tr>
+                      {previewSample[0] && Object.keys(previewSample[0]).slice(0, 6).map(k => (
+                        <th key={k} className="p-2 text-right font-extrabold">{k}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {previewSample.map((row, i) => (
+                      <tr key={i} className="border-t border-border">
+                        {Object.keys(previewSample[0]).slice(0, 6).map(k => (
+                          <td key={k} className="p-2 truncate max-w-[180px]">
+                            {typeof row[k] === "object" ? JSON.stringify(row[k]).slice(0, 40) : String(row[k] ?? "—")}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
