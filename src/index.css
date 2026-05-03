@@ -210,19 +210,39 @@
     display: flex;
     justify-content: center;
     width: 100%;
+    max-width: min(960px, 100%);
     margin: auto 0;
   }
-  /* The card itself: animation only, width comes from utility classes (max-w-*) */
+  /* The card itself: animation + sane defaults so any .glass-modal inside an
+     overlay keeps a unified max width/height even if the page forgot utilities */
   .modal-overlay > .glass-modal,
   .modal-overlay > .modal-content > .glass-modal {
     animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     margin: auto 0;
     box-sizing: border-box;
+    width: 100%;
+    max-width: min(960px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
   }
 
   .modal-overlay > .modal-content > .glass-modal {
     width: 100%;
   }
+
+  /* Unified modal card — single class that any page can use to guarantee
+     consistent width/height/padding/glass styling without remembering utils */
+  .modal-card {
+    @apply glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full;
+    max-width: min(960px, 100%);
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+  .modal-card.modal-sm { max-width: min(28rem, 100%); }
+  .modal-card.modal-md { max-width: min(36rem, 100%); }
+  .modal-card.modal-lg { max-width: min(48rem, 100%); }
+  .modal-card.modal-xl { max-width: min(64rem, 100%); }
 
   @keyframes overlayFadeIn {
     from { opacity: 0; }
