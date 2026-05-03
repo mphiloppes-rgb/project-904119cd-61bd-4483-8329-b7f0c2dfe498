@@ -130,7 +130,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 min-h-screen relative z-10">
+      <main className="flex-1 min-h-screen relative">
         {/* Top bar mobile */}
         <div className="lg:hidden flex items-center justify-between p-4 glass-card rounded-none border-x-0 border-t-0">
           <div className="flex items-center gap-3">
