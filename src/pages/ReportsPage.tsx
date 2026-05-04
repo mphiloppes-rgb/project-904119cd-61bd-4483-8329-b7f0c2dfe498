@@ -214,14 +214,9 @@ export default function ReportsPage() {
         );
       })()}
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-4 flex-wrap overflow-x-auto pb-1">
-        {tabs.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)} className={`px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${tab === t.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Reports Index — categorized with descriptions */}
+      <ReportsIndex active={tab} onSelect={(k) => setTab(k as Tab)} />
+
 
       {/* Tab content */}
       <div className="stat-card animate-fade-in-up">
