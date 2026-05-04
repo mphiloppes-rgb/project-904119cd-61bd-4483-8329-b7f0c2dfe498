@@ -18,7 +18,7 @@ const periods: { key: Period; label: string }[] = [
   { key: "yearly", label: "سنوي" },
 ];
 
-type Tab = "summary" | "financial" | "inventory" | "calculator" | "debt" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
+type Tab = "summary" | "financial" | "inventory" | "calculator" | "debt" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts" | "hourly" | "margins" | "supplierBreakdown" | "customerAnalytics";
 type StaleDays = 30 | 60 | 90 | 180;
 
 export default function ReportsPage() {
