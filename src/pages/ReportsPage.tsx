@@ -569,6 +569,7 @@ export default function ReportsPage() {
           <CustomerAnalytics salesDetails={report.salesDetails} bestCustomers={report.bestCustomers} />
         )}
 
+        {tab === "staleProducts" && (
           <div>
             <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
               <div className="flex items-center gap-3">
