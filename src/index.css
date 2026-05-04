@@ -205,29 +205,23 @@
     animation: overlayFadeIn 0.35s cubic-bezier(0.22, 1, 0.36, 1);
     text-align: initial;
   }
-  /* Inner wrapper — let the card define its own width via max-w-* */
+  /* Inner wrapper — keeps content centered without forcing a width on the
+     card. Each modal sets its own max-w utility. */
   .modal-overlay > .modal-content {
     display: flex;
     justify-content: center;
     width: 100%;
-    max-width: min(960px, 100%);
     margin: auto 0;
   }
-  /* The card itself: animation + sane defaults so any .glass-modal inside an
-     overlay keeps a unified max width/height even if the page forgot utilities */
+  /* Animation + overflow safety. We DO NOT force a max-width here so cards
+     keep their own (max-w-md, max-w-lg, max-w-2xl …). */
   .modal-overlay > .glass-modal,
   .modal-overlay > .modal-content > .glass-modal {
     animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
     margin: auto 0;
     box-sizing: border-box;
-    width: 100%;
-    max-width: min(960px, 100%);
     max-height: calc(100vh - 2rem);
     overflow-y: auto;
-  }
-
-  .modal-overlay > .modal-content > .glass-modal {
-    width: 100%;
   }
 
   /* Unified modal card — single class that any page can use to guarantee
