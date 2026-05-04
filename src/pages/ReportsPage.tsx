@@ -562,7 +562,13 @@ export default function ReportsPage() {
           </div>
         )}
 
-        {tab === "staleProducts" && (
+        {tab === "hourly" && <HourlyPerformance salesDetails={report.salesDetails} />}
+        {tab === "margins" && <ProfitMargins productProfits={report.productProfits} />}
+        {tab === "supplierBreakdown" && <SupplierBreakdown purchaseDetails={report.purchaseDetails} />}
+        {tab === "customerAnalytics" && (
+          <CustomerAnalytics salesDetails={report.salesDetails} bestCustomers={report.bestCustomers} />
+        )}
+
           <div>
             <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
               <div className="flex items-center gap-3">
