@@ -69,21 +69,8 @@ export default function ReportsPage() {
     { label: "صافي الربح", value: report.netProfit, icon: TrendingUp, iconBg: report.netProfit >= 0 ? "bg-success/10" : "bg-destructive/10", iconColor: report.netProfit >= 0 ? "text-success" : "text-destructive" },
   ];
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "summary", label: "ملخص" },
-    { key: "financial", label: "💰 الموقف المالي" },
-    { key: "inventory", label: "📦 المخزون والكاش" },
-    { key: "calculator", label: "🧮 حاسبة بنود" },
-    { key: "debt", label: "📋 تقرير المديونية" },
-    { key: "sales", label: `المبيعات (${report.salesDetails.length})` },
-    { key: "bestCustomers", label: `أفضل العملاء (${report.bestCustomers.length})` },
-    { key: "staleProducts", label: `منتجات راكدة` },
-    { key: "returns", label: `المرتجعات (${report.returnsDetails.length})` },
-    { key: "expenses", label: `المصاريف (${report.expensesDetails.length})` },
-    { key: "purchases", label: `المشتريات (${report.purchaseDetails.length})` },
-    { key: "supplierPayments", label: `سداد موردين (${report.supplierPaymentsDetails.length})` },
-    { key: "products", label: `ربح المنتجات (${report.productProfits.length})` },
-  ];
+  // (Tabs list moved to <ReportsIndex /> with grouped descriptions)
+
 
   return (
     <div>
