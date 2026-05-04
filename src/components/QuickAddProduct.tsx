@@ -100,6 +100,7 @@ export default function QuickAddProduct({ open, onClose, onCreated, defaultCost 
           <button onClick={submit} className="btn-primary py-3">حفظ وإضافة للفاتورة</button>
           <button onClick={onClose} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold hover:bg-muted transition-all">إلغاء</button>
         </div>
+        </div>
       </div>
     </div>
   );
