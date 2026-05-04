@@ -7,6 +7,8 @@ import { exportElementToPDF } from "@/lib/pdf-export";
 import { isCashier } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import ReportCalculator, { DebtReport } from "@/components/ReportCalculator";
+import ReportsIndex from "@/components/ReportsIndex";
+import { HourlyPerformance, ProfitMargins, SupplierBreakdown, CustomerAnalytics } from "@/components/ReportAnalytics";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
@@ -16,7 +18,7 @@ const periods: { key: Period; label: string }[] = [
   { key: "yearly", label: "سنوي" },
 ];
 
-type Tab = "summary" | "financial" | "inventory" | "calculator" | "debt" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts";
+type Tab = "summary" | "financial" | "inventory" | "calculator" | "debt" | "sales" | "returns" | "expenses" | "purchases" | "supplierPayments" | "products" | "bestCustomers" | "staleProducts" | "hourly" | "margins" | "supplierBreakdown" | "customerAnalytics";
 type StaleDays = 30 | 60 | 90 | 180;
 
 export default function ReportsPage() {
@@ -67,21 +69,8 @@ export default function ReportsPage() {
     { label: "صافي الربح", value: report.netProfit, icon: TrendingUp, iconBg: report.netProfit >= 0 ? "bg-success/10" : "bg-destructive/10", iconColor: report.netProfit >= 0 ? "text-success" : "text-destructive" },
   ];
 
-  const tabs: { key: Tab; label: string }[] = [
-    { key: "summary", label: "ملخص" },
-    { key: "financial", label: "💰 الموقف المالي" },
-    { key: "inventory", label: "📦 المخزون والكاش" },
-    { key: "calculator", label: "🧮 حاسبة بنود" },
-    { key: "debt", label: "📋 تقرير المديونية" },
-    { key: "sales", label: `المبيعات (${report.salesDetails.length})` },
-    { key: "bestCustomers", label: `أفضل العملاء (${report.bestCustomers.length})` },
-    { key: "staleProducts", label: `منتجات راكدة` },
-    { key: "returns", label: `المرتجعات (${report.returnsDetails.length})` },
-    { key: "expenses", label: `المصاريف (${report.expensesDetails.length})` },
-    { key: "purchases", label: `المشتريات (${report.purchaseDetails.length})` },
-    { key: "supplierPayments", label: `سداد موردين (${report.supplierPaymentsDetails.length})` },
-    { key: "products", label: `ربح المنتجات (${report.productProfits.length})` },
-  ];
+  // (Tabs list moved to <ReportsIndex /> with grouped descriptions)
+
 
   return (
     <div>
@@ -212,14 +201,9 @@ export default function ReportsPage() {
         );
       })()}
 
-      {/* Tabs */}
-      <div className="flex gap-2 mb-4 flex-wrap overflow-x-auto pb-1">
-        {tabs.map((t) => (
-          <button key={t.key} onClick={() => setTab(t.key)} className={`px-4 py-2 rounded-xl font-bold text-sm whitespace-nowrap transition-all ${tab === t.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-accent"}`}>
-            {t.label}
-          </button>
-        ))}
-      </div>
+      {/* Reports Index — categorized with descriptions */}
+      <ReportsIndex active={tab} onSelect={(k) => setTab(k as Tab)} />
+
 
       {/* Tab content */}
       <div className="stat-card animate-fade-in-up">
@@ -576,6 +560,13 @@ export default function ReportsPage() {
               </>
             )}
           </div>
+        )}
+
+        {tab === "hourly" && <HourlyPerformance salesDetails={report.salesDetails} />}
+        {tab === "margins" && <ProfitMargins productProfits={report.productProfits} />}
+        {tab === "supplierBreakdown" && <SupplierBreakdown purchaseDetails={report.purchaseDetails} />}
+        {tab === "customerAnalytics" && (
+          <CustomerAnalytics salesDetails={report.salesDetails} bestCustomers={report.bestCustomers} />
         )}
 
         {tab === "staleProducts" && (
