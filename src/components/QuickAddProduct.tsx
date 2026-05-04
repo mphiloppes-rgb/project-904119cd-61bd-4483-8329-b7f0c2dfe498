@@ -49,8 +49,9 @@ export default function QuickAddProduct({ open, onClose, onCreated, defaultCost 
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 60 }}>
-      <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-xl md:max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="modal-overlay" style={{ zIndex: 1100 }}>
+      <div className="modal-content" style={{ maxWidth: 'min(42rem, 100%)' }}>
+        <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full">
         <div className="flex justify-between items-center mb-5 pb-4 border-b border-border/50">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shadow-lg animate-bounce-in">
