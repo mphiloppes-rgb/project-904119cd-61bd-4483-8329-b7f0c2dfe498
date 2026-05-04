@@ -7,6 +7,8 @@ import { exportElementToPDF } from "@/lib/pdf-export";
 import { isCashier } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import ReportCalculator, { DebtReport } from "@/components/ReportCalculator";
+import ReportsIndex from "@/components/ReportsIndex";
+import { HourlyPerformance, ProfitMargins, SupplierBreakdown, CustomerAnalytics } from "@/components/ReportAnalytics";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
 const periods: { key: Period; label: string }[] = [
