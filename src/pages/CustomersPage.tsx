@@ -220,7 +220,7 @@ export default function CustomersPage() {
               </div>
             </div>
           ))}
-          {customers.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">لا يوجد عملاء</p>}
+          {customers.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">{tab === 'oneTime' ? 'لا يوجد عملاء لمرة واحدة بعد — هيتسجلوا تلقائياً من نقطة البيع' : 'لا يوجد عملاء دائمين'}</p>}
         </div>
       </div>
     </>
