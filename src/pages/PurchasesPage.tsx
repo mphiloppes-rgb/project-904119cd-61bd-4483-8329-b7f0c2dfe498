@@ -297,10 +297,20 @@ export default function PurchasesPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-              <select className="input-field" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-                <option value="">اختر المورد *</option>
-                {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select className="input-field flex-1" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                  <option value="">اختر المورد *</option>
+                  {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setQuickSupplierOpen(true)}
+                  className="px-3 rounded-xl bg-gradient-to-r from-success to-success/70 text-success-foreground font-extrabold text-xs whitespace-nowrap hover:shadow-lg transition-all flex items-center gap-1"
+                  title="إضافة مورد جديد"
+                >
+                  <Truck size={14} /> + جديد
+                </button>
+              </div>
               <input className="input-field" placeholder="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
 
