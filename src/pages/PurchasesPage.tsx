@@ -42,6 +42,21 @@ export default function PurchasesPage() {
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickSupplierOpen, setQuickSupplierOpen] = useState(false);
+  const [newSupplier, setNewSupplier] = useState({ name: "", phone: "", notes: "" });
+
+  const submitQuickSupplier = () => {
+    if (!newSupplier.name.trim()) {
+      toast({ title: "خطأ", description: "اسم المورد مطلوب", variant: "destructive" });
+      return;
+    }
+    const s = addSupplier({ name: newSupplier.name.trim(), phone: newSupplier.phone.trim() || undefined, notes: newSupplier.notes.trim() || undefined });
+    toast({ title: "تمت إضافة المورد ✅", description: s.name });
+    setSupplierId(s.id);
+    setNewSupplier({ name: "", phone: "", notes: "" });
+    setQuickSupplierOpen(false);
+    refresh();
+  };
 
   // مقارنة بين سعر الفاتورة الجديد وسعر الشراء الحالي للمنتج
   const priceDiffs = useMemo(() => {
