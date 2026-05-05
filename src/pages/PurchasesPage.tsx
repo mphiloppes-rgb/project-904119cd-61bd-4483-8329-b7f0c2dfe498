@@ -520,6 +520,30 @@ export default function PurchasesPage() {
         </div>
       )}
 
+      {/* Quick supplier */}
+      {quickSupplierOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: 'min(28rem, 100%)' }}>
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-lg flex items-center gap-2"><Truck className="text-success" size={20} /> إضافة مورد جديد</h3>
+                <button onClick={() => setQuickSupplierOpen(false)} className="p-2 rounded-xl hover:bg-muted"><X size={18} /></button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">المورد هيتحفظ في قائمة الموردين ويتم اختياره في الفاتورة على طول.</p>
+              <div className="space-y-3 mb-4">
+                <input className="input-field w-full" placeholder="الاسم *" value={newSupplier.name} onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })} autoFocus />
+                <input className="input-field w-full" placeholder="رقم الهاتف (اختياري)" value={newSupplier.phone} onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })} />
+                <textarea className="input-field w-full min-h-[60px]" placeholder="ملاحظات (اختياري)" value={newSupplier.notes} onChange={(e) => setNewSupplier({ ...newSupplier, notes: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={submitQuickSupplier} className="btn-primary py-3">حفظ</button>
+                <button onClick={() => setQuickSupplierOpen(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <QuickAddProduct
         open={quickAddOpen}
         onClose={() => setQuickAddOpen(false)}
