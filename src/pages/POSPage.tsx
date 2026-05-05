@@ -407,6 +407,29 @@ export default function POSPage() {
         </div>
       )}
 
+      {/* One-time customer dialog */}
+      {showOneTimeDialog && (
+        <div className="modal-overlay no-print">
+          <div className="modal-content">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-lg">إضافة عميل لمرة واحدة</h3>
+                <button onClick={() => setShowOneTimeDialog(false)} className="p-1 rounded-lg hover:bg-muted"><X size={18} /></button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">العميل ده هيتحفظ في تبويب "عملاء لمرة واحدة" مع كل فواتيره ومديونيته.</p>
+              <div className="space-y-3 mb-4">
+                <input className="input-field w-full" placeholder="الاسم *" value={oneTimeName} onChange={(e) => setOneTimeName(e.target.value)} autoFocus />
+                <input className="input-field w-full" placeholder="رقم الهاتف (اختياري)" value={oneTimePhone} onChange={(e) => setOneTimePhone(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={createOneTimeCustomer} className="btn-primary py-3 text-sm">حفظ واختيار</button>
+                <button onClick={() => setShowOneTimeDialog(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">إلغاء</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="no-print">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h1 className="page-header mb-0">نقطة البيع</h1>
