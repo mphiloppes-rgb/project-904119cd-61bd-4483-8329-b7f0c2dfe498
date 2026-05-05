@@ -17,12 +17,12 @@ export default function QuickAddProduct({ open, onClose, onCreated, defaultCost 
   const [costPrice, setCostPrice] = useState<number>(defaultCost);
   const [sellPrice, setSellPrice] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(0);
-  const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
+  const [lowStockThreshold, setLowStockThreshold] = useState<number>(1);
 
   if (!open) return null;
 
   const reset = () => {
-    setName(""); setCode(""); setCostPrice(0); setSellPrice(0); setQuantity(0); setLowStockThreshold(5);
+    setName(""); setCode(""); setCostPrice(0); setSellPrice(0); setQuantity(0); setLowStockThreshold(1);
   };
 
   const submit = () => {
