@@ -45,6 +45,29 @@ export default function POSPage() {
   const [tempDiscountType, setTempDiscountType] = useState<DiscountType>('amount');
   const [tempDiscountValue, setTempDiscountValue] = useState<number>(0);
 
+  // عميل لمرة واحدة
+  const [showOneTimeDialog, setShowOneTimeDialog] = useState(false);
+  const [oneTimeName, setOneTimeName] = useState("");
+  const [oneTimePhone, setOneTimePhone] = useState("");
+
+  const createOneTimeCustomer = () => {
+    if (!oneTimeName.trim()) {
+      toast({ title: "خطأ", description: "اكتب اسم العميل", variant: "destructive" });
+      return;
+    }
+    const c = addCustomer({
+      name: oneTimeName.trim(),
+      phone: oneTimePhone.trim() || undefined,
+      balance: 0,
+      oneTime: true,
+    });
+    toast({ title: "تمت الإضافة ✅", description: `${c.name} (لمرة واحدة)` });
+    setCustomerId(c.id);
+    setOneTimeName(""); setOneTimePhone("");
+    setShowOneTimeDialog(false);
+    refresh();
+  };
+
   useEffect(() => {
     localStorage.setItem('pos_print_mode', printMode);
   }, [printMode]);
