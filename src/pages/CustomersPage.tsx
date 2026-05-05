@@ -35,7 +35,7 @@ export default function CustomersPage() {
   const handleSave = () => {
     if (!form.name.trim()) { toast({ title: "خطأ", description: "الاسم مطلوب", variant: "destructive" }); return; }
     if (editId) { updateCustomer(editId, form); toast({ title: "تم التحديث ✅" }); }
-    else { addCustomer(form); toast({ title: "تمت الإضافة ✅" }); }
+    else { addCustomer({ ...form, oneTime: tab === 'oneTime' || undefined }); toast({ title: "تمت الإضافة ✅" }); }
     refresh(); setShowForm(false);
   };
   const handleDelete = (id: string) => {
