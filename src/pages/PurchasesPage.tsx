@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles, History, Filter } from "lucide-react";
+import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles, History, Filter, Truck } from "lucide-react";
 import {
   getPurchaseInvoices,
   addPurchaseInvoice,
   paySupplierForInvoice,
   deletePurchaseInvoice,
   getSuppliers,
+  addSupplier,
   type PurchaseInvoiceItem,
   type PurchaseInvoice,
 } from "@/lib/suppliers";
