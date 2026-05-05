@@ -638,6 +638,7 @@ function SummaryRow({ label, value, variant }: { label: string; value: string; v
 }
 
 function DataTable({ title, headers, rows, empty, footer }: { title: string; headers: string[]; rows: (string | number)[][]; empty: string; footer?: string }) {
+  const [detail, setDetail] = useState<{ row: (string | number)[] } | null>(null);
   return (
     <div>
       <h3 className="font-extrabold mb-3">{title}</h3>
@@ -645,17 +646,18 @@ function DataTable({ title, headers, rows, empty, footer }: { title: string; hea
         <p className="text-sm text-muted-foreground py-6 text-center">{empty}</p>
       ) : (
         <>
+          <p className="text-[11px] text-muted-foreground mb-2">💡 اضغط على أي صف لعرض التفاصيل الكاملة</p>
           {/* Mobile: cards */}
           <div className="grid grid-cols-1 sm:hidden gap-2">
             {rows.map((r, i) => (
-              <div key={i} className="bg-accent/40 rounded-xl p-3 space-y-1">
+              <button key={i} onClick={() => setDetail({ row: r })} className="text-right bg-accent/40 rounded-xl p-3 space-y-1 hover:bg-accent/70 transition-colors">
                 {r.map((cell, ci) => (
                   <div key={ci} className="flex justify-between text-xs">
                     <span className="text-muted-foreground font-bold">{headers[ci]}</span>
                     <span className="font-extrabold text-left">{cell}</span>
                   </div>
                 ))}
-              </div>
+              </button>
             ))}
           </div>
           {/* Desktop: table */}
@@ -670,7 +672,7 @@ function DataTable({ title, headers, rows, empty, footer }: { title: string; hea
               </thead>
               <tbody>
                 {rows.map((r, i) => (
-                  <tr key={i} className="border-b border-border/30 hover:bg-accent/30">
+                  <tr key={i} onClick={() => setDetail({ row: r })} className="border-b border-border/30 hover:bg-accent/50 cursor-pointer transition-colors">
                     {r.map((cell, ci) => (
                       <td key={ci} className="p-3 whitespace-nowrap">{cell}</td>
                     ))}
@@ -681,6 +683,29 @@ function DataTable({ title, headers, rows, empty, footer }: { title: string; hea
           </div>
           {footer && (
             <p className="mt-3 p-3 bg-primary/10 rounded-xl text-sm font-extrabold text-primary text-center">{footer}</p>
+          )}
+
+          {/* Detail modal */}
+          {detail && (
+            <div className="modal-overlay" onClick={() => setDetail(null)}>
+              <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-lg">
+                  <div className="flex justify-between items-center mb-4 pb-3 border-b border-border/50">
+                    <h3 className="font-extrabold text-lg">📋 تفاصيل السجل</h3>
+                    <button onClick={() => setDetail(null)} className="p-2 hover:bg-muted rounded-xl">✕</button>
+                  </div>
+                  <div className="space-y-2">
+                    {detail.row.map((cell, ci) => (
+                      <div key={ci} className="flex justify-between gap-3 p-3 bg-accent/40 rounded-xl">
+                        <span className="text-sm font-bold text-muted-foreground">{headers[ci]}</span>
+                        <span className="text-sm font-extrabold text-left break-words">{cell}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => setDetail(null)} className="btn-primary w-full py-3 mt-4">إغلاق</button>
+                </div>
+              </div>
+            </div>
           )}
         </>
       )}
