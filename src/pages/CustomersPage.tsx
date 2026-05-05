@@ -74,12 +74,28 @@ export default function CustomersPage() {
       {printInvoice && <InvoicePrint invoice={printInvoice} />}
       {statementCustomerId && <StatementView type="customer" entityId={statementCustomerId} onClose={() => setStatementCustomerId(null)} />}
       <div className="no-print">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="text-primary" size={22} /></div>
-            <h1 className="page-header mb-0">العملاء ({customers.length})</h1>
+            <h1 className="page-header mb-0">العملاء</h1>
           </div>
-          <button onClick={openAdd} className="btn-primary"><Plus size={18} /> إضافة عميل</button>
+          <button onClick={openAdd} className="btn-primary"><Plus size={18} /> {tab === 'oneTime' ? 'إضافة عميل لمرة واحدة' : 'إضافة عميل'}</button>
+        </div>
+
+        {/* Tabs: regular vs one-time */}
+        <div className="flex gap-2 mb-6 rounded-2xl bg-muted/50 p-1">
+          <button
+            onClick={() => setTab('regular')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-extrabold transition-all flex items-center justify-center gap-2 ${tab === 'regular' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-accent'}`}
+          >
+            <Users size={16} /> عملاء دائمين ({allCustomers.filter(c => !c.oneTime).length})
+          </button>
+          <button
+            onClick={() => setTab('oneTime')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-extrabold transition-all flex items-center justify-center gap-2 ${tab === 'oneTime' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-accent'}`}
+          >
+            <UserPlus size={16} /> عملاء لمرة واحدة ({allCustomers.filter(c => c.oneTime).length})
+          </button>
         </div>
 
         {showForm && (
