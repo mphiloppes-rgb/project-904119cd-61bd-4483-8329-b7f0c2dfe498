@@ -1,14 +1,21 @@
 import { useState, useMemo } from "react";
-import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote, FileText } from "lucide-react";
+import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote, FileText, UserPlus } from "lucide-react";
 import { getCustomers, addCustomer, updateCustomer, deleteCustomer, getInvoicesByCustomer, payCustomerDebt, type Customer, type Invoice } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import InvoicePrint from "@/components/InvoicePrint";
 import StatementView from "@/components/StatementView";
 
+type CustomerTab = 'regular' | 'oneTime';
+
 export default function CustomersPage() {
   const { refreshKey, refresh } = useStoreRefresh();
-  const customers = useMemo(() => getCustomers(), [refreshKey]);
+  const allCustomers = useMemo(() => getCustomers(), [refreshKey]);
+  const [tab, setTab] = useState<CustomerTab>('regular');
+  const customers = useMemo(
+    () => allCustomers.filter(c => tab === 'oneTime' ? c.oneTime : !c.oneTime),
+    [allCustomers, tab]
+  );
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", balance: 0 });
