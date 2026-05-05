@@ -40,7 +40,7 @@ export default function QuickAddProduct({ open, onClose, onCreated, defaultCost 
       costPrice: Number(costPrice) || 0,
       sellPrice: Number(sellPrice) || 0,
       quantity: Number(quantity) || 0,
-      lowStockThreshold: Number(lowStockThreshold) || 5,
+      lowStockThreshold: Number(lowStockThreshold) || 1,
     });
     toast({ title: "تم إضافة المنتج ✅", description: p.name });
     onCreated(p);
