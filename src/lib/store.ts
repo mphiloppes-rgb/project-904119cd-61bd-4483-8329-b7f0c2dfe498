@@ -30,6 +30,7 @@ export interface Customer {
   name: string;
   phone?: string;
   balance: number; // positive = they owe us, negative = we owe them
+  oneTime?: boolean; // عميل لمرة واحدة (تم إنشاؤه من نقطة البيع)
   createdAt: string;
 }
 

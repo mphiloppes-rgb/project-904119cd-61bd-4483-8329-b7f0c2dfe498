@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { Search, Plus, Minus, Trash2, Printer, ShoppingCart, AlertTriangle, Save, Percent, Tag, X, Eye, EyeOff, Receipt, Scan, Banknote } from "lucide-react";
-import { getCustomers, addInvoice, type InvoiceItem } from "@/lib/store";
+import { getCustomers, addCustomer, addInvoice, type InvoiceItem } from "@/lib/store";
 import { logAction, canViewCostPrice, isCashier } from "@/lib/auth";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
@@ -44,6 +44,29 @@ export default function POSPage() {
   const [discountItemId, setDiscountItemId] = useState<string | null>(null);
   const [tempDiscountType, setTempDiscountType] = useState<DiscountType>('amount');
   const [tempDiscountValue, setTempDiscountValue] = useState<number>(0);
+
+  // عميل لمرة واحدة
+  const [showOneTimeDialog, setShowOneTimeDialog] = useState(false);
+  const [oneTimeName, setOneTimeName] = useState("");
+  const [oneTimePhone, setOneTimePhone] = useState("");
+
+  const createOneTimeCustomer = () => {
+    if (!oneTimeName.trim()) {
+      toast({ title: "خطأ", description: "اكتب اسم العميل", variant: "destructive" });
+      return;
+    }
+    const c = addCustomer({
+      name: oneTimeName.trim(),
+      phone: oneTimePhone.trim() || undefined,
+      balance: 0,
+      oneTime: true,
+    });
+    toast({ title: "تمت الإضافة ✅", description: `${c.name} (لمرة واحدة)` });
+    setCustomerId(c.id);
+    setOneTimeName(""); setOneTimePhone("");
+    setShowOneTimeDialog(false);
+    refresh();
+  };
 
   useEffect(() => {
     localStorage.setItem('pos_print_mode', printMode);
@@ -384,6 +407,29 @@ export default function POSPage() {
         </div>
       )}
 
+      {/* One-time customer dialog */}
+      {showOneTimeDialog && (
+        <div className="modal-overlay no-print">
+          <div className="modal-content">
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full max-w-[95vw] sm:max-w-md">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-lg">إضافة عميل لمرة واحدة</h3>
+                <button onClick={() => setShowOneTimeDialog(false)} className="p-1 rounded-lg hover:bg-muted"><X size={18} /></button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">العميل ده هيتحفظ في تبويب "عملاء لمرة واحدة" مع كل فواتيره ومديونيته.</p>
+              <div className="space-y-3 mb-4">
+                <input className="input-field w-full" placeholder="الاسم *" value={oneTimeName} onChange={(e) => setOneTimeName(e.target.value)} autoFocus />
+                <input className="input-field w-full" placeholder="رقم الهاتف (اختياري)" value={oneTimePhone} onChange={(e) => setOneTimePhone(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={createOneTimeCustomer} className="btn-primary py-3 text-sm">حفظ واختيار</button>
+                <button onClick={() => setShowOneTimeDialog(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold text-sm hover:opacity-90 transition-all">إلغاء</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="no-print">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
           <h1 className="page-header mb-0">نقطة البيع</h1>
@@ -462,10 +508,15 @@ export default function POSPage() {
                 <ShoppingCart className="text-primary" size={22} />
                 <h3 className="font-extrabold text-lg">الفاتورة</h3>
               </div>
-              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-field w-full mb-4">
-                <option value="">بدون عميل</option>
-                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <div className="flex gap-2 mb-4">
+                <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-field flex-1">
+                  <option value="">بدون عميل</option>
+                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name}{c.oneTime ? ' (لمرة واحدة)' : ''}</option>)}
+                </select>
+                <button type="button" onClick={() => setShowOneTimeDialog(true)} className="px-3 py-2 rounded-xl bg-primary/10 text-primary font-extrabold text-xs whitespace-nowrap hover:bg-primary/20 transition-all" title="عميل لمرة واحدة">
+                  + لمرة واحدة
+                </button>
+              </div>
               <div className="space-y-2 max-h-64 overflow-y-auto mb-4">
                 {cart.map((item) => {
                   const itemDisc = calcItemDiscountAmount(item);

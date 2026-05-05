@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles, History, Filter } from "lucide-react";
+import { PackagePlus, Plus, Trash2, Search, Eye, Banknote, X, Sparkles, History, Filter, Truck } from "lucide-react";
 import {
   getPurchaseInvoices,
   addPurchaseInvoice,
   paySupplierForInvoice,
   deletePurchaseInvoice,
   getSuppliers,
+  addSupplier,
   type PurchaseInvoiceItem,
   type PurchaseInvoice,
 } from "@/lib/suppliers";
@@ -41,6 +42,21 @@ export default function PurchasesPage() {
   const [payOpen, setPayOpen] = useState<PurchaseInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [quickSupplierOpen, setQuickSupplierOpen] = useState(false);
+  const [newSupplier, setNewSupplier] = useState({ name: "", phone: "", notes: "" });
+
+  const submitQuickSupplier = () => {
+    if (!newSupplier.name.trim()) {
+      toast({ title: "خطأ", description: "اسم المورد مطلوب", variant: "destructive" });
+      return;
+    }
+    const s = addSupplier({ name: newSupplier.name.trim(), phone: newSupplier.phone.trim() || undefined, notes: newSupplier.notes.trim() || undefined });
+    toast({ title: "تمت إضافة المورد ✅", description: s.name });
+    setSupplierId(s.id);
+    setNewSupplier({ name: "", phone: "", notes: "" });
+    setQuickSupplierOpen(false);
+    refresh();
+  };
 
   // مقارنة بين سعر الفاتورة الجديد وسعر الشراء الحالي للمنتج
   const priceDiffs = useMemo(() => {
@@ -281,10 +297,20 @@ export default function PurchasesPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
-              <select className="input-field" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
-                <option value="">اختر المورد *</option>
-                {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+              <div className="flex gap-2">
+                <select className="input-field flex-1" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
+                  <option value="">اختر المورد *</option>
+                  {suppliers.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+                <button
+                  type="button"
+                  onClick={() => setQuickSupplierOpen(true)}
+                  className="px-3 rounded-xl bg-gradient-to-r from-success to-success/70 text-success-foreground font-extrabold text-xs whitespace-nowrap hover:shadow-lg transition-all flex items-center gap-1"
+                  title="إضافة مورد جديد"
+                >
+                  <Truck size={14} /> + جديد
+                </button>
+              </div>
               <input className="input-field" placeholder="ملاحظات" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
 
@@ -489,6 +515,30 @@ export default function PurchasesPage() {
             <div className="grid grid-cols-2 gap-3">
               <button onClick={handlePay} className="btn-primary py-3">دفع</button>
               <button onClick={() => setPayOpen(null)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Quick supplier */}
+      {quickSupplierOpen && (
+        <div className="modal-overlay" style={{ zIndex: 1100 }}>
+          <div className="modal-content" style={{ maxWidth: 'min(28rem, 100%)' }}>
+            <div className="glass-modal rounded-3xl p-5 sm:p-7 w-full">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-extrabold text-lg flex items-center gap-2"><Truck className="text-success" size={20} /> إضافة مورد جديد</h3>
+                <button onClick={() => setQuickSupplierOpen(false)} className="p-2 rounded-xl hover:bg-muted"><X size={18} /></button>
+              </div>
+              <p className="text-xs text-muted-foreground mb-3">المورد هيتحفظ في قائمة الموردين ويتم اختياره في الفاتورة على طول.</p>
+              <div className="space-y-3 mb-4">
+                <input className="input-field w-full" placeholder="الاسم *" value={newSupplier.name} onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })} autoFocus />
+                <input className="input-field w-full" placeholder="رقم الهاتف (اختياري)" value={newSupplier.phone} onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })} />
+                <textarea className="input-field w-full min-h-[60px]" placeholder="ملاحظات (اختياري)" value={newSupplier.notes} onChange={(e) => setNewSupplier({ ...newSupplier, notes: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <button onClick={submitQuickSupplier} className="btn-primary py-3">حفظ</button>
+                <button onClick={() => setQuickSupplierOpen(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">إلغاء</button>
+              </div>
             </div>
           </div>
         </div>

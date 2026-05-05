@@ -17,12 +17,12 @@ export default function QuickAddProduct({ open, onClose, onCreated, defaultCost 
   const [costPrice, setCostPrice] = useState<number>(defaultCost);
   const [sellPrice, setSellPrice] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(0);
-  const [lowStockThreshold, setLowStockThreshold] = useState<number>(5);
+  const [lowStockThreshold, setLowStockThreshold] = useState<number>(1);
 
   if (!open) return null;
 
   const reset = () => {
-    setName(""); setCode(""); setCostPrice(0); setSellPrice(0); setQuantity(0); setLowStockThreshold(5);
+    setName(""); setCode(""); setCostPrice(0); setSellPrice(0); setQuantity(0); setLowStockThreshold(1);
   };
 
   const submit = () => {
@@ -40,7 +40,7 @@ export default function QuickAddProduct({ open, onClose, onCreated, defaultCost 
       costPrice: Number(costPrice) || 0,
       sellPrice: Number(sellPrice) || 0,
       quantity: Number(quantity) || 0,
-      lowStockThreshold: Number(lowStockThreshold) || 5,
+      lowStockThreshold: Number(lowStockThreshold) || 1,
     });
     toast({ title: "تم إضافة المنتج ✅", description: p.name });
     onCreated(p);
@@ -92,7 +92,7 @@ export default function QuickAddProduct({ open, onClose, onCreated, defaultCost 
           </div>
           <div className="sm:col-span-2">
             <label className="text-xs font-bold text-muted-foreground mb-1 block">حد المخزون الأدنى للتنبيه</label>
-            <input type="number" min={0} className="input-field w-full" value={lowStockThreshold || ""} onChange={(e) => setLowStockThreshold(Number(e.target.value))} placeholder="5" />
+            <input type="number" min={0} className="input-field w-full" value={lowStockThreshold || ""} onChange={(e) => setLowStockThreshold(Number(e.target.value))} placeholder="1" />
           </div>
         </div>
 

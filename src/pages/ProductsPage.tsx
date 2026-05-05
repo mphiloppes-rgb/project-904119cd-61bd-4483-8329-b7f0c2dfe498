@@ -11,7 +11,7 @@ const emptyForm = {
   costPrice: 0, sellPrice: 0,
   wholesalePrice: 0, halfWholesalePrice: 0,
   wholesaleMinQty: 0, halfWholesaleMinQty: 0,
-  quantity: 0, lowStockThreshold: 5,
+  quantity: 0, lowStockThreshold: 1,
   preferredSupplierId: "",
 };
 

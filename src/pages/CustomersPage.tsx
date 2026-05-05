@@ -1,14 +1,21 @@
 import { useState, useMemo } from "react";
-import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote, FileText } from "lucide-react";
+import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote, FileText, UserPlus } from "lucide-react";
 import { getCustomers, addCustomer, updateCustomer, deleteCustomer, getInvoicesByCustomer, payCustomerDebt, type Customer, type Invoice } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import InvoicePrint from "@/components/InvoicePrint";
 import StatementView from "@/components/StatementView";
 
+type CustomerTab = 'regular' | 'oneTime';
+
 export default function CustomersPage() {
   const { refreshKey, refresh } = useStoreRefresh();
-  const customers = useMemo(() => getCustomers(), [refreshKey]);
+  const allCustomers = useMemo(() => getCustomers(), [refreshKey]);
+  const [tab, setTab] = useState<CustomerTab>('regular');
+  const customers = useMemo(
+    () => allCustomers.filter(c => tab === 'oneTime' ? c.oneTime : !c.oneTime),
+    [allCustomers, tab]
+  );
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", balance: 0 });
@@ -28,7 +35,7 @@ export default function CustomersPage() {
   const handleSave = () => {
     if (!form.name.trim()) { toast({ title: "خطأ", description: "الاسم مطلوب", variant: "destructive" }); return; }
     if (editId) { updateCustomer(editId, form); toast({ title: "تم التحديث ✅" }); }
-    else { addCustomer(form); toast({ title: "تمت الإضافة ✅" }); }
+    else { addCustomer({ ...form, oneTime: tab === 'oneTime' || undefined }); toast({ title: "تمت الإضافة ✅" }); }
     refresh(); setShowForm(false);
   };
   const handleDelete = (id: string) => {
@@ -67,12 +74,28 @@ export default function CustomersPage() {
       {printInvoice && <InvoicePrint invoice={printInvoice} />}
       {statementCustomerId && <StatementView type="customer" entityId={statementCustomerId} onClose={() => setStatementCustomerId(null)} />}
       <div className="no-print">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4 flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Users className="text-primary" size={22} /></div>
-            <h1 className="page-header mb-0">العملاء ({customers.length})</h1>
+            <h1 className="page-header mb-0">العملاء</h1>
           </div>
-          <button onClick={openAdd} className="btn-primary"><Plus size={18} /> إضافة عميل</button>
+          <button onClick={openAdd} className="btn-primary"><Plus size={18} /> {tab === 'oneTime' ? 'إضافة عميل لمرة واحدة' : 'إضافة عميل'}</button>
+        </div>
+
+        {/* Tabs: regular vs one-time */}
+        <div className="flex gap-2 mb-6 rounded-2xl bg-muted/50 p-1">
+          <button
+            onClick={() => setTab('regular')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-extrabold transition-all flex items-center justify-center gap-2 ${tab === 'regular' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-accent'}`}
+          >
+            <Users size={16} /> عملاء دائمين ({allCustomers.filter(c => !c.oneTime).length})
+          </button>
+          <button
+            onClick={() => setTab('oneTime')}
+            className={`flex-1 py-2.5 rounded-xl text-sm font-extrabold transition-all flex items-center justify-center gap-2 ${tab === 'oneTime' ? 'bg-primary text-primary-foreground shadow' : 'text-muted-foreground hover:bg-accent'}`}
+          >
+            <UserPlus size={16} /> عملاء لمرة واحدة ({allCustomers.filter(c => c.oneTime).length})
+          </button>
         </div>
 
         {showForm && (
@@ -167,8 +190,11 @@ export default function CustomersPage() {
           {customers.map((c, idx) => (
             <div key={c.id} className="stat-card animate-fade-in-up" style={{ animationDelay: `${idx * 0.05}s` }}>
               <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-extrabold text-lg">{c.name}</h3>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-extrabold text-lg truncate">{c.name}</h3>
+                    {c.oneTime && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 font-extrabold whitespace-nowrap">لمرة واحدة</span>}
+                  </div>
                   {c.phone && <p className="text-sm text-muted-foreground" dir="ltr">{c.phone}</p>}
                 </div>
                 <div className="flex gap-1">
@@ -194,7 +220,7 @@ export default function CustomersPage() {
               </div>
             </div>
           ))}
-          {customers.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">لا يوجد عملاء</p>}
+          {customers.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">{tab === 'oneTime' ? 'لا يوجد عملاء لمرة واحدة بعد — هيتسجلوا تلقائياً من نقطة البيع' : 'لا يوجد عملاء دائمين'}</p>}
         </div>
       </div>
     </>

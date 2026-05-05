@@ -86,13 +86,15 @@ export default function InlinePriceHistory({ productId, productName, currentNewP
       ) : (
         <div className="space-y-1 max-h-32 overflow-y-auto">
           {history.map((h) => (
-            <div key={h.id} className="flex items-center justify-between text-[11px] p-1.5 rounded bg-muted/30">
-              <span className="text-muted-foreground">{new Date(h.date).toLocaleDateString("ar-EG")}</span>
-              <span className="font-bold">
+            <div key={h.id} className="flex items-center justify-between gap-2 text-[11px] p-1.5 rounded bg-muted/30">
+              <span className="text-muted-foreground whitespace-nowrap" title={new Date(h.date).toLocaleString("ar-EG")}>
+                {new Date(h.date).toLocaleDateString("ar-EG")} • {new Date(h.date).toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })}
+              </span>
+              <span className="font-bold whitespace-nowrap">
                 {h.oldCost.toLocaleString()} → {h.newCost.toLocaleString()}
               </span>
               <span
-                className={`font-extrabold ${
+                className={`font-extrabold whitespace-nowrap ${
                   h.direction === "up" ? "text-destructive" : h.direction === "down" ? "text-success" : "text-muted-foreground"
                 }`}
               >
