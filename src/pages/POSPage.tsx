@@ -485,10 +485,15 @@ export default function POSPage() {
                 <ShoppingCart className="text-primary" size={22} />
                 <h3 className="font-extrabold text-lg">الفاتورة</h3>
               </div>
-              <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-field w-full mb-4">
-                <option value="">بدون عميل</option>
-                {customers.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
+              <div className="flex gap-2 mb-4">
+                <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} className="input-field flex-1">
+                  <option value="">بدون عميل</option>
+                  {customers.map((c) => <option key={c.id} value={c.id}>{c.name}{c.oneTime ? ' (لمرة واحدة)' : ''}</option>)}
+                </select>
+                <button type="button" onClick={() => setShowOneTimeDialog(true)} className="px-3 py-2 rounded-xl bg-primary/10 text-primary font-extrabold text-xs whitespace-nowrap hover:bg-primary/20 transition-all" title="عميل لمرة واحدة">
+                  + لمرة واحدة
+                </button>
+              </div>
               <div className="space-y-2 max-h-64 overflow-y-auto mb-4">
                 {cart.map((item) => {
                   const itemDisc = calcItemDiscountAmount(item);
