@@ -190,8 +190,11 @@ export default function CustomersPage() {
           {customers.map((c, idx) => (
             <div key={c.id} className="stat-card animate-fade-in-up" style={{ animationDelay: `${idx * 0.05}s` }}>
               <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-extrabold text-lg">{c.name}</h3>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="font-extrabold text-lg truncate">{c.name}</h3>
+                    {c.oneTime && <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 font-extrabold whitespace-nowrap">لمرة واحدة</span>}
+                  </div>
                   {c.phone && <p className="text-sm text-muted-foreground" dir="ltr">{c.phone}</p>}
                 </div>
                 <div className="flex gap-1">
