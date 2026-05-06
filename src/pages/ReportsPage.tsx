@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator } from "lucide-react";
 import { getReport, getStaleProductsByDays } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
@@ -639,17 +640,61 @@ function SummaryRow({ label, value, variant }: { label: string; value: string; v
 
 function DataTable({ title, headers, rows, empty, footer }: { title: string; headers: string[]; rows: (string | number)[][]; empty: string; footer?: string }) {
   const [detail, setDetail] = useState<{ row: (string | number)[] } | null>(null);
+  const [search, setSearch] = useState("");
+
+  const filteredRows = useMemo(() => {
+    if (!search.trim()) return rows;
+    const s = search.toLowerCase();
+    return rows.filter(r => r.some(c => String(c).toLowerCase().includes(s)));
+  }, [rows, search]);
+
+  // روابط سريعة بناء على شكل الـ row (لو فيه رقم فاتورة في أول عمود أو اسم عميل/مورد/منتج)
+  const navigate = useNavigate();
+  const quickLinks = (row: (string | number)[]) => {
+    const links: Array<{ label: string; to: string }> = [];
+    const findIdx = (kw: string) => headers.findIndex(h => h.includes(kw));
+    const invIdx = headers.findIndex(h => h === '#' || h.includes('فاتورة'));
+    const custIdx = findIdx('عميل');
+    const supIdx = findIdx('مورد');
+    const prodIdx = findIdx('منتج');
+    if (invIdx >= 0 && row[invIdx]) {
+      const v = String(row[invIdx]);
+      if (v.startsWith('P-')) links.push({ label: '📦 صفحة المشتريات', to: '/purchases' });
+      else links.push({ label: '🧾 صفحة الفواتير', to: '/invoices' });
+    }
+    if (custIdx >= 0 && row[custIdx] && row[custIdx] !== '—') links.push({ label: '👤 صفحة العملاء', to: '/customers' });
+    if (supIdx >= 0 && row[supIdx]) links.push({ label: '🏭 صفحة الموردين', to: '/suppliers' });
+    if (prodIdx >= 0 && row[prodIdx]) links.push({ label: '📦 صفحة المنتجات', to: '/products' });
+    return links;
+  };
+
   return (
     <div>
-      <h3 className="font-extrabold mb-3">{title}</h3>
-      {rows.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-6 text-center">{empty}</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-3">
+        <h3 className="font-extrabold">{title}</h3>
+        {rows.length > 0 && (
+          <div className="relative w-full sm:w-64">
+            <input
+              type="text"
+              placeholder="🔍 ابحث داخل التقرير..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="input-field w-full text-sm py-1.5"
+            />
+            {search && (
+              <button onClick={() => setSearch("")} className="absolute left-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">✕</button>
+            )}
+          </div>
+        )}
+      </div>
+      {filteredRows.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-6 text-center">{search ? 'مفيش نتائج للبحث' : empty}</p>
       ) : (
         <>
-          <p className="text-[11px] text-muted-foreground mb-2">💡 اضغط على أي صف لعرض التفاصيل الكاملة</p>
+          <p className="text-[11px] text-muted-foreground mb-2">💡 اضغط على أي صف لعرض التفاصيل الكاملة • {filteredRows.length} نتيجة{search ? ` من ${rows.length}` : ''}</p>
           {/* Mobile: cards */}
           <div className="grid grid-cols-1 sm:hidden gap-2">
-            {rows.map((r, i) => (
+            {filteredRows.map((r, i) => (
               <button key={i} onClick={() => setDetail({ row: r })} className="text-right bg-accent/40 rounded-xl p-3 space-y-1 hover:bg-accent/70 transition-colors">
                 {r.map((cell, ci) => (
                   <div key={ci} className="flex justify-between text-xs">
@@ -671,7 +716,7 @@ function DataTable({ title, headers, rows, empty, footer }: { title: string; hea
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r, i) => (
+                {filteredRows.map((r, i) => (
                   <tr key={i} onClick={() => setDetail({ row: r })} className="border-b border-border/30 hover:bg-accent/50 cursor-pointer transition-colors">
                     {r.map((cell, ci) => (
                       <td key={ci} className="p-3 whitespace-nowrap">{cell}</td>
@@ -702,6 +747,22 @@ function DataTable({ title, headers, rows, empty, footer }: { title: string; hea
                       </div>
                     ))}
                   </div>
+                  {quickLinks(detail.row).length > 0 && (
+                    <div className="mt-4 pt-3 border-t border-border/50">
+                      <p className="text-xs text-muted-foreground mb-2 font-bold">🔗 روابط سريعة</p>
+                      <div className="flex flex-wrap gap-2">
+                        {quickLinks(detail.row).map((l, i) => (
+                          <button
+                            key={i}
+                            onClick={() => { setDetail(null); navigate(l.to); }}
+                            className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary text-xs font-extrabold hover:bg-primary/20 transition-all"
+                          >
+                            {l.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                   <button onClick={() => setDetail(null)} className="btn-primary w-full py-3 mt-4">إغلاق</button>
                 </div>
               </div>

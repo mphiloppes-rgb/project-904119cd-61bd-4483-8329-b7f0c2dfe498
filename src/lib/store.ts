@@ -144,8 +144,15 @@ export function updateProduct(id: string, updates: Partial<Product>, opts?: { re
 export function deleteProduct(id: string) {
   saveProducts(getProducts().filter(p => p.id !== id));
 }
+/** الحد الأدنى الفعّال = الأكبر بين الحد المخصص ولـ 1 (تنبيه افتراضي) */
+export function effectiveLowStockThreshold(p: Product): number {
+  return Math.max(1, p.lowStockThreshold || 0);
+}
+export function isLowStock(p: Product): boolean {
+  return p.quantity <= effectiveLowStockThreshold(p);
+}
 export function getLowStockProducts(): Product[] {
-  return getProducts().filter(p => p.quantity <= p.lowStockThreshold);
+  return getProducts().filter(p => isLowStock(p));
 }
 
 // Customers

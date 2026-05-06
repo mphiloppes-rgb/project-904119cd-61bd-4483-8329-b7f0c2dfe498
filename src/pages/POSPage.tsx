@@ -496,6 +496,9 @@ export default function POSPage() {
                   <p className={`text-xs ${(p.quantity ?? (p.inStock ? 1 : 0)) <= 0 ? 'text-destructive font-extrabold' : 'text-muted-foreground'}`}>
                     {cashier ? (p.inStock ? 'متاح للبيع' : 'غير متاح') : `المخزون: ${p.quantity} ${Number(p.quantity) <= 0 ? '(نفد)' : ''}`}
                   </p>
+                  {!cashier && p.quantity !== undefined && p.quantity > 0 && p.quantity <= Math.max(1, p.lowStockThreshold || 0) && (
+                    <p className="text-[10px] text-warning font-extrabold mt-0.5">⚠️ كمية منخفضة</p>
+                  )}
                 </button>
               ))}
               {filtered.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">لا توجد منتجات</p>}

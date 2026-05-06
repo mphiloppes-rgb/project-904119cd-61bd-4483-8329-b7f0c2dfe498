@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <title>عارض المخزون والأسعار</title>
+  <style>
+    *{box-sizing:border-box} body{font-family:Tahoma,'Segoe UI',Arial,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
+    header{background:linear-gradient(90deg,#1e3a8a,#1e40af);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    header h1{margin:0;font-size:18px}
+    header .meta{font-size:11px;opacity:.75}
+    .toolbar{padding:14px 22px;background:#1e293b;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #334155}
+    .toolbar input{flex:1;min-width:200px;padding:9px 12px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#e2e8f0;font-size:14px}
+    .toolbar button{padding:9px 14px;border:none;border-radius:8px;background:#3b82f6;color:#fff;font-weight:bold;cursor:pointer;font-size:13px}
+    .toolbar button:hover{background:#2563eb}
+    .stats{padding:14px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;background:#0f172a}
+    .stat{background:#1e293b;border:1px solid #334155;padding:12px;border-radius:10px}
+    .stat .lbl{font-size:11px;color:#94a3b8;font-weight:bold} .stat .val{font-size:20px;font-weight:800;margin-top:4px}
+    .stat .val.warn{color:#f59e0b} .stat .val.danger{color:#ef4444} .stat .val.ok{color:#10b981}
+    main{padding:0 22px 22px} table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden}
+    th,td{padding:10px 12px;text-align:right;border-bottom:1px solid #334155;font-size:13px}
+    th{background:#0f172a;color:#94a3b8;font-size:12px;font-weight:bold;position:sticky;top:0}
+    tr:hover{background:#334155} .low{color:#f59e0b;font-weight:bold} .out{color:#ef4444;font-weight:bold}
+    .empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px;background:#1e293b;border-radius:10px;margin-top:14px;white-space:pre-line}
+    .footer{padding:8px 22px;font-size:10px;color:#64748b;text-align:center;border-top:1px solid #334155;background:#0f172a}
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>📦 عارض المخزون والأسعار</h1>
+      <div class="meta">عرض فقط — البيانات تتحدث تلقائياً من البرنامج الأساسي</div>
+    </div>
+    <div class="meta" id="updatedAt">—</div>
+  </header>
+
+  <div class="toolbar">
+    <input id="search" placeholder="🔍 ابحث بالاسم أو الكود أو الماركة..." />
+    <button onclick="loadData()">🔄 تحديث</button>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <main>
+    <div id="content"></div>
+  </main>
+
+  <div class="footer" id="footerPath">—</div>
+
+  <script>
+    let allProducts = [];
+
+    async function loadData() {
+      const res = await window.viewer.readData();
+      const path = await window.viewer.getPath();
+      document.getElementById('footerPath').textContent = '📁 ملف البيانات: ' + path;
+      if (!res.ok) {
+        document.getElementById('content').innerHTML = '<div class="empty">' + res.message + '</div>';
+        document.getElementById('stats').innerHTML = '';
+        document.getElementById('updatedAt').textContent = '—';
+        return;
+      }
+      allProducts = res.products || [];
+      document.getElementById('updatedAt').textContent = res.updatedAt
+        ? '🕐 آخر تحديث: ' + new Date(res.updatedAt).toLocaleString('ar-EG')
+        : '';
+      render();
+    }
+
+    function render() {
+      const q = document.getElementById('search').value.trim().toLowerCase();
+      const list = q
+        ? allProducts.filter(p => (p.name||'').toLowerCase().includes(q) || (p.code||'').toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q))
+        : allProducts;
+
+      // stats
+      const total = allProducts.length;
+      const totalQty = allProducts.reduce((s,p)=>s+(p.quantity||0),0);
+      const lows = allProducts.filter(p => (p.quantity||0) <= Math.max(1,(p.lowStockThreshold||0)) && (p.quantity||0) > 0).length;
+      const outs = allProducts.filter(p => (p.quantity||0) <= 0).length;
+      const sellValue = allProducts.reduce((s,p)=>s+((p.quantity||0)*(p.sellPrice||0)),0);
+      document.getElementById('stats').innerHTML = `
+        <div class="stat"><div class="lbl">إجمالي المنتجات</div><div class="val">${total.toLocaleString()}</div></div>
+        <div class="stat"><div class="lbl">إجمالي الكميات</div><div class="val ok">${totalQty.toLocaleString()}</div></div>
+        <div class="stat"><div class="lbl">قاربت تخلص</div><div class="val warn">${lows.toLocaleString()}</div></div>
+        <div class="stat"><div class="lbl">نفدت</div><div class="val danger">${outs.toLocaleString()}</div></div>
+        <div class="stat"><div class="lbl">قيمة المخزون (بيع)</div><div class="val ok">${sellValue.toLocaleString()} ج.م</div></div>
+      `;
+
+      if (list.length === 0) {
+        document.getElementById('content').innerHTML = '<div class="empty">مفيش نتائج</div>';
+        return;
+      }
+      const rows = list.map(p => {
+        const qty = Number(p.quantity||0);
+        const low = qty <= Math.max(1,(p.lowStockThreshold||0));
+        const out = qty <= 0;
+        const cls = out ? 'out' : low ? 'low' : '';
+        return `<tr>
+          <td><strong>${escape(p.name)}</strong>${p.brand?`<div style="font-size:10px;color:#94a3b8">${escape(p.brand)} ${p.model?'· '+escape(p.model):''}</div>`:''}</td>
+          <td>${escape(p.code||'—')}</td>
+          <td>${(p.sellPrice||0).toLocaleString()}</td>
+          <td>${p.halfWholesalePrice?`${p.halfWholesalePrice.toLocaleString()} <span style="color:#94a3b8">(≥${p.halfWholesaleMinQty||0})</span>`:'—'}</td>
+          <td>${p.wholesalePrice?`${p.wholesalePrice.toLocaleString()} <span style="color:#94a3b8">(≥${p.wholesaleMinQty||0})</span>`:'—'}</td>
+          <td class="${cls}">${qty}${out?' (نفد)':low?' ⚠️':''}</td>
+        </tr>`;
+      }).join('');
+      document.getElementById('content').innerHTML = `<table>
+        <thead><tr><th>المنتج</th><th>الكود</th><th>قطاعي</th><th>نص جملة</th><th>جملة</th><th>المخزون</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+        <p style="text-align:center;color:#94a3b8;font-size:11px;margin-top:10px">${list.length} نتيجة من ${allProducts.length}</p>`;
+    }
+
+    function escape(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+    document.getElementById('search').addEventListener('input', render);
+    window.viewer.onFileChanged(() => loadData());
+    loadData();
+    setInterval(loadData, 5000); // fallback polling
+  </script>
+</body>
+</html>

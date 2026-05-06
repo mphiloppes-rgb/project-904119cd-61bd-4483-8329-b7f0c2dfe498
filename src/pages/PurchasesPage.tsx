@@ -15,6 +15,7 @@ import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import QuickAddProduct from "@/components/QuickAddProduct";
 import InlinePriceHistory from "@/components/InlinePriceHistory";
+import SupplierLastPriceHint from "@/components/SupplierLastPriceHint";
 import { getPriceHistoryForProduct } from "@/lib/price-history";
 
 export default function PurchasesPage() {
@@ -386,6 +387,7 @@ export default function PurchasesPage() {
                         <p className="font-extrabold mt-1.5">{it.total.toLocaleString()} ج.م</p>
                       </div>
                     </div>
+                    <SupplierLastPriceHint supplierId={supplierId} productId={it.productId} currentUnitCost={it.unitCost} />
                   </div>
                 ))}
                 {items.length === 0 && <p className="text-center text-muted-foreground py-6 text-sm">أضف منتجات للفاتورة</p>}

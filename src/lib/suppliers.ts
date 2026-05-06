@@ -236,3 +236,36 @@ export function getPurchaseInvoicesBySupplier(supplierId: string): PurchaseInvoi
     .filter(i => i.supplierId === supplierId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 }
+
+/** آخر سعر اشترى بيه المورد ده المنتج ده + التاريخ */
+export function getLastSupplierPriceForProduct(supplierId: string, productId: string): { unitCost: number; date: string; invoiceNumber: string } | null {
+  if (!supplierId || !productId) return null;
+  const invoices = getPurchaseInvoices()
+    .filter(i => i.supplierId === supplierId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  for (const inv of invoices) {
+    const it = inv.items.find(x => x.productId === productId);
+    if (it) return { unitCost: it.unitCost, date: inv.createdAt, invoiceNumber: inv.invoiceNumber };
+  }
+  return null;
+}
+
+/** سجل أسعار مورد لكل المنتجات اللي عمل فيها فاتورة شراء (آخر سعر فقط لكل منتج) */
+export function getSupplierProductPrices(supplierId: string): Array<{ productId: string; productName: string; lastCost: number; date: string; invoiceNumber: string; count: number }> {
+  if (!supplierId) return [];
+  const invoices = getPurchaseInvoices()
+    .filter(i => i.supplierId === supplierId)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const map = new Map<string, { productId: string; productName: string; lastCost: number; date: string; invoiceNumber: string; count: number }>();
+  for (const inv of invoices) {
+    for (const it of inv.items) {
+      const ex = map.get(it.productId);
+      if (!ex) {
+        map.set(it.productId, { productId: it.productId, productName: it.productName, lastCost: it.unitCost, date: inv.createdAt, invoiceNumber: inv.invoiceNumber, count: 1 });
+      } else {
+        ex.count += 1;
+      }
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}

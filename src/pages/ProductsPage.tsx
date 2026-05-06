@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus, Edit2, Trash2, Search, X, Check, Package, Lock } from "lucide-react";
-import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from "@/lib/store";
+import { getProducts, addProduct, updateProduct, deleteProduct, effectiveLowStockThreshold, type Product } from "@/lib/store";
 import { getSuppliers } from "@/lib/suppliers";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
@@ -94,6 +94,22 @@ export default function ProductsPage() {
         </div>
         <button onClick={openAdd} className="btn-primary"><Plus size={18} /> إضافة منتج</button>
       </div>
+
+      {(() => {
+        const lows = products.filter(p => p.quantity <= effectiveLowStockThreshold(p));
+        const outs = lows.filter(p => p.quantity <= 0);
+        if (lows.length === 0) return null;
+        return (
+          <div className="mb-4 p-3 sm:p-4 rounded-2xl border-2 border-warning/40 bg-warning/10 flex items-start gap-3 animate-fade-in-up">
+            <div className="w-9 h-9 rounded-xl bg-warning/20 flex items-center justify-center flex-shrink-0">⚠️</div>
+            <div className="min-w-0 flex-1">
+              <p className="font-extrabold text-sm text-warning">تنبيه مخزون: {lows.length} منتج عند/تحت الحد الأدنى{outs.length > 0 ? ` — ${outs.length} نفد كاملاً` : ''}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{lows.slice(0, 5).map(p => `${p.name} (${p.quantity})`).join(' • ')}{lows.length > 5 ? ` … +${lows.length - 5}` : ''}</p>
+              <p className="text-[10px] text-muted-foreground mt-1">الحد الافتراضي = 1 لو مكتبتش حد مخصص.</p>
+            </div>
+          </div>
+        );
+      })()}
 
       <div className="relative mb-4 animate-fade-in-up">
         <Search className="absolute right-3 top-3 text-muted-foreground" size={18} />
