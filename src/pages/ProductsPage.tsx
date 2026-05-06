@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Plus, Edit2, Trash2, Search, X, Check, Package, Lock } from "lucide-react";
-import { getProducts, addProduct, updateProduct, deleteProduct, type Product } from "@/lib/store";
+import { getProducts, addProduct, updateProduct, deleteProduct, effectiveLowStockThreshold, type Product } from "@/lib/store";
 import { getSuppliers } from "@/lib/suppliers";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
