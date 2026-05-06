@@ -18,6 +18,7 @@ import {
 import PatternLock from "@/components/PatternLock";
 import CashierPermissionsCard from "@/components/CashierPermissionsCard";
 import LegacyImporter from "@/components/LegacyImporter";
+import { exportViewerData } from "@/lib/viewer-sync";
 
 export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
