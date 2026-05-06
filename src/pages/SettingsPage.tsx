@@ -265,6 +265,23 @@ export default function SettingsPage() {
         {/* Legacy data importer */}
         {admin && <LegacyImporter />}
 
+        {/* Viewer app sync */}
+        {admin && (
+          <div className="stat-card animate-fade-in-up">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Download className="text-primary" size={22} /></div>
+              <h3 className="font-extrabold text-lg">مزامنة العارض (RaeiViewer.exe)</h3>
+            </div>
+            <p className="text-sm text-muted-foreground mb-3">يصدّر ملف <code>shop-viewer-data.json</code> يستخدمه برنامج العارض المنفصل لعرض الأسعار والمخزون فقط (للقراءة).</p>
+            <ol className="text-xs text-muted-foreground mb-3 list-decimal pr-4 space-y-1">
+              <li>اضغط الزر تحت — هينزل ملف <strong>shop-viewer-data.json</strong>.</li>
+              <li>احفظه في مجلد <strong>Documents</strong> على نفس الجهاز.</li>
+              <li>افتح <strong>RaeiViewer.exe</strong> هيقرأ الملف ويحدّث تلقائياً مع كل تصدير.</li>
+            </ol>
+            <button onClick={() => { exportViewerData(); toast({ title: 'تم تصدير ملف العارض ✅', description: 'ضعه في مجلد Documents' }); }} className="w-full btn-primary py-3"><Download size={18} /> تصدير ملف العارض</button>
+          </div>
+        )}
+
         {/* Price changes log */}
         {admin && <PriceHistoryCard />}
 
