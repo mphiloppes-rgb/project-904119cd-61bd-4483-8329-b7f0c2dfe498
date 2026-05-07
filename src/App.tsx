@@ -4,6 +4,7 @@ import { HashRouter, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { startAutoBackup } from "@/lib/auto-backup";
+import { startAutoViewerSync } from "@/lib/viewer-sync";
 import AppLayout from "@/components/AppLayout";
 import PinLock from "@/components/PinLock";
 import DashboardPage from "@/pages/DashboardPage";
@@ -22,7 +23,13 @@ import RequireAdmin from "@/components/RequireAdmin";
 const queryClient = new QueryClient();
 
 const App = () => {
-  useEffect(() => { startAutoBackup(); }, []);
+  useEffect(() => {
+    startAutoBackup();
+    // ابدأ مزامنة العارض تلقائياً لو المستخدم فعّلها قبل كده
+    if (typeof window !== 'undefined' && localStorage.getItem('pos_viewer_auto') === '1') {
+      startAutoViewerSync(5000);
+    }
+  }, []);
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

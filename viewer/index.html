@@ -5,22 +5,51 @@
   <title>عارض المخزون والأسعار</title>
   <style>
     *{box-sizing:border-box} body{font-family:Tahoma,'Segoe UI',Arial,sans-serif;margin:0;background:#0f172a;color:#e2e8f0}
-    header{background:linear-gradient(90deg,#1e3a8a,#1e40af);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+    header{background:linear-gradient(90deg,#1e3a8a,#1e40af);padding:14px 22px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 8px rgba(0,0,0,.3);flex-wrap:wrap;gap:8px}
     header h1{margin:0;font-size:18px}
-    header .meta{font-size:11px;opacity:.75}
-    .toolbar{padding:14px 22px;background:#1e293b;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #334155}
+    header .meta{font-size:11px;opacity:.85}
+    header .live{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.08);padding:4px 10px;border-radius:999px;font-size:11px}
+    header .live .dot{width:8px;height:8px;border-radius:50%;background:#10b981;box-shadow:0 0 6px #10b981;animation:pulse 1.4s infinite}
+    header .live.off .dot{background:#ef4444;box-shadow:0 0 6px #ef4444;animation:none}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+    .toolbar{padding:12px 22px;background:#1e293b;display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #334155}
     .toolbar input{flex:1;min-width:200px;padding:9px 12px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#e2e8f0;font-size:14px}
     .toolbar button{padding:9px 14px;border:none;border-radius:8px;background:#3b82f6;color:#fff;font-weight:bold;cursor:pointer;font-size:13px}
     .toolbar button:hover{background:#2563eb}
-    .stats{padding:14px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;background:#0f172a}
+    .toolbar button.ghost{background:#334155}
+    .toolbar button.ghost:hover{background:#475569}
+    .filters{padding:8px 22px;background:#0f172a;display:flex;gap:6px;flex-wrap:wrap;border-bottom:1px solid #1e293b}
+    .filters .chip{padding:6px 12px;border-radius:999px;background:#1e293b;border:1px solid #334155;cursor:pointer;font-size:12px;color:#cbd5e1;font-weight:bold}
+    .filters .chip.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+    .filters .chip.warn.active{background:#f59e0b;border-color:#f59e0b}
+    .filters .chip.danger.active{background:#ef4444;border-color:#ef4444}
+    .stats{padding:14px 22px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;background:#0f172a}
     .stat{background:#1e293b;border:1px solid #334155;padding:12px;border-radius:10px}
     .stat .lbl{font-size:11px;color:#94a3b8;font-weight:bold} .stat .val{font-size:20px;font-weight:800;margin-top:4px}
     .stat .val.warn{color:#f59e0b} .stat .val.danger{color:#ef4444} .stat .val.ok{color:#10b981}
+    .alerts{margin:0 22px 12px;border:1px solid #7f1d1d;background:linear-gradient(180deg,#450a0a55,#1e293b);border-radius:12px;padding:12px;display:none}
+    .alerts.show{display:block;animation:fadein .3s}
+    .alerts h3{margin:0 0 8px;font-size:14px;color:#fca5a5;display:flex;align-items:center;gap:6px}
+    .alerts ul{margin:0;padding:0;list-style:none;max-height:160px;overflow:auto}
+    .alerts li{padding:6px 8px;border-bottom:1px solid #334155;font-size:12px;display:flex;justify-content:space-between;gap:10px}
+    .alerts li:last-child{border-bottom:0}
+    .alerts li .name{font-weight:bold}
+    .alerts li .qty.out{color:#ef4444;font-weight:bold}
+    .alerts li .qty.low{color:#f59e0b;font-weight:bold}
+    @keyframes fadein{from{opacity:0;transform:translateY(-4px)}to{opacity:1}}
     main{padding:0 22px 22px} table{width:100%;border-collapse:collapse;background:#1e293b;border-radius:10px;overflow:hidden}
-    th,td{padding:10px 12px;text-align:right;border-bottom:1px solid #334155;font-size:13px}
+    th,td{padding:10px 12px;text-align:right;border-bottom:1px solid #334155;font-size:13px;vertical-align:top}
     th{background:#0f172a;color:#94a3b8;font-size:12px;font-weight:bold;position:sticky;top:0}
     tr:hover{background:#334155} .low{color:#f59e0b;font-weight:bold} .out{color:#ef4444;font-weight:bold}
     .empty{text-align:center;padding:40px;color:#94a3b8;font-size:14px;background:#1e293b;border-radius:10px;margin-top:14px;white-space:pre-line}
+    .last-buy{font-size:10px;color:#94a3b8;margin-top:3px;line-height:1.4}
+    .last-buy strong{color:#cbd5e1}
+    .ph-toggle{background:none;border:1px dashed #475569;color:#94a3b8;font-size:10px;padding:2px 6px;border-radius:5px;cursor:pointer;margin-top:3px}
+    .ph-toggle:hover{background:#0f172a;color:#e2e8f0}
+    .ph-list{margin-top:5px;padding:5px 8px;background:#0f172a;border-radius:6px;font-size:10px;color:#cbd5e1}
+    .ph-list div{display:flex;justify-content:space-between;border-bottom:1px solid #1e293b;padding:2px 0}
+    .ph-list div:last-child{border-bottom:0}
+    .ph-list .up{color:#ef4444} .ph-list .down{color:#10b981}
     .footer{padding:8px 22px;font-size:10px;color:#64748b;text-align:center;border-top:1px solid #334155;background:#0f172a}
   </style>
 </head>
@@ -28,17 +57,34 @@
   <header>
     <div>
       <h1>📦 عارض المخزون والأسعار</h1>
-      <div class="meta">عرض فقط — البيانات تتحدث تلقائياً من البرنامج الأساسي</div>
+      <div class="meta">عرض فقط — تحديث تلقائي كل 5 ثواني</div>
     </div>
-    <div class="meta" id="updatedAt">—</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="liveBadge" class="live"><span class="dot"></span><span id="liveText">متصل</span></span>
+      <div class="meta" id="updatedAt">—</div>
+    </div>
   </header>
 
   <div class="toolbar">
     <input id="search" placeholder="🔍 ابحث بالاسم أو الكود أو الماركة..." />
     <button onclick="loadData()">🔄 تحديث</button>
+    <button class="ghost" onclick="choosePath()">📁 اختر ملف البيانات</button>
+    <button class="ghost" onclick="resetPath()">↺ المسار الافتراضي</button>
+  </div>
+
+  <div class="filters">
+    <button class="chip active" data-f="all">الكل</button>
+    <button class="chip warn" data-f="low">⚠️ قاربت تخلص</button>
+    <button class="chip danger" data-f="out">⛔ نفدت</button>
+    <button class="chip warn" data-f="lowOrOut">⚠️+⛔ منخفضة أو منفدة</button>
   </div>
 
   <div class="stats" id="stats"></div>
+
+  <div class="alerts" id="alerts">
+    <h3>🚨 تنبيهات المخزون</h3>
+    <ul id="alertsList"></ul>
+  </div>
 
   <main>
     <div id="content"></div>
@@ -48,35 +94,69 @@
 
   <script>
     let allProducts = [];
+    let activeFilter = 'all';
+    let lastSig = '';
+    let openHistory = new Set();
+
+    function setLive(online){
+      const el = document.getElementById('liveBadge');
+      const txt = document.getElementById('liveText');
+      if (online) { el.classList.remove('off'); txt.textContent = 'متصل — تحديث تلقائي'; }
+      else { el.classList.add('off'); txt.textContent = 'بدون اتصال — أرقام محفوظة'; }
+    }
+    window.addEventListener('online', () => { setLive(true); loadData(); });
+    window.addEventListener('offline', () => setLive(false));
+    setLive(navigator.onLine);
 
     async function loadData() {
-      const res = await window.viewer.readData();
-      const path = await window.viewer.getPath();
-      document.getElementById('footerPath').textContent = '📁 ملف البيانات: ' + path;
-      if (!res.ok) {
-        document.getElementById('content').innerHTML = '<div class="empty">' + res.message + '</div>';
-        document.getElementById('stats').innerHTML = '';
-        document.getElementById('updatedAt').textContent = '—';
-        return;
+      try {
+        const res = await window.viewer.readData();
+        const path = await window.viewer.getPath();
+        document.getElementById('footerPath').textContent = '📁 ملف البيانات: ' + path;
+        if (!res.ok) {
+          document.getElementById('content').innerHTML = '<div class="empty">' + res.message + '</div>';
+          document.getElementById('stats').innerHTML = '';
+          document.getElementById('alerts').classList.remove('show');
+          document.getElementById('updatedAt').textContent = '—';
+          return;
+        }
+        allProducts = res.products || [];
+        document.getElementById('updatedAt').textContent = res.updatedAt
+          ? '🕐 آخر تحديث: ' + new Date(res.updatedAt).toLocaleString('ar-EG')
+          : '';
+        render();
+      } catch (e) {
+        setLive(false);
       }
-      allProducts = res.products || [];
-      document.getElementById('updatedAt').textContent = res.updatedAt
-        ? '🕐 آخر تحديث: ' + new Date(res.updatedAt).toLocaleString('ar-EG')
-        : '';
-      render();
     }
+
+    async function choosePath(){
+      const p = await window.viewer.choosePath();
+      if (p) loadData();
+    }
+    async function resetPath(){
+      await window.viewer.resetPath();
+      loadData();
+    }
+
+    function isLow(p){ const q=Number(p.quantity||0); return q>0 && q<=Math.max(1,(p.lowStockThreshold||0)); }
+    function isOut(p){ return Number(p.quantity||0) <= 0; }
 
     function render() {
       const q = document.getElementById('search').value.trim().toLowerCase();
-      const list = q
+      let list = q
         ? allProducts.filter(p => (p.name||'').toLowerCase().includes(q) || (p.code||'').toLowerCase().includes(q) || (p.brand||'').toLowerCase().includes(q))
-        : allProducts;
+        : allProducts.slice();
 
-      // stats
+      if (activeFilter === 'low') list = list.filter(isLow);
+      else if (activeFilter === 'out') list = list.filter(isOut);
+      else if (activeFilter === 'lowOrOut') list = list.filter(p => isLow(p) || isOut(p));
+
+      // stats (محسوبة على الكل)
       const total = allProducts.length;
       const totalQty = allProducts.reduce((s,p)=>s+(p.quantity||0),0);
-      const lows = allProducts.filter(p => (p.quantity||0) <= Math.max(1,(p.lowStockThreshold||0)) && (p.quantity||0) > 0).length;
-      const outs = allProducts.filter(p => (p.quantity||0) <= 0).length;
+      const lows = allProducts.filter(isLow).length;
+      const outs = allProducts.filter(isOut).length;
       const sellValue = allProducts.reduce((s,p)=>s+((p.quantity||0)*(p.sellPrice||0)),0);
       document.getElementById('stats').innerHTML = `
         <div class="stat"><div class="lbl">إجمالي المنتجات</div><div class="val">${total.toLocaleString()}</div></div>
@@ -86,17 +166,47 @@
         <div class="stat"><div class="lbl">قيمة المخزون (بيع)</div><div class="val ok">${sellValue.toLocaleString()} ج.م</div></div>
       `;
 
+      // alerts panel
+      const alertItems = allProducts.filter(p => isOut(p) || isLow(p));
+      const alertsBox = document.getElementById('alerts');
+      const alertsList = document.getElementById('alertsList');
+      if (alertItems.length === 0) {
+        alertsBox.classList.remove('show');
+        alertsList.innerHTML = '';
+      } else {
+        alertsBox.classList.add('show');
+        alertsList.innerHTML = alertItems
+          .sort((a,b)=> (a.quantity||0) - (b.quantity||0))
+          .slice(0,50)
+          .map(p => {
+            const out = isOut(p);
+            return `<li>
+              <span class="name">${escape(p.name)} ${p.code?`<span style="color:#94a3b8">(${escape(p.code)})</span>`:''}</span>
+              <span class="qty ${out?'out':'low'}">${out?'⛔ نفد':'⚠️ '+(p.quantity||0)+' / حد '+ (p.lowStockThreshold||0)}</span>
+            </li>`;
+          }).join('');
+      }
+
       if (list.length === 0) {
         document.getElementById('content').innerHTML = '<div class="empty">مفيش نتائج</div>';
         return;
       }
       const rows = list.map(p => {
         const qty = Number(p.quantity||0);
-        const low = qty <= Math.max(1,(p.lowStockThreshold||0));
-        const out = qty <= 0;
+        const low = isLow(p);
+        const out = isOut(p);
         const cls = out ? 'out' : low ? 'low' : '';
+        const lp = p.lastPurchase;
+        const lastBuy = lp ? `<div class="last-buy">🛒 آخر شراء: <strong>${Number(lp.unitCost).toLocaleString()} ج.م</strong> — ${new Date(lp.date).toLocaleDateString('ar-EG')} — فاتورة #${escape(lp.invoiceNumber||'')}${lp.supplierName?` — ${escape(lp.supplierName)}`:''}</div>` : `<div class="last-buy" style="opacity:.5">🛒 لا يوجد سجل شراء</div>`;
+        const ph = Array.isArray(p.priceHistory) ? p.priceHistory : [];
+        const phId = 'ph_'+p.id;
+        const phOpen = openHistory.has(p.id);
+        const phBlock = ph.length > 0 ? `
+          <button class="ph-toggle" onclick="toggleHistory('${p.id}')">${phOpen?'▲ إخفاء':'▼ سجل أسعار ('+ph.length+')'}</button>
+          ${phOpen ? `<div class="ph-list">${ph.map(h=>`<div><span>${new Date(h.date).toLocaleDateString('ar-EG')}</span><span>${Number(h.oldCost).toLocaleString()} → ${Number(h.newCost).toLocaleString()}</span><span class="${h.direction==='up'?'up':h.direction==='down'?'down':''}">${h.percent>0?'+':''}${Number(h.percent).toFixed(0)}٪</span></div>`).join('')}</div>` : ''}
+        ` : '';
         return `<tr>
-          <td><strong>${escape(p.name)}</strong>${p.brand?`<div style="font-size:10px;color:#94a3b8">${escape(p.brand)} ${p.model?'· '+escape(p.model):''}</div>`:''}</td>
+          <td><strong>${escape(p.name)}</strong>${p.brand?`<div style="font-size:10px;color:#94a3b8">${escape(p.brand)} ${p.model?'· '+escape(p.model):''}</div>`:''}${lastBuy}${phBlock}</td>
           <td>${escape(p.code||'—')}</td>
           <td>${(p.sellPrice||0).toLocaleString()}</td>
           <td>${p.halfWholesalePrice?`${p.halfWholesalePrice.toLocaleString()} <span style="color:#94a3b8">(≥${p.halfWholesaleMinQty||0})</span>`:'—'}</td>
@@ -110,12 +220,28 @@
         <p style="text-align:center;color:#94a3b8;font-size:11px;margin-top:10px">${list.length} نتيجة من ${allProducts.length}</p>`;
     }
 
+    function toggleHistory(id){
+      if (openHistory.has(id)) openHistory.delete(id); else openHistory.add(id);
+      render();
+    }
+    window.toggleHistory = toggleHistory;
+
     function escape(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 
     document.getElementById('search').addEventListener('input', render);
+    document.querySelectorAll('.filters .chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filters .chip').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        activeFilter = btn.dataset.f;
+        render();
+      });
+    });
+
     window.viewer.onFileChanged(() => loadData());
     loadData();
-    setInterval(loadData, 5000); // fallback polling
+    // تحديث تلقائي كل 5 ثوان (حتى لو فيه/مفيش نت — fs.watchFile محلي)
+    setInterval(loadData, 5000);
   </script>
 </body>
 </html>
