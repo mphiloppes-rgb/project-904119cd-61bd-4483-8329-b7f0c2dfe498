@@ -57,6 +57,7 @@ export interface Invoice {
   itemsDiscountTotal?: number; // مجموع خصومات الأصناف
   total: number;
   paid: number;
+  initialPaid?: number; // المدفوع وقت إنشاء الفاتورة (للكشوف الدقيقة)
   remaining: number;
   customerId?: string;
   customerName?: string;
@@ -194,7 +195,7 @@ export function addInvoice(inv: Omit<Invoice, 'id' | 'createdAt' | 'invoiceNumbe
     const product = products.find(p => p.id === item.productId);
     return { ...item, costPrice: item.costPrice || product?.costPrice || 0 };
   });
-  const invoice: Invoice = { ...inv, items: normalizedItems, id: generateId(), invoiceNumber: generateInvoiceNumber(), createdAt: new Date().toISOString() };
+  const invoice: Invoice = { ...inv, items: normalizedItems, id: generateId(), invoiceNumber: generateInvoiceNumber(), initialPaid: inv.paid, createdAt: new Date().toISOString() };
   invoices.push(invoice);
   saveInvoices(invoices);
 
@@ -365,13 +366,17 @@ export function payCustomerDebt(customerId: string, amount: number, note?: strin
   const customers = getCustomers();
   const cidx = customers.findIndex(c => c.id === customerId);
   if (cidx === -1) return false;
-  
-  let remaining = amount;
+
+  // المبلغ الفعلي = أقل من أو يساوي رصيد العميل
+  const actualAmount = Math.min(amount, Math.max(0, customers[cidx].balance));
+  if (actualAmount <= 0) return false;
+
+  let remaining = actualAmount;
   const invoices = getInvoices();
   const customerInvoices = invoices
     .filter(i => i.customerId === customerId && i.remaining > 0)
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  
+
   customerInvoices.forEach(inv => {
     if (remaining <= 0) return;
     const idx = invoices.findIndex(i => i.id === inv.id);
@@ -380,14 +385,14 @@ export function payCustomerDebt(customerId: string, amount: number, note?: strin
     invoices[idx].remaining = Math.max(0, invoices[idx].total - invoices[idx].paid);
     remaining -= pay;
   });
-  
+
   saveInvoices(invoices);
-  customers[cidx].balance = Math.max(0, customers[cidx].balance - amount);
+  customers[cidx].balance = Math.max(0, customers[cidx].balance - actualAmount);
   saveCustomers(customers);
 
-  // Log payment
+  // سجل دفعة واحدة فقط بالمبلغ الفعلي
   const allPayments = getItem<CustomerPayment[]>('pos_customer_payments', []);
-  allPayments.push({ id: generateId(), customerId, amount, date: new Date().toISOString(), note });
+  allPayments.push({ id: generateId(), customerId, amount: actualAmount, date: new Date().toISOString(), note });
   setItem('pos_customer_payments', allPayments);
   return true;
 }
