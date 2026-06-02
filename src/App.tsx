@@ -25,10 +25,8 @@ const queryClient = new QueryClient();
 const App = () => {
   useEffect(() => {
     startAutoBackup();
-    // ابدأ مزامنة العارض تلقائياً لو المستخدم فعّلها قبل كده
-    if (typeof window !== 'undefined' && localStorage.getItem('pos_viewer_auto') === '1') {
-      startAutoViewerSync(5000);
-    }
+    // مزامنة العارض تلقائياً كل 5 ثوان دائماً (يتجاهلها بصمت لو مفيش Electron/مسار)
+    startAutoViewerSync(5000);
   }, []);
   return (
     <QueryClientProvider client={queryClient}>

@@ -57,6 +57,7 @@ export interface Invoice {
   itemsDiscountTotal?: number; // مجموع خصومات الأصناف
   total: number;
   paid: number;
+  initialPaid?: number; // المدفوع وقت إنشاء الفاتورة (للكشوف الدقيقة)
   remaining: number;
   customerId?: string;
   customerName?: string;
