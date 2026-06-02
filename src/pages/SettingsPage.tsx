@@ -18,7 +18,7 @@ import {
 import PatternLock from "@/components/PatternLock";
 import CashierPermissionsCard from "@/components/CashierPermissionsCard";
 import LegacyImporter from "@/components/LegacyImporter";
-import { exportViewerData } from "@/lib/viewer-sync";
+import { exportViewerData, chooseViewerSavePath, getViewerSavePath } from "@/lib/viewer-sync";
 
 export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -270,15 +270,32 @@ export default function SettingsPage() {
           <div className="stat-card animate-fade-in-up">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Download className="text-primary" size={22} /></div>
-              <h3 className="font-extrabold text-lg">مزامنة العارض (RaeiViewer.exe)</h3>
+              <h3 className="font-extrabold text-lg">مزامنة العارض (RaeiViewer)</h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-3">يصدّر ملف <code>shop-viewer-data.json</code> يستخدمه برنامج العارض المنفصل لعرض الأسعار والمخزون فقط (للقراءة).</p>
-            <ol className="text-xs text-muted-foreground mb-3 list-decimal pr-4 space-y-1">
-              <li>اضغط الزر تحت — هينزل ملف <strong>shop-viewer-data.json</strong>.</li>
-              <li>احفظه في مجلد <strong>Documents</strong> على نفس الجهاز.</li>
-              <li>افتح <strong>RaeiViewer.exe</strong> هيقرأ الملف ويحدّث تلقائياً مع كل تصدير.</li>
-            </ol>
-            <button onClick={() => { exportViewerData(); toast({ title: 'تم تصدير ملف العارض ✅', description: 'ضعه في مجلد Documents' }); }} className="w-full btn-primary py-3"><Download size={18} /> تصدير ملف العارض</button>
+            <p className="text-sm text-muted-foreground mb-3">
+              المزامنة شغّالة تلقائياً كل 5 ثواني. على نسخة Electron الملف بيتحفظ مباشرة، وعلى المتصفح بيتحمّل عند الضغط على التصدير.
+            </p>
+            <div className="space-y-2 mb-3">
+              <div className="bg-accent/40 rounded-xl p-3 text-xs">
+                <p className="text-muted-foreground mb-1">📁 مسار حفظ ملف العارض الحالي:</p>
+                <p className="font-mono break-all">{getViewerSavePath() || 'افتراضي (Documents/shop-viewer-data.json)'}</p>
+              </div>
+              <button
+                onClick={async () => {
+                  const p = await chooseViewerSavePath();
+                  if (p) { toast({ title: 'تم تحديد المسار ✅', description: p }); refresh(); }
+                  else toast({ title: 'لازم النسخة المكتبية (Electron) لاختيار المسار', variant: 'destructive' });
+                }}
+                className="w-full flex items-center justify-center gap-2 bg-accent text-accent-foreground py-2.5 rounded-xl font-extrabold text-sm hover:opacity-90"
+              >
+                📁 اختر مسار حفظ shop-viewer-data.json
+              </button>
+            </div>
+            <button onClick={async () => { const r = await exportViewerData(); toast({ title: 'تم التصدير ✅', description: r.path || 'تم التحميل' }); }} className="w-full btn-primary py-3"><Download size={18} /> تصدير ملف العارض الآن</button>
+            <div className="mt-3 p-3 bg-primary/5 rounded-xl text-xs text-muted-foreground">
+              💡 العارض يمكن تثبيته كتطبيق مستقل على سطح المكتب من المتصفح:
+              افتح <a href="./viewer.html" target="_blank" rel="noreferrer" className="text-primary font-extrabold underline">./viewer.html</a> ثم من قائمة المتصفح → "تثبيت التطبيق".
+            </div>
           </div>
         )}
 
