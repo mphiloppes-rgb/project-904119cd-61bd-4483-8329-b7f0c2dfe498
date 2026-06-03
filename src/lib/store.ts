@@ -275,7 +275,7 @@ export function returnInvoiceFull(invoiceId: string): boolean {
   if (idx === -1 || invoices[idx].isReturned) return false;
   
   const inv = invoices[idx];
-  const beforeRemaining = Math.max(0, inv.remaining || 0);
+  const returnValue = getInvoiceNetTotal(inv);
   const now = new Date().toISOString();
   inv.isReturned = true;
   inv.returnedItems = inv.items.map(item => ({
@@ -297,8 +297,8 @@ export function returnInvoiceFull(invoiceId: string): boolean {
   });
   saveProducts(products);
   
-  // المرتجع يلغي المتبقي فقط من مديونية العميل، بدون ما يلمس فلوس اتحصلت بالفعل.
-  adjustCustomerBalance(inv.customerId, -beforeRemaining);
+  // المرتجع يخصم قيمة المرتجع بالكامل من حساب العميل؛ لو كان دافع زيادة يظهر رصيد له.
+  adjustCustomerBalance(inv.customerId, -returnValue);
   
   saveInvoices(invoices);
   return true;
@@ -310,11 +310,11 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
   if (idx === -1) return false;
   
   const inv = invoices[idx];
-  const beforeRemaining = Math.max(0, inv.remaining || 0);
   const itemIdx = inv.items.findIndex(it => it.productId === productId);
   if (itemIdx === -1) return false;
   
   const item = inv.items[itemIdx];
+  const returnValue = returnQty * item.unitPrice;
   const alreadyReturned = (inv.returnedItems || []).filter(r => r.productId === productId).reduce((s, r) => s + r.quantity, 0);
   if (returnQty > item.quantity - alreadyReturned) return false;
   
@@ -324,7 +324,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
     productName: item.productName,
     quantity: returnQty,
     unitPrice: item.unitPrice,
-    total: returnQty * item.unitPrice,
+    total: returnValue,
     returnedAt: new Date().toISOString(),
   });
   
@@ -339,7 +339,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
     return retQty >= it.quantity;
   });
   if (allReturned) inv.isReturned = true;
-  adjustCustomerBalance(inv.customerId, Math.max(0, inv.remaining || 0) - beforeRemaining);
+  adjustCustomerBalance(inv.customerId, -returnValue);
   
   // Return stock
   const products = getProducts();
