@@ -91,6 +91,9 @@
     window.addEventListener('online', ()=>{setLive(true);loadData();});
     window.addEventListener('offline', ()=>setLive(false));
     setLive(navigator.onLine);
+    if ('serviceWorker' in navigator && !location.hostname.includes('id-preview--') && !location.hostname.includes('lovableproject.com')) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+    }
 
     // قراءة سجل التغييرات لمنتج معين
     function priceHistoryFor(id){
