@@ -76,6 +76,33 @@ export interface ReturnedItem {
   returnedAt: string;
 }
 
+export function getInvoiceOriginalTotal(inv: Pick<Invoice, 'items' | 'total' | 'subtotal'>): number {
+  const itemsTotal = (inv.items || []).reduce((s, it) => s + (Number(it.total) || 0), 0);
+  return itemsTotal || Number(inv.subtotal) || Number(inv.total) || 0;
+}
+
+export function getInvoiceReturnedTotal(inv: Pick<Invoice, 'returnedItems'>): number {
+  return (inv.returnedItems || []).reduce((s, r) => s + (Number(r.total) || 0), 0);
+}
+
+export function getInvoiceNetTotal(inv: Invoice): number {
+  return Math.max(0, getInvoiceOriginalTotal(inv) - getInvoiceReturnedTotal(inv));
+}
+
+export function getInvoiceInitialPaid(inv: Invoice): number {
+  return Number(inv.initialPaid ?? inv.paid ?? 0);
+}
+
+function adjustCustomerBalance(customerId: string | undefined, delta: number) {
+  if (!customerId || delta === 0) return;
+  const customers = getCustomers();
+  const cidx = customers.findIndex(c => c.id === customerId);
+  if (cidx !== -1) {
+    customers[cidx].balance = (customers[cidx].balance || 0) + delta;
+    saveCustomers(customers);
+  }
+}
+
 export interface Expense {
   id: string;
   name: string;
