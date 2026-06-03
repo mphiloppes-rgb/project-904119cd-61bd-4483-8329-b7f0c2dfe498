@@ -461,7 +461,7 @@ export default function ReportsPage() {
 
         {tab === "returns" && (
           <DataTable
-            title="تفاصيل المرتجعات"
+            title="Band المرتجعات — تفاصيل كل مرتجع"
             empty="لا توجد مرتجعات"
             headers={["فاتورة", "العميل", "تاريخ الفاتورة", "المنتج", "الكمية", "قيمة المرتجع", "صافي الفاتورة", "تاريخ المرتجع"]}
             rows={report.returnsDetails.map((r) => [
