@@ -92,7 +92,12 @@
     window.addEventListener('offline', ()=>setLive(false));
     setLive(navigator.onLine);
     if ('serviceWorker' in navigator && !location.hostname.includes('id-preview--') && !location.hostname.includes('lovableproject.com')) {
-      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').then(async ()=>{
+        if (!('caches' in window)) return;
+        const cache = await caches.open('raei-offline-v1');
+        const urls = [location.href, ...performance.getEntriesByType('resource').map(e=>e.name)].filter(u=>u.startsWith(location.origin));
+        await Promise.allSettled(urls.map(u=>cache.add(u)));
+      }).catch(()=>{}));
     }
 
     // قراءة سجل التغييرات لمنتج معين
