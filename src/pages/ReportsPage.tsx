@@ -205,6 +205,24 @@ export default function ReportsPage() {
       {/* Reports Index — categorized with descriptions */}
       <ReportsIndex active={tab} onSelect={(k) => setTab(k as Tab)} />
 
+      <button
+        onClick={() => setTab("returns")}
+        className="w-full mb-5 p-4 sm:p-5 rounded-3xl bg-warning/10 border border-warning/25 text-right hover:bg-warning/15 transition-all animate-fade-in-up"
+      >
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-warning/15 flex items-center justify-center animate-float">
+              <RotateCcw className="text-warning" size={22} />
+            </div>
+            <div>
+              <h2 className="font-extrabold text-warning">Band المرتجعات</h2>
+              <p className="text-xs text-muted-foreground">كل مرتجع مرتبط برقم الفاتورة والعميل وتاريخ الفاتورة وتاريخ الارتجاع.</p>
+            </div>
+          </div>
+          <span className="text-xl font-extrabold text-warning">{report.totalReturns.toLocaleString()} ج.م</span>
+        </div>
+      </button>
+
 
       {/* Tab content */}
       <div className="stat-card animate-fade-in-up">
@@ -445,12 +463,15 @@ export default function ReportsPage() {
           <DataTable
             title="تفاصيل المرتجعات"
             empty="لا توجد مرتجعات"
-            headers={["فاتورة", "المنتج", "الكمية", "القيمة", "تاريخ المرتجع"]}
+            headers={["فاتورة", "العميل", "تاريخ الفاتورة", "المنتج", "الكمية", "قيمة المرتجع", "صافي الفاتورة", "تاريخ المرتجع"]}
             rows={report.returnsDetails.map((r) => [
               r.invoiceNumber,
+              r.customerName,
+              new Date(r.invoiceDate).toLocaleString("ar-EG"),
               r.productName,
               `${r.quantity}`,
               `${r.total.toLocaleString()} ج.م`,
+              `${r.invoiceNetTotal.toLocaleString()} ج.م`,
               new Date(r.returnedAt).toLocaleString("ar-EG"),
             ])}
             footer={`إجمالي المرتجعات: ${report.totalReturns.toLocaleString()} ج.م`}
