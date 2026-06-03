@@ -90,7 +90,8 @@ export default function StatementView({ type, entityId, onClose }: Props) {
   const totalDebit = data.entries.reduce((s, e) => s + e.debit, 0);
   const totalCredit = data.entries.reduce((s, e) => s + e.credit, 0);
   const label = type === 'customer' ? 'كشف حساب عميل' : 'كشف حساب مورد';
-  const debitLabel = type === 'customer' ? 'مبيعات' : 'مشتريات';
+  const debitLabel = type === 'customer' ? 'مبيعات أصلية' : 'مشتريات';
+  const totalReturns = type === 'customer' ? data.entries.filter(e => e.type === 'return').reduce((s, e) => s + e.credit, 0) : 0;
 
   return (
     <div className="modal-overlay">
@@ -103,18 +104,25 @@ export default function StatementView({ type, entityId, onClose }: Props) {
           <button onClick={onClose} className="p-2 hover:bg-muted rounded-xl"><X size={20} /></button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div className="bg-accent/40 rounded-xl p-3 text-center">
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><TrendingUp size={12} /> {debitLabel}</div>
             <p className="font-extrabold">{totalDebit.toLocaleString()} ج.م</p>
           </div>
           <div className="bg-accent/40 rounded-xl p-3 text-center">
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><TrendingDown size={12} /> مدفوعات</div>
-            <p className="font-extrabold text-success">{totalCredit.toLocaleString()} ج.م</p>
+            <p className="font-extrabold text-success">{(totalCredit - totalReturns).toLocaleString()} ج.م</p>
           </div>
-          <div className={`rounded-xl p-3 text-center ${data.balance > 0 ? 'bg-destructive/10' : 'bg-success/10'}`}>
+          {type === 'customer' && (
+            <div className="bg-warning/10 rounded-xl p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><RotateCcw size={12} /> المرتجعات</div>
+              <p className="font-extrabold text-warning">{totalReturns.toLocaleString()} ج.م</p>
+            </div>
+          )}
+          <div className={`rounded-xl p-3 text-center ${data.balance > 0 ? 'bg-destructive/10' : data.balance < 0 ? 'bg-warning/10' : 'bg-success/10'}`}>
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><Banknote size={12} /> الرصيد</div>
-            <p className={`font-extrabold ${data.balance > 0 ? 'text-destructive' : 'text-success'}`}>{Math.abs(data.balance).toLocaleString()} ج.م</p>
+            <p className={`font-extrabold ${data.balance > 0 ? 'text-destructive' : data.balance < 0 ? 'text-warning' : 'text-success'}`}>{Math.abs(data.balance).toLocaleString()} ج.م</p>
+            <p className="text-[10px] text-muted-foreground">{data.balance > 0 ? 'على العميل' : data.balance < 0 ? 'للعميل' : 'صافي'}</p>
           </div>
         </div>
 
