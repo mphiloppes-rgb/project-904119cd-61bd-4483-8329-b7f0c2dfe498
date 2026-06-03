@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote, FileText, UserPlus } from "lucide-react";
+import { Plus, Trash2, X, Check, Eye, Edit2, Users, Banknote, FileText, UserPlus, Search } from "lucide-react";
 import { getCustomers, addCustomer, updateCustomer, deleteCustomer, getInvoicesByCustomer, payCustomerDebt, type Customer, type Invoice } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
@@ -12,10 +12,20 @@ export default function CustomersPage() {
   const { refreshKey, refresh } = useStoreRefresh();
   const allCustomers = useMemo(() => getCustomers(), [refreshKey]);
   const [tab, setTab] = useState<CustomerTab>('regular');
-  const customers = useMemo(
+  const [search, setSearch] = useState("");
+  const customersInTab = useMemo(
     () => allCustomers.filter(c => tab === 'oneTime' ? c.oneTime : !c.oneTime),
     [allCustomers, tab]
   );
+  const customers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return customersInTab;
+    return allCustomers.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.phone || '').includes(search.trim()) ||
+      String(c.balance || 0).includes(q)
+    );
+  }, [allCustomers, customersInTab, search]);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", phone: "", balance: 0 });
@@ -96,6 +106,17 @@ export default function CustomersPage() {
           >
             <UserPlus size={16} /> عملاء لمرة واحدة ({allCustomers.filter(c => c.oneTime).length})
           </button>
+        </div>
+
+        <div className="relative mb-5">
+          <Search className="absolute right-3 top-3.5 text-muted-foreground" size={18} />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="بحث في كل العملاء والعملاء لمرة واحدة بالاسم أو الهاتف..."
+            className="input-field w-full pr-10"
+          />
+          {search && <button onClick={() => setSearch("")} className="absolute left-3 top-3 text-muted-foreground hover:text-foreground">✕</button>}
         </div>
 
         {showForm && (
@@ -220,7 +241,7 @@ export default function CustomersPage() {
               </div>
             </div>
           ))}
-          {customers.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">{tab === 'oneTime' ? 'لا يوجد عملاء لمرة واحدة بعد — هيتسجلوا تلقائياً من نقطة البيع' : 'لا يوجد عملاء دائمين'}</p>}
+          {customers.length === 0 && <p className="col-span-full text-center text-muted-foreground py-8">{search ? 'لا توجد نتائج للبحث في كل العملاء' : tab === 'oneTime' ? 'لا يوجد عملاء لمرة واحدة بعد — هيتسجلوا تلقائياً من نقطة البيع' : 'لا يوجد عملاء دائمين'}</p>}
         </div>
       </div>
     </>
