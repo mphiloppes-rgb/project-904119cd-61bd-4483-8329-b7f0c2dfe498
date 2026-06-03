@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw } from "lucide-react";
-import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
+import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
 type Props = {
@@ -35,7 +35,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
           ref: `#${inv.invoiceNumber}`,
           description: `فاتورة بيع${inv.isReturned ? ' (مرتجعة بالكامل)' : ''}`,
           debit: getInvoiceOriginalTotal(inv),
-          credit: Number(inv.paid || 0),
+          credit: getInvoiceInitialPaid(inv),
           invoice: inv,
         });
         (inv.returnedItems || []).forEach(ret => entries.push({
@@ -51,9 +51,16 @@ export default function StatementView({ type, entityId, onClose }: Props) {
       payments.forEach(p => {
         entries.push({
           date: p.date, type: 'payment', ref: '—',
-          description: `${p.note || 'إيصال دفع مسجل'} (${Number(p.amount || 0).toLocaleString()} ج.م)`,
-          debit: 0, credit: 0,
+          description: p.note || 'تسديد مديونية',
+          debit: 0, credit: p.amount,
         });
+      });
+      const paidAfterCreation = invoices.reduce((s, inv) => s + Math.max(0, Number(inv.paid || 0) - getInvoiceInitialPaid(inv)), 0);
+      const loggedPayments = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+      const unloggedPayment = Math.max(0, paidAfterCreation - loggedPayments);
+      if (unloggedPayment > 0) entries.push({
+        date: new Date().toISOString(), type: 'payment', ref: '—',
+        description: 'تسوية مدفوعات مباشرة قديمة على الفواتير', debit: 0, credit: unloggedPayment,
       });
       entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       return { name: customer?.name || '', balance: customer?.balance || 0, entries };
