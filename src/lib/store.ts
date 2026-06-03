@@ -381,6 +381,7 @@ export function payInvoice(invoiceId: string, amount: number): boolean {
       customers[cidx].balance = Math.max(0, customers[cidx].balance - actualPayment);
       saveCustomers(customers);
     }
+    addCustomerPayment({ customerId: inv.customerId, amount: actualPayment, note: `دفع على فاتورة #${inv.invoiceNumber}` });
   }
   
   return true;
@@ -607,7 +608,7 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   } catch {}
 
   // Cash flow within period (السيولة الفعلية الداخلة/الخارجة)
-  const cashIn = invoiceNetItems.reduce((s, x) => s + (x.invoice.paid || 0), 0) + totalCustomerPayments;
+  const cashIn = invoiceNetItems.reduce((s, x) => s + getInvoiceInitialPaid(x.invoice), 0) + totalCustomerPayments;
   const cashOut = totalPurchasesPaid + totalSupplierPayments + totalExpenses;
   const cashFlow = cashIn - cashOut;
 
@@ -629,15 +630,19 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   const productProfits = Object.values(productSales).sort((a, b) => b.profit - a.profit);
 
   // Returns details
-  const returnsDetails: Array<{ invoiceNumber: string; productName: string; quantity: number; total: number; returnedAt: string }> = [];
+  const returnsDetails: Array<{ invoiceNumber: string; customerName: string; invoiceDate: string; productName: string; quantity: number; total: number; returnedAt: string; invoiceOriginalTotal: number; invoiceNetTotal: number }> = [];
   allInvoices.forEach(inv => {
     (inv.returnedItems || []).forEach(r => {
       returnsDetails.push({
         invoiceNumber: inv.invoiceNumber,
+        customerName: inv.customerName || 'بدون عميل',
+        invoiceDate: inv.createdAt,
         productName: r.productName,
         quantity: r.quantity,
         total: r.total,
         returnedAt: r.returnedAt,
+        invoiceOriginalTotal: getInvoiceOriginalTotal(inv),
+        invoiceNetTotal: getInvoiceNetTotal(inv),
       });
     });
   });
@@ -729,7 +734,7 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   let allPurchasesAll: any[] = [];
   try { allPurchasesAll = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]'); } catch {}
   const lifetimeCashIn =
-    allInvoicesAll.reduce((s, inv) => s + (inv.paid || 0), 0) +
+    allInvoicesAll.reduce((s, inv) => s + getInvoiceInitialPaid(inv), 0) +
     customerPaymentsAll.reduce((s: number, p: any) => s + (p.amount || 0), 0);
   const lifetimeCashOut =
     allPurchasesAll.reduce((s, p: any) => s + (p.paid || 0), 0) +
