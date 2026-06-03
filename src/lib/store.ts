@@ -275,6 +275,8 @@ export function returnInvoiceFull(invoiceId: string): boolean {
   if (idx === -1 || invoices[idx].isReturned) return false;
   
   const inv = invoices[idx];
+  const beforeRemaining = Math.max(0, inv.remaining || 0);
+  const now = new Date().toISOString();
   inv.isReturned = true;
   inv.returnedItems = inv.items.map(item => ({
     productId: item.productId,
@@ -282,8 +284,10 @@ export function returnInvoiceFull(invoiceId: string): boolean {
     quantity: item.quantity,
     unitPrice: item.unitPrice,
     total: item.total,
-    returnedAt: new Date().toISOString(),
+    returnedAt: now,
   }));
+  inv.total = 0;
+  inv.remaining = 0;
   
   // Return stock
   const products = getProducts();
@@ -293,15 +297,8 @@ export function returnInvoiceFull(invoiceId: string): boolean {
   });
   saveProducts(products);
   
-  // Adjust customer balance
-  if (inv.customerId && inv.remaining > 0) {
-    const customers = getCustomers();
-    const cidx = customers.findIndex(c => c.id === inv.customerId);
-    if (cidx !== -1) {
-      customers[cidx].balance = Math.max(0, customers[cidx].balance - inv.remaining);
-      saveCustomers(customers);
-    }
-  }
+  // المرتجع يلغي المتبقي فقط من مديونية العميل، بدون ما يلمس فلوس اتحصلت بالفعل.
+  adjustCustomerBalance(inv.customerId, -beforeRemaining);
   
   saveInvoices(invoices);
   return true;
@@ -313,6 +310,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
   if (idx === -1) return false;
   
   const inv = invoices[idx];
+  const beforeRemaining = Math.max(0, inv.remaining || 0);
   const itemIdx = inv.items.findIndex(it => it.productId === productId);
   if (itemIdx === -1) return false;
   
@@ -333,7 +331,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
   // Update invoice totals
   const totalReturned = inv.returnedItems.reduce((s, r) => s + r.total, 0);
   inv.total = inv.items.reduce((s, it) => s + it.total, 0) - totalReturned;
-  inv.remaining = Math.max(0, inv.total - inv.paid);
+  inv.remaining = Math.max(0, inv.total - getInvoiceInitialPaid(inv));
   
   // Check if all items fully returned
   const allReturned = inv.items.every(it => {
@@ -341,6 +339,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
     return retQty >= it.quantity;
   });
   if (allReturned) inv.isReturned = true;
+  adjustCustomerBalance(inv.customerId, Math.max(0, inv.remaining || 0) - beforeRemaining);
   
   // Return stock
   const products = getProducts();
