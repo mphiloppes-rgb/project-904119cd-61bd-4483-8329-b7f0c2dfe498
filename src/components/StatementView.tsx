@@ -29,14 +29,13 @@ export default function StatementView({ type, entityId, onClose }: Props) {
       const payments = getCustomerPayments(entityId);
       const entries: Entry[] = [];
       invoices.forEach(inv => {
-        const ip = getInvoiceInitialPaid(inv);
         entries.push({
           date: inv.createdAt,
           type: 'invoice',
           ref: `#${inv.invoiceNumber}`,
           description: `فاتورة بيع${inv.isReturned ? ' (مرتجعة بالكامل)' : ''}`,
           debit: getInvoiceOriginalTotal(inv),
-          credit: ip,
+          credit: Number(inv.paid || 0),
           invoice: inv,
         });
         (inv.returnedItems || []).forEach(ret => entries.push({
@@ -52,8 +51,8 @@ export default function StatementView({ type, entityId, onClose }: Props) {
       payments.forEach(p => {
         entries.push({
           date: p.date, type: 'payment', ref: '—',
-          description: p.note || 'تسديد مديونية',
-          debit: 0, credit: p.amount,
+          description: `${p.note || 'إيصال دفع مسجل'} (${Number(p.amount || 0).toLocaleString()} ج.م)`,
+          debit: 0, credit: 0,
         });
       });
       entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
