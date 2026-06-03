@@ -182,7 +182,7 @@ export default function CustomersPage() {
             <div className="modal-content">
               <div className="glass-modal rounded-3xl p-5 sm:p-7 md:p-8 w-full max-w-[95vw] sm:max-w-2xl md:max-w-3xl">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-extrabold text-lg">فواتير {customers.find(c => c.id === selectedCustomer)?.name}</h3>
+                  <h3 className="font-extrabold text-lg">فواتير {allCustomers.find(c => c.id === selectedCustomer)?.name}</h3>
                   <button onClick={() => setSelectedCustomer(null)} className="p-2 hover:bg-muted rounded-xl transition-colors"><X size={20} /></button>
                 </div>
                 {customerInvoices.length === 0 ? (
