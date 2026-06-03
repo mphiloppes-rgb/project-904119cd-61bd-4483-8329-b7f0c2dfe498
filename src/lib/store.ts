@@ -76,6 +76,33 @@ export interface ReturnedItem {
   returnedAt: string;
 }
 
+export function getInvoiceOriginalTotal(inv: Pick<Invoice, 'items' | 'total' | 'subtotal'>): number {
+  const itemsTotal = (inv.items || []).reduce((s, it) => s + (Number(it.total) || 0), 0);
+  return itemsTotal || Number(inv.subtotal) || Number(inv.total) || 0;
+}
+
+export function getInvoiceReturnedTotal(inv: Pick<Invoice, 'returnedItems'>): number {
+  return (inv.returnedItems || []).reduce((s, r) => s + (Number(r.total) || 0), 0);
+}
+
+export function getInvoiceNetTotal(inv: Invoice): number {
+  return Math.max(0, getInvoiceOriginalTotal(inv) - getInvoiceReturnedTotal(inv));
+}
+
+export function getInvoiceInitialPaid(inv: Invoice): number {
+  return Number(inv.initialPaid ?? inv.paid ?? 0);
+}
+
+function adjustCustomerBalance(customerId: string | undefined, delta: number) {
+  if (!customerId || delta === 0) return;
+  const customers = getCustomers();
+  const cidx = customers.findIndex(c => c.id === customerId);
+  if (cidx !== -1) {
+    customers[cidx].balance = (customers[cidx].balance || 0) + delta;
+    saveCustomers(customers);
+  }
+}
+
 export interface Expense {
   id: string;
   name: string;
@@ -248,6 +275,8 @@ export function returnInvoiceFull(invoiceId: string): boolean {
   if (idx === -1 || invoices[idx].isReturned) return false;
   
   const inv = invoices[idx];
+  const returnValue = getInvoiceNetTotal(inv);
+  const now = new Date().toISOString();
   inv.isReturned = true;
   inv.returnedItems = inv.items.map(item => ({
     productId: item.productId,
@@ -255,8 +284,10 @@ export function returnInvoiceFull(invoiceId: string): boolean {
     quantity: item.quantity,
     unitPrice: item.unitPrice,
     total: item.total,
-    returnedAt: new Date().toISOString(),
+    returnedAt: now,
   }));
+  inv.total = 0;
+  inv.remaining = 0;
   
   // Return stock
   const products = getProducts();
@@ -266,15 +297,8 @@ export function returnInvoiceFull(invoiceId: string): boolean {
   });
   saveProducts(products);
   
-  // Adjust customer balance
-  if (inv.customerId && inv.remaining > 0) {
-    const customers = getCustomers();
-    const cidx = customers.findIndex(c => c.id === inv.customerId);
-    if (cidx !== -1) {
-      customers[cidx].balance = Math.max(0, customers[cidx].balance - inv.remaining);
-      saveCustomers(customers);
-    }
-  }
+  // المرتجع يخصم قيمة المرتجع بالكامل من حساب العميل؛ لو كان دافع زيادة يظهر رصيد له.
+  adjustCustomerBalance(inv.customerId, -returnValue);
   
   saveInvoices(invoices);
   return true;
@@ -290,6 +314,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
   if (itemIdx === -1) return false;
   
   const item = inv.items[itemIdx];
+  const returnValue = returnQty * item.unitPrice;
   const alreadyReturned = (inv.returnedItems || []).filter(r => r.productId === productId).reduce((s, r) => s + r.quantity, 0);
   if (returnQty > item.quantity - alreadyReturned) return false;
   
@@ -299,7 +324,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
     productName: item.productName,
     quantity: returnQty,
     unitPrice: item.unitPrice,
-    total: returnQty * item.unitPrice,
+    total: returnValue,
     returnedAt: new Date().toISOString(),
   });
   
@@ -314,6 +339,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
     return retQty >= it.quantity;
   });
   if (allReturned) inv.isReturned = true;
+  adjustCustomerBalance(inv.customerId, -returnValue);
   
   // Return stock
   const products = getProducts();
@@ -342,7 +368,6 @@ export function payInvoice(invoiceId: string, amount: number): boolean {
   const inv = invoices[idx];
   const actualPayment = Math.min(amount, inv.remaining);
   if (actualPayment <= 0) return false;
-  
   inv.paid += actualPayment;
   inv.remaining = Math.max(0, inv.total - inv.paid);
   saveInvoices(invoices);
@@ -355,6 +380,7 @@ export function payInvoice(invoiceId: string, amount: number): boolean {
       customers[cidx].balance = Math.max(0, customers[cidx].balance - actualPayment);
       saveCustomers(customers);
     }
+    addCustomerPayment({ customerId: inv.customerId, amount: actualPayment, note: `دفع على فاتورة #${inv.invoiceNumber}` });
   }
   
   return true;
@@ -581,7 +607,7 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   } catch {}
 
   // Cash flow within period (السيولة الفعلية الداخلة/الخارجة)
-  const cashIn = invoiceNetItems.reduce((s, x) => s + (x.invoice.paid || 0), 0) + totalCustomerPayments;
+  const cashIn = invoiceNetItems.reduce((s, x) => s + getInvoiceInitialPaid(x.invoice), 0) + totalCustomerPayments;
   const cashOut = totalPurchasesPaid + totalSupplierPayments + totalExpenses;
   const cashFlow = cashIn - cashOut;
 
@@ -603,15 +629,19 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   const productProfits = Object.values(productSales).sort((a, b) => b.profit - a.profit);
 
   // Returns details
-  const returnsDetails: Array<{ invoiceNumber: string; productName: string; quantity: number; total: number; returnedAt: string }> = [];
+  const returnsDetails: Array<{ invoiceNumber: string; customerName: string; invoiceDate: string; productName: string; quantity: number; total: number; returnedAt: string; invoiceOriginalTotal: number; invoiceNetTotal: number }> = [];
   allInvoices.forEach(inv => {
     (inv.returnedItems || []).forEach(r => {
       returnsDetails.push({
         invoiceNumber: inv.invoiceNumber,
+        customerName: inv.customerName || 'بدون عميل',
+        invoiceDate: inv.createdAt,
         productName: r.productName,
         quantity: r.quantity,
         total: r.total,
         returnedAt: r.returnedAt,
+        invoiceOriginalTotal: getInvoiceOriginalTotal(inv),
+        invoiceNetTotal: getInvoiceNetTotal(inv),
       });
     });
   });
@@ -703,7 +733,7 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
   let allPurchasesAll: any[] = [];
   try { allPurchasesAll = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]'); } catch {}
   const lifetimeCashIn =
-    allInvoicesAll.reduce((s, inv) => s + (inv.paid || 0), 0) +
+    allInvoicesAll.reduce((s, inv) => s + getInvoiceInitialPaid(inv), 0) +
     customerPaymentsAll.reduce((s: number, p: any) => s + (p.amount || 0), 0);
   const lifetimeCashOut =
     allPurchasesAll.reduce((s, p: any) => s + (p.paid || 0), 0) +

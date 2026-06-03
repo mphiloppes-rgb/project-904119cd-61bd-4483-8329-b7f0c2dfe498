@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye } from "lucide-react";
-import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, type Invoice } from "@/lib/store";
+import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw } from "lucide-react";
+import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 
 interface Entry {
   date: string;
-  type: 'invoice' | 'payment';
+  type: 'invoice' | 'payment' | 'return';
   ref: string;
   description: string;
   debit: number;
@@ -29,17 +29,24 @@ export default function StatementView({ type, entityId, onClose }: Props) {
       const payments = getCustomerPayments(entityId);
       const entries: Entry[] = [];
       invoices.forEach(inv => {
-        // initialPaid = المدفوع وقت الإنشاء فقط (للفواتير القديمة fallback = paid)
-        const ip = inv.initialPaid != null ? inv.initialPaid : inv.paid;
         entries.push({
           date: inv.createdAt,
           type: 'invoice',
           ref: `#${inv.invoiceNumber}`,
-          description: `فاتورة بيع${inv.isReturned ? ' (مرتجعة)' : ''}`,
-          debit: inv.total,
-          credit: ip,
+          description: `فاتورة بيع${inv.isReturned ? ' (مرتجعة بالكامل)' : ''}`,
+          debit: getInvoiceOriginalTotal(inv),
+          credit: getInvoiceInitialPaid(inv),
           invoice: inv,
         });
+        (inv.returnedItems || []).forEach(ret => entries.push({
+          date: ret.returnedAt,
+          type: 'return',
+          ref: `#${inv.invoiceNumber}`,
+          description: `مرتجع: ${ret.productName} × ${ret.quantity}`,
+          debit: 0,
+          credit: ret.total,
+          invoice: inv,
+        }));
       });
       payments.forEach(p => {
         entries.push({
@@ -47,6 +54,13 @@ export default function StatementView({ type, entityId, onClose }: Props) {
           description: p.note || 'تسديد مديونية',
           debit: 0, credit: p.amount,
         });
+      });
+      const paidAfterCreation = invoices.reduce((s, inv) => s + Math.max(0, Number(inv.paid || 0) - getInvoiceInitialPaid(inv)), 0);
+      const loggedPayments = payments.reduce((s, p) => s + Number(p.amount || 0), 0);
+      const unloggedPayment = Math.max(0, paidAfterCreation - loggedPayments);
+      if (unloggedPayment > 0) entries.push({
+        date: new Date().toISOString(), type: 'payment', ref: '—',
+        description: 'تسوية مدفوعات مباشرة قديمة على الفواتير', debit: 0, credit: unloggedPayment,
       });
       entries.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
       return { name: customer?.name || '', balance: customer?.balance || 0, entries };
@@ -82,7 +96,8 @@ export default function StatementView({ type, entityId, onClose }: Props) {
   const totalDebit = data.entries.reduce((s, e) => s + e.debit, 0);
   const totalCredit = data.entries.reduce((s, e) => s + e.credit, 0);
   const label = type === 'customer' ? 'كشف حساب عميل' : 'كشف حساب مورد';
-  const debitLabel = type === 'customer' ? 'مبيعات' : 'مشتريات';
+  const debitLabel = type === 'customer' ? 'مبيعات أصلية' : 'مشتريات';
+  const totalReturns = type === 'customer' ? data.entries.filter(e => e.type === 'return').reduce((s, e) => s + e.credit, 0) : 0;
 
   return (
     <div className="modal-overlay">
@@ -95,18 +110,25 @@ export default function StatementView({ type, entityId, onClose }: Props) {
           <button onClick={onClose} className="p-2 hover:bg-muted rounded-xl"><X size={20} /></button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
           <div className="bg-accent/40 rounded-xl p-3 text-center">
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><TrendingUp size={12} /> {debitLabel}</div>
             <p className="font-extrabold">{totalDebit.toLocaleString()} ج.م</p>
           </div>
           <div className="bg-accent/40 rounded-xl p-3 text-center">
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><TrendingDown size={12} /> مدفوعات</div>
-            <p className="font-extrabold text-success">{totalCredit.toLocaleString()} ج.م</p>
+            <p className="font-extrabold text-success">{(totalCredit - totalReturns).toLocaleString()} ج.م</p>
           </div>
-          <div className={`rounded-xl p-3 text-center ${data.balance > 0 ? 'bg-destructive/10' : 'bg-success/10'}`}>
+          {type === 'customer' && (
+            <div className="bg-warning/10 rounded-xl p-3 text-center">
+              <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><RotateCcw size={12} /> المرتجعات</div>
+              <p className="font-extrabold text-warning">{totalReturns.toLocaleString()} ج.م</p>
+            </div>
+          )}
+          <div className={`rounded-xl p-3 text-center ${data.balance > 0 ? 'bg-destructive/10' : data.balance < 0 ? 'bg-warning/10' : 'bg-success/10'}`}>
             <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1"><Banknote size={12} /> الرصيد</div>
-            <p className={`font-extrabold ${data.balance > 0 ? 'text-destructive' : 'text-success'}`}>{Math.abs(data.balance).toLocaleString()} ج.م</p>
+            <p className={`font-extrabold ${data.balance > 0 ? 'text-destructive' : data.balance < 0 ? 'text-warning' : 'text-success'}`}>{Math.abs(data.balance).toLocaleString()} ج.م</p>
+            <p className="text-[10px] text-muted-foreground">{data.balance > 0 ? 'على العميل' : data.balance < 0 ? 'للعميل' : 'صافي'}</p>
           </div>
         </div>
 
@@ -119,7 +141,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
               {rows.map((r, i) => (
                 <div key={i} className="bg-accent/40 rounded-xl p-3 text-xs">
                   <div className="flex justify-between mb-1 items-center gap-2">
-                    <span className="font-bold">{r.description} {r.ref}</span>
+                    <span className={`font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>{r.description} {r.ref}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-[10px]">{new Date(r.date).toLocaleDateString("ar-EG")}</span>
                       {r.invoice && (
@@ -129,7 +151,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center mt-2 pt-2 border-t border-border/30">
                     <div><p className="text-muted-foreground">عليه</p><p className="font-extrabold">{r.debit ? r.debit.toLocaleString() : '—'}</p></div>
-                    <div><p className="text-muted-foreground">له</p><p className="font-extrabold text-success">{r.credit ? r.credit.toLocaleString() : '—'}</p></div>
+                    <div><p className="text-muted-foreground">له</p><p className={`font-extrabold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</p></div>
                     <div><p className="text-muted-foreground">الرصيد</p><p className={`font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</p></div>
                   </div>
                 </div>
@@ -154,10 +176,10 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                   {rows.map((r, i) => (
                     <tr key={i} className="border-b border-border/30 hover:bg-accent/20">
                       <td className="p-2 text-xs text-muted-foreground">{new Date(r.date).toLocaleDateString("ar-EG")}</td>
-                      <td className="p-2 font-bold">{r.description}</td>
+                      <td className={`p-2 font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>{r.description}</td>
                       <td className="p-2 text-xs">{r.ref}</td>
                       <td className="p-2 text-center">{r.debit ? r.debit.toLocaleString() : '—'}</td>
-                      <td className="p-2 text-center text-success font-bold">{r.credit ? r.credit.toLocaleString() : '—'}</td>
+                      <td className={`p-2 text-center font-bold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</td>
                       <td className={`p-2 text-center font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</td>
                       <td className="p-2 text-center">
                         {r.invoice ? (
@@ -188,8 +210,9 @@ export default function StatementView({ type, entityId, onClose }: Props) {
             </div>
 
             <div className="grid grid-cols-3 gap-2 mb-3 text-center text-xs">
-              <div className="bg-accent/40 p-2 rounded-lg"><p className="text-muted-foreground">الإجمالي</p><p className="font-extrabold">{Number(detailInvoice.total||0).toLocaleString()} ج.م</p></div>
-              <div className="bg-success/10 p-2 rounded-lg"><p className="text-muted-foreground">المدفوع</p><p className="font-extrabold text-success">{Number(detailInvoice.paid||0).toLocaleString()} ج.م</p></div>
+              <div className="bg-accent/40 p-2 rounded-lg"><p className="text-muted-foreground">قبل المرتجع</p><p className="font-extrabold">{getInvoiceOriginalTotal(detailInvoice).toLocaleString()} ج.م</p></div>
+              <div className="bg-warning/10 p-2 rounded-lg"><p className="text-muted-foreground">المرتجع</p><p className="font-extrabold text-warning">{getInvoiceReturnedTotal(detailInvoice).toLocaleString()} ج.م</p></div>
+              <div className="bg-success/10 p-2 rounded-lg"><p className="text-muted-foreground">الصافي</p><p className="font-extrabold text-success">{getInvoiceNetTotal(detailInvoice).toLocaleString()} ج.م</p></div>
               <div className={`p-2 rounded-lg ${Number(detailInvoice.remaining||0) > 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}><p className="text-muted-foreground">المتبقي</p><p className={`font-extrabold ${Number(detailInvoice.remaining||0) > 0 ? 'text-destructive' : ''}`}>{Number(detailInvoice.remaining||0).toLocaleString()} ج.م</p></div>
             </div>
 

@@ -13,6 +13,7 @@ import {
   X,
   Truck,
   PackagePlus,
+  Eye,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { LogoutButton } from "./PinLock";
@@ -89,6 +90,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
           {/* Navigation */}
           <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+            <a
+              href="./viewer.html"
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 bg-primary/10 text-sidebar-primary hover:bg-sidebar-primary hover:text-sidebar-primary-foreground"
+            >
+              <Eye size={20} className="animate-float" />
+              <span>عرض الأسعار</span>
+            </a>
             {visibleNav.map((item, idx) => {
               const isActive = location.pathname === item.path;
               return (
