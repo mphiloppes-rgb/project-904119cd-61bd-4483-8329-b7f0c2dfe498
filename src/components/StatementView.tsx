@@ -135,7 +135,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
               {rows.map((r, i) => (
                 <div key={i} className="bg-accent/40 rounded-xl p-3 text-xs">
                   <div className="flex justify-between mb-1 items-center gap-2">
-                    <span className="font-bold">{r.description} {r.ref}</span>
+                    <span className={`font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>{r.description} {r.ref}</span>
                     <div className="flex items-center gap-2">
                       <span className="text-muted-foreground text-[10px]">{new Date(r.date).toLocaleDateString("ar-EG")}</span>
                       {r.invoice && (
@@ -145,7 +145,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center mt-2 pt-2 border-t border-border/30">
                     <div><p className="text-muted-foreground">عليه</p><p className="font-extrabold">{r.debit ? r.debit.toLocaleString() : '—'}</p></div>
-                    <div><p className="text-muted-foreground">له</p><p className="font-extrabold text-success">{r.credit ? r.credit.toLocaleString() : '—'}</p></div>
+                    <div><p className="text-muted-foreground">له</p><p className={`font-extrabold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</p></div>
                     <div><p className="text-muted-foreground">الرصيد</p><p className={`font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</p></div>
                   </div>
                 </div>
@@ -170,10 +170,10 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                   {rows.map((r, i) => (
                     <tr key={i} className="border-b border-border/30 hover:bg-accent/20">
                       <td className="p-2 text-xs text-muted-foreground">{new Date(r.date).toLocaleDateString("ar-EG")}</td>
-                      <td className="p-2 font-bold">{r.description}</td>
+                      <td className={`p-2 font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>{r.description}</td>
                       <td className="p-2 text-xs">{r.ref}</td>
                       <td className="p-2 text-center">{r.debit ? r.debit.toLocaleString() : '—'}</td>
-                      <td className="p-2 text-center text-success font-bold">{r.credit ? r.credit.toLocaleString() : '—'}</td>
+                      <td className={`p-2 text-center font-bold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</td>
                       <td className={`p-2 text-center font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</td>
                       <td className="p-2 text-center">
                         {r.invoice ? (
@@ -204,8 +204,9 @@ export default function StatementView({ type, entityId, onClose }: Props) {
             </div>
 
             <div className="grid grid-cols-3 gap-2 mb-3 text-center text-xs">
-              <div className="bg-accent/40 p-2 rounded-lg"><p className="text-muted-foreground">الإجمالي</p><p className="font-extrabold">{Number(detailInvoice.total||0).toLocaleString()} ج.م</p></div>
-              <div className="bg-success/10 p-2 rounded-lg"><p className="text-muted-foreground">المدفوع</p><p className="font-extrabold text-success">{Number(detailInvoice.paid||0).toLocaleString()} ج.م</p></div>
+              <div className="bg-accent/40 p-2 rounded-lg"><p className="text-muted-foreground">قبل المرتجع</p><p className="font-extrabold">{getInvoiceOriginalTotal(detailInvoice).toLocaleString()} ج.م</p></div>
+              <div className="bg-warning/10 p-2 rounded-lg"><p className="text-muted-foreground">المرتجع</p><p className="font-extrabold text-warning">{getInvoiceReturnedTotal(detailInvoice).toLocaleString()} ج.م</p></div>
+              <div className="bg-success/10 p-2 rounded-lg"><p className="text-muted-foreground">الصافي</p><p className="font-extrabold text-success">{getInvoiceNetTotal(detailInvoice).toLocaleString()} ج.م</p></div>
               <div className={`p-2 rounded-lg ${Number(detailInvoice.remaining||0) > 0 ? 'bg-destructive/10' : 'bg-muted/40'}`}><p className="text-muted-foreground">المتبقي</p><p className={`font-extrabold ${Number(detailInvoice.remaining||0) > 0 ? 'text-destructive' : ''}`}>{Number(detailInvoice.remaining||0).toLocaleString()} ج.م</p></div>
             </div>
 
