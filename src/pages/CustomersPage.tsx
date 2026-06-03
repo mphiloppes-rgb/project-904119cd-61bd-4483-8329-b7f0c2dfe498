@@ -225,7 +225,7 @@ export default function CustomersPage() {
               </div>
               <div className="mt-3">
                 <span className={`text-lg font-extrabold ${c.balance > 0 ? "text-destructive" : "text-success"}`}>
-                  {c.balance > 0 ? `عليه ${c.balance.toLocaleString()} ج.م` : "لا مديونية"}
+                  {c.balance > 0 ? `عليه ${c.balance.toLocaleString()} ج.م` : c.balance < 0 ? `له ${Math.abs(c.balance).toLocaleString()} ج.م` : "لا مديونية"}
                 </span>
               </div>
               <div className="mt-3 flex gap-2 flex-wrap">
