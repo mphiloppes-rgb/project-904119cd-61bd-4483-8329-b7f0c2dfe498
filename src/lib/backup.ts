@@ -1,5 +1,17 @@
 import { getProducts, getCustomers, getInvoices, getExpenses, saveProducts, saveCustomers, saveInvoices, saveExpenses } from './store';
 
+const EXTRA_KEYS = [
+  'pos_suppliers',
+  'pos_purchase_invoices',
+  'pos_supplier_payments',
+  'pos_customer_payments',
+  'pos_price_changes',
+  'pos_users',
+  'pos_auth_enabled',
+  'pos_viewer_save_path',
+  'pos_auto_backup_interval_ms',
+];
+
 export function exportBackup(): string {
   const data = {
     version: 1,
@@ -8,6 +20,11 @@ export function exportBackup(): string {
     customers: getCustomers(),
     invoices: getInvoices(),
     expenses: getExpenses(),
+    extra: EXTRA_KEYS.reduce<Record<string, string>>((acc, key) => {
+      const value = localStorage.getItem(key);
+      if (value != null) acc[key] = value;
+      return acc;
+    }, {}),
   };
   return JSON.stringify(data, null, 2);
 }
@@ -36,6 +53,11 @@ export function restoreBackup(file: File): Promise<{ products: number; customers
         saveCustomers(data.customers);
         saveInvoices(data.invoices);
         saveExpenses(data.expenses);
+        if (data.extra && typeof data.extra === 'object') {
+          Object.entries(data.extra).forEach(([key, value]) => {
+            if (EXTRA_KEYS.includes(key) && typeof value === 'string') localStorage.setItem(key, value);
+          });
+        }
         resolve({
           products: data.products.length,
           customers: data.customers.length,
