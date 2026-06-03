@@ -331,7 +331,7 @@ export function returnInvoiceItem(invoiceId: string, productId: string, returnQt
   // Update invoice totals
   const totalReturned = inv.returnedItems.reduce((s, r) => s + r.total, 0);
   inv.total = inv.items.reduce((s, it) => s + it.total, 0) - totalReturned;
-  inv.remaining = Math.max(0, inv.total - getInvoiceInitialPaid(inv));
+  inv.remaining = Math.max(0, inv.total - inv.paid);
   
   // Check if all items fully returned
   const allReturned = inv.items.every(it => {
