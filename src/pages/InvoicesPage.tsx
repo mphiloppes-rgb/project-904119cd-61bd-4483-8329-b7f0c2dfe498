@@ -234,8 +234,9 @@ export default function InvoicesPage() {
                   )}
 
                   {confirmReturn && (
-                    <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 text-center">
-                      <p className="text-sm font-extrabold text-destructive">⚠️ هل أنت متأكد؟ سيتم تحديث المخزون تلقائياً</p>
+                    <div className="bg-destructive/10 border border-destructive/20 rounded-xl p-3 text-center space-y-1">
+                      <p className="text-sm font-extrabold text-destructive">⚠️ هل أنت متأكد؟ سيتم تحديث المخزون وحساب العميل تلقائياً</p>
+                      <p className="text-xs text-muted-foreground">قيمة المرتجع هتتخصم من مديونية العميل، ولو العميل كان دافع زيادة هتظهر كرصيد له.</p>
                     </div>
                   )}
 
