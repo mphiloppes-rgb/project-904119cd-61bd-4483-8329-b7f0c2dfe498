@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye } from "lucide-react";
-import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, type Invoice } from "@/lib/store";
+import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw } from "lucide-react";
+import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
 type Props = {
@@ -11,7 +11,7 @@ type Props = {
 
 interface Entry {
   date: string;
-  type: 'invoice' | 'payment';
+  type: 'invoice' | 'payment' | 'return';
   ref: string;
   description: string;
   debit: number;
@@ -29,17 +29,25 @@ export default function StatementView({ type, entityId, onClose }: Props) {
       const payments = getCustomerPayments(entityId);
       const entries: Entry[] = [];
       invoices.forEach(inv => {
-        // initialPaid = المدفوع وقت الإنشاء فقط (للفواتير القديمة fallback = paid)
-        const ip = inv.initialPaid != null ? inv.initialPaid : inv.paid;
+        const ip = getInvoiceInitialPaid(inv);
         entries.push({
           date: inv.createdAt,
           type: 'invoice',
           ref: `#${inv.invoiceNumber}`,
-          description: `فاتورة بيع${inv.isReturned ? ' (مرتجعة)' : ''}`,
-          debit: inv.total,
+          description: `فاتورة بيع${inv.isReturned ? ' (مرتجعة بالكامل)' : ''}`,
+          debit: getInvoiceOriginalTotal(inv),
           credit: ip,
           invoice: inv,
         });
+        (inv.returnedItems || []).forEach(ret => entries.push({
+          date: ret.returnedAt,
+          type: 'return',
+          ref: `#${inv.invoiceNumber}`,
+          description: `مرتجع: ${ret.productName} × ${ret.quantity}`,
+          debit: 0,
+          credit: ret.total,
+          invoice: inv,
+        }));
       });
       payments.forEach(p => {
         entries.push({
