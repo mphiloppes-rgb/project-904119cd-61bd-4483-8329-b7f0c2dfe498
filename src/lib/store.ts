@@ -368,8 +368,6 @@ export function payInvoice(invoiceId: string, amount: number): boolean {
   const inv = invoices[idx];
   const actualPayment = Math.min(amount, inv.remaining);
   if (actualPayment <= 0) return false;
-  const beforePaid = inv.paid;
-  
   inv.paid += actualPayment;
   inv.remaining = Math.max(0, inv.total - inv.paid);
   saveInvoices(invoices);
@@ -382,9 +380,7 @@ export function payInvoice(invoiceId: string, amount: number): boolean {
       customers[cidx].balance = Math.max(0, customers[cidx].balance - actualPayment);
       saveCustomers(customers);
     }
-    if (beforePaid <= getInvoiceInitialPaid(inv)) {
-      addCustomerPayment({ customerId: inv.customerId, amount: actualPayment, note: `دفع على فاتورة #${inv.invoiceNumber}` });
-    }
+    addCustomerPayment({ customerId: inv.customerId, amount: actualPayment, note: `دفع على فاتورة #${inv.invoiceNumber}` });
   }
   
   return true;
