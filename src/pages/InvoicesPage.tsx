@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Search, Eye, Printer, Receipt, RotateCcw, UserPlus, Banknote } from "lucide-react";
-import { getInvoices, getCustomers, returnInvoiceFull, returnInvoiceItem, assignInvoiceToCustomer, payInvoice, type Invoice } from "@/lib/store";
+import { getInvoices, getCustomers, returnInvoiceFull, returnInvoiceItem, assignInvoiceToCustomer, payInvoice, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { toast } from "@/hooks/use-toast";
 import InvoicePrint from "@/components/InvoicePrint";
@@ -75,7 +75,7 @@ export default function InvoicesPage() {
     }
 
     if (success) {
-      toast({ title: "تم المرتجع ✅", description: returnType === 'full' ? "تم ارتجاع الفاتورة بالكامل وتحديث المخزون" : `تم ارتجاع ${returnQty} قطعة وتحديث المخزون` });
+      toast({ title: "تم المرتجع ✅", description: returnType === 'full' ? "تم ارتجاع الفاتورة وتصفير مديونيتها وتحديث المخزون" : `تم ارتجاع ${returnQty} قطعة وتعديل حساب العميل والمخزون` });
       setShowReturnDialog(false);
       setSelectedInvoice(null);
       refresh();
@@ -182,7 +182,9 @@ export default function InvoicesPage() {
                   </table>
                 </div>
                 <div className="space-y-2 border-t pt-3">
-                  <div className="flex justify-between font-extrabold"><span>الإجمالي</span><span>{selectedInvoice.total.toLocaleString()} ج.م</span></div>
+                  <div className="flex justify-between font-extrabold"><span>الإجمالي قبل المرتجع</span><span>{getInvoiceOriginalTotal(selectedInvoice).toLocaleString()} ج.م</span></div>
+                  <div className="flex justify-between"><span>إجمالي المرتجع</span><span className="text-warning font-bold">-{getInvoiceReturnedTotal(selectedInvoice).toLocaleString()} ج.م</span></div>
+                  <div className="flex justify-between"><span>صافي الفاتورة</span><span className="text-primary font-bold">{getInvoiceNetTotal(selectedInvoice).toLocaleString()} ج.م</span></div>
                   <div className="flex justify-between"><span>المدفوع</span><span className="text-success font-bold">{selectedInvoice.paid.toLocaleString()} ج.م</span></div>
                   <div className="flex justify-between font-extrabold text-destructive"><span>المتبقي</span><span>{selectedInvoice.remaining.toLocaleString()} ج.م</span></div>
                 </div>
