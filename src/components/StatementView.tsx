@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw } from "lucide-react";
+import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw, ChevronDown, ChevronLeft } from "lucide-react";
 import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
@@ -21,6 +21,8 @@ interface Entry {
 
 export default function StatementView({ type, entityId, onClose }: Props) {
   const [detailInvoice, setDetailInvoice] = useState<any | null>(null);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const toggle = (i: number) => setExpanded(e => ({ ...e, [i]: !e[i] }));
 
   const data = useMemo(() => {
     if (type === 'customer') {
