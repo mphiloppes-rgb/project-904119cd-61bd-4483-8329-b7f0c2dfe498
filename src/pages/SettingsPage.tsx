@@ -19,6 +19,7 @@ import PatternLock from "@/components/PatternLock";
 import CashierPermissionsCard from "@/components/CashierPermissionsCard";
 import LegacyImporter from "@/components/LegacyImporter";
 import { exportViewerData, chooseViewerSavePath, getViewerSavePath } from "@/lib/viewer-sync";
+import { getBackupFolder, chooseDiskBackupFolder, runDiskBackup, isDiskBackupEnabled, setDiskBackupEnabled, getDiskBackupIntervalMs, setDiskBackupIntervalMs, getLastBackupInfo } from "@/lib/disk-backup";
 
 export default function SettingsPage() {
   const fileRef = useRef<HTMLInputElement>(null);
@@ -295,6 +296,67 @@ export default function SettingsPage() {
             <div className="mt-3 p-3 bg-primary/5 rounded-xl text-xs text-muted-foreground">
               💡 العارض يمكن تثبيته كتطبيق مستقل على سطح المكتب من المتصفح:
               افتح <a href="./viewer.html" target="_blank" rel="noreferrer" className="text-primary font-extrabold underline">./viewer.html</a> ثم من قائمة المتصفح → "تثبيت التطبيق".
+            </div>
+          </div>
+        )}
+
+        {/* Disk Backup (D:) */}
+        {admin && (
+          <div className="stat-card animate-fade-in-up sm:col-span-2">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-success/10 flex items-center justify-center"><Database className="text-success" size={22} /></div>
+              <div>
+                <h3 className="font-extrabold text-lg">نسخة احتياطية شاملة على القرص (D:)</h3>
+                <p className="text-xs text-muted-foreground">تشمل كل البيانات: منتجات، عملاء، فواتير بيع وشراء، موردين، مدفوعات، مصاريف، سجل أسعار، إعدادات</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+              <div className="bg-accent/40 rounded-xl p-3 text-xs">
+                <p className="text-muted-foreground mb-1">📁 مجلد النسخ الاحتياطي:</p>
+                <p className="font-mono break-all">{getBackupFolder() || 'افتراضي: D:\\PosBackup (أو ~/PosBackup)'}</p>
+              </div>
+              <div className="bg-accent/40 rounded-xl p-3 text-xs">
+                <p className="text-muted-foreground mb-1">⏱️ آخر حفظ:</p>
+                {(() => {
+                  const last = getLastBackupInfo();
+                  if (!last) return <p className="font-bold">لم يتم بعد</p>;
+                  return <p className="font-bold">{new Date(last.time).toLocaleString('ar-EG')} <span className="text-muted-foreground">({last.method === 'electron' ? 'إلى القرص' : 'متصفح فقط'})</span></p>;
+                })()}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-3">
+              <button onClick={async () => {
+                const p = await chooseDiskBackupFolder();
+                if (p) { toast({ title: 'تم تحديد المجلد ✅', description: p }); refresh(); }
+                else toast({ title: 'لازم النسخة المكتبية (Electron) لاختيار مجلد على القرص', variant: 'destructive' });
+              }} className="bg-accent hover:bg-accent/80 py-2.5 rounded-xl font-extrabold text-sm">📁 اختر المجلد</button>
+
+              <button onClick={async () => {
+                const r = await runDiskBackup(true);
+                if (r.ok) { toast({ title: 'تم الحفظ ✅', description: r.path || (r.method === 'browser' ? 'متصفح فقط — مفيش وصول للقرص' : '') }); refresh(); }
+                else toast({ title: 'فشل الحفظ', description: r.error, variant: 'destructive' });
+              }} className="btn-primary py-2.5 text-sm"><Download size={16} /> احفظ نسخة الآن</button>
+
+              <button onClick={() => { setDiskBackupEnabled(!isDiskBackupEnabled()); refresh(); toast({ title: isDiskBackupEnabled() ? 'تم الإيقاف' : 'تم التفعيل ✅' }); }}
+                className={`py-2.5 rounded-xl font-extrabold text-sm ${isDiskBackupEnabled() ? 'bg-success/15 text-success' : 'bg-destructive/15 text-destructive'}`}>
+                {isDiskBackupEnabled() ? '✅ التلقائي شغّال' : '⏸️ متوقف'}
+              </button>
+            </div>
+
+            <div className="bg-accent/30 rounded-xl p-3">
+              <p className="text-xs font-extrabold mb-2">⏱️ تكرار النسخ التلقائي</p>
+              <div className="flex flex-wrap gap-2">
+                {[{l:'30 ثانية',v:30000},{l:'1 دقيقة',v:60000},{l:'5 دقايق',v:300000},{l:'15 دقيقة',v:900000}].map(opt => (
+                  <button key={opt.v} onClick={() => { setDiskBackupIntervalMs(opt.v); refresh(); toast({ title: '✅ تم التعديل' }); }}
+                    className={`text-xs font-extrabold px-3 py-2 rounded-lg ${getDiskBackupIntervalMs() === opt.v ? 'bg-primary text-primary-foreground' : 'bg-background border border-border'}`}>{opt.l}</button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 p-3 bg-primary/5 rounded-xl text-xs text-muted-foreground leading-relaxed">
+              💡 على نسخة سطح المكتب (Electron): الملف بيتكتب كل دقيقة على القرص في المجلد المختار (افتراضي D:\PosBackup) ومعاه نسخة بتاريخ ووقت لآخر 60 نسخة. لو عملت ويندوز للجهاز، البيانات بتفضل سليمة على D: وتقدر تستعيدها من خانة "استرجاع نسخة احتياطية".
             </div>
           </div>
         )}
