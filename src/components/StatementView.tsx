@@ -233,7 +233,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                             </td>
                           </tr>
                         )}
-                      </>
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
