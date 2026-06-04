@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw } from "lucide-react";
+import React, { useMemo, useState } from "react";
+import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw, ChevronDown, ChevronLeft } from "lucide-react";
 import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
@@ -21,6 +21,8 @@ interface Entry {
 
 export default function StatementView({ type, entityId, onClose }: Props) {
   const [detailInvoice, setDetailInvoice] = useState<any | null>(null);
+  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const toggle = (i: number) => setExpanded(e => ({ ...e, [i]: !e[i] }));
 
   const data = useMemo(() => {
     if (type === 'customer') {
@@ -173,23 +175,67 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((r, i) => (
-                    <tr key={i} className="border-b border-border/30 hover:bg-accent/20">
-                      <td className="p-2 text-xs text-muted-foreground">{new Date(r.date).toLocaleDateString("ar-EG")}</td>
-                      <td className={`p-2 font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>{r.description}</td>
-                      <td className="p-2 text-xs">{r.ref}</td>
-                      <td className="p-2 text-center">{r.debit ? r.debit.toLocaleString() : '—'}</td>
-                      <td className={`p-2 text-center font-bold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</td>
-                      <td className={`p-2 text-center font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</td>
-                      <td className="p-2 text-center">
-                        {r.invoice ? (
-                          <button onClick={() => setDetailInvoice(r.invoice)} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20">
-                            <Eye size={14} /> عرض
-                          </button>
-                        ) : '—'}
-                      </td>
-                    </tr>
-                  ))}
+                  {rows.map((r, i) => {
+                    const isInvoice = r.type === 'invoice' && r.invoice;
+                    const isOpen = !!expanded[i];
+                    return (
+                      <React.Fragment key={i}>
+                        <tr key={i} className={`border-b border-border/30 hover:bg-accent/20 ${isInvoice ? 'cursor-pointer' : ''}`} onClick={() => isInvoice && toggle(i)}>
+                          <td className="p-2 text-xs text-muted-foreground">{new Date(r.date).toLocaleDateString("ar-EG")}</td>
+                          <td className={`p-2 font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>
+                            {isInvoice && (isOpen ? <ChevronDown size={14} className="inline ml-1" /> : <ChevronLeft size={14} className="inline ml-1" />)}
+                            {r.description}
+                          </td>
+                          <td className="p-2 text-xs">{r.ref}</td>
+                          <td className="p-2 text-center">{r.debit ? r.debit.toLocaleString() : '—'}</td>
+                          <td className={`p-2 text-center font-bold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</td>
+                          <td className={`p-2 text-center font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</td>
+                          <td className="p-2 text-center">
+                            {r.invoice ? (
+                              <button onClick={(e) => { e.stopPropagation(); setDetailInvoice(r.invoice); }} className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-primary/10 text-primary text-xs font-bold hover:bg-primary/20">
+                                <Eye size={14} /> عرض
+                              </button>
+                            ) : '—'}
+                          </td>
+                        </tr>
+                        {isInvoice && isOpen && (
+                          <tr key={`${i}-items`} className="bg-muted/20">
+                            <td colSpan={7} className="p-3">
+                              <div className="text-xs">
+                                <p className="font-extrabold mb-2 text-primary">📋 محتوى فاتورة #{r.invoice.invoiceNumber} — {new Date(r.invoice.createdAt).toLocaleString("ar-EG")}</p>
+                                <table className="w-full">
+                                  <thead><tr className="text-muted-foreground">
+                                    <th className="text-right p-1">المنتج</th>
+                                    <th className="text-center p-1">كمية</th>
+                                    <th className="text-center p-1">سعر</th>
+                                    <th className="text-center p-1">إجمالي</th>
+                                  </tr></thead>
+                                  <tbody>
+                                    {(r.invoice.items || []).map((it: any, k: number) => (
+                                      <tr key={k} className="border-t border-border/30">
+                                        <td className="p-1 font-bold">{it.productName}</td>
+                                        <td className="p-1 text-center">{it.quantity}</td>
+                                        <td className="p-1 text-center">{Number(it.unitPrice || 0).toLocaleString()}</td>
+                                        <td className="p-1 text-center font-extrabold">{Number(it.total || 0).toLocaleString()}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                                {r.invoice.returnedItems && r.invoice.returnedItems.length > 0 && (
+                                  <div className="mt-2 p-2 bg-amber-500/10 rounded-lg">
+                                    <p className="font-extrabold text-amber-600 mb-1">⚠️ مرتجعات:</p>
+                                    {r.invoice.returnedItems.map((rr: any, k: number) => (
+                                      <div key={k} className="flex justify-between"><span>{rr.productName} × {rr.quantity}</span><span className="font-bold">{Number(rr.total || 0).toLocaleString()} ج.م</span></div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

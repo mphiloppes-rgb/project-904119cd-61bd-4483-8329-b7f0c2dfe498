@@ -4,6 +4,10 @@ const fs = require('fs');
 const os = require('os');
 
 const DEFAULT_VIEWER_PATH = path.join(os.homedir(), 'Documents', 'shop-viewer-data.json');
+// Default backup folder: D:\PosBackup on Windows, ~/PosBackup elsewhere
+const DEFAULT_BACKUP_FOLDER = process.platform === 'win32'
+  ? 'D:\\PosBackup'
+  : path.join(os.homedir(), 'PosBackup');
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -20,11 +24,10 @@ function createWindow() {
     },
     autoHideMenuBar: true,
   });
-
   win.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
 }
 
-// IPC: حفظ ملف العارض (مسار مختار من المستخدم)
+// ===== Viewer file IPC =====
 ipcMain.handle('pos:save-viewer-data', async (_evt, { json, savedPath }) => {
   try {
     const target = savedPath && typeof savedPath === 'string' && savedPath.trim()
@@ -37,8 +40,6 @@ ipcMain.handle('pos:save-viewer-data', async (_evt, { json, savedPath }) => {
     return { ok: false, error: e.message };
   }
 });
-
-// IPC: اختيار مسار حفظ ملف shop-viewer-data.json يدويًا
 ipcMain.handle('pos:choose-viewer-path', async () => {
   const res = await dialog.showSaveDialog({
     title: 'اختر مكان حفظ ملف بيانات العارض',
@@ -48,8 +49,65 @@ ipcMain.handle('pos:choose-viewer-path', async () => {
   if (res.canceled || !res.filePath) return null;
   return res.filePath;
 });
-
 ipcMain.handle('pos:get-default-viewer-path', () => DEFAULT_VIEWER_PATH);
+
+// ===== Full disk backup IPC =====
+function safeFolder(folder) {
+  return folder && typeof folder === 'string' && folder.trim() ? folder : DEFAULT_BACKUP_FOLDER;
+}
+
+ipcMain.handle('pos:save-full-backup', async (_evt, { json, folder }) => {
+  try {
+    const dir = safeFolder(folder);
+    fs.mkdirSync(dir, { recursive: true });
+    // ملف ثابت (آخر نسخة)
+    const latest = path.join(dir, 'pos-backup-latest.json');
+    fs.writeFileSync(latest, json, 'utf-8');
+    // نسخة بالوقت (تدوير: نحتفظ بآخر 60 نسخة فقط)
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const dated = path.join(dir, `pos-backup-${stamp}.json`);
+    fs.writeFileSync(dated, json, 'utf-8');
+    try {
+      const files = fs.readdirSync(dir)
+        .filter(f => f.startsWith('pos-backup-') && f.endsWith('.json') && f !== 'pos-backup-latest.json')
+        .map(f => ({ f, t: fs.statSync(path.join(dir, f)).mtimeMs }))
+        .sort((a, b) => b.t - a.t);
+      files.slice(60).forEach(x => { try { fs.unlinkSync(path.join(dir, x.f)); } catch {} });
+    } catch {}
+    return { ok: true, folder: dir, latest, dated };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle('pos:choose-backup-folder', async () => {
+  const res = await dialog.showOpenDialog({
+    title: 'اختر مجلد النسخ الاحتياطي (يفضّل قسم D:)',
+    defaultPath: DEFAULT_BACKUP_FOLDER,
+    properties: ['openDirectory', 'createDirectory'],
+  });
+  if (res.canceled || !res.filePaths?.[0]) return null;
+  return res.filePaths[0];
+});
+
+ipcMain.handle('pos:get-default-backup-folder', () => DEFAULT_BACKUP_FOLDER);
+
+ipcMain.handle('pos:list-backups', async (_evt, folder) => {
+  try {
+    const dir = safeFolder(folder);
+    if (!fs.existsSync(dir)) return { ok: true, folder: dir, files: [] };
+    const files = fs.readdirSync(dir)
+      .filter(f => f.startsWith('pos-backup-') && f.endsWith('.json'))
+      .map(f => {
+        const st = fs.statSync(path.join(dir, f));
+        return { name: f, size: st.size, mtime: st.mtime.toISOString() };
+      })
+      .sort((a, b) => b.mtime.localeCompare(a.mtime));
+    return { ok: true, folder: dir, files };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
 
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => app.quit());

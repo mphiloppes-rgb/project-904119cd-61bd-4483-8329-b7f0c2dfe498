@@ -5,6 +5,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { startAutoBackup } from "@/lib/auto-backup";
 import { startAutoViewerSync } from "@/lib/viewer-sync";
+import { startDiskBackup } from "@/lib/disk-backup";
+import InventoryAuditPage from "@/pages/InventoryAuditPage";
 import AppLayout from "@/components/AppLayout";
 import PinLock from "@/components/PinLock";
 import DashboardPage from "@/pages/DashboardPage";
@@ -27,6 +29,8 @@ const App = () => {
     startAutoBackup();
     // مزامنة العارض تلقائياً كل 5 ثوان دائماً (يتجاهلها بصمت لو مفيش Electron/مسار)
     startAutoViewerSync(5000);
+    // نسخة احتياطية شاملة على القرص (D: افتراضياً) كل دقيقة
+    startDiskBackup();
   }, []);
   return (
     <QueryClientProvider client={queryClient}>
@@ -39,6 +43,7 @@ const App = () => {
                 <Route path="/" element={<RequireAdmin><DashboardPage /></RequireAdmin>} />
                 <Route path="/pos" element={<POSPage />} />
                 <Route path="/products" element={<RequireAdmin><ProductsPage /></RequireAdmin>} />
+                <Route path="/inventory-audit" element={<RequireAdmin><InventoryAuditPage /></RequireAdmin>} />
                 <Route path="/customers" element={<CustomersPage />} />
                 <Route path="/suppliers" element={<RequireAdmin><SuppliersPage /></RequireAdmin>} />
                 <Route path="/purchases" element={<RequireAdmin><PurchasesPage /></RequireAdmin>} />

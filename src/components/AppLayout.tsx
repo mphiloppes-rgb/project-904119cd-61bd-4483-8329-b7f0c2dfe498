@@ -14,6 +14,7 @@ import {
   Truck,
   PackagePlus,
   Eye,
+  ClipboardCheck,
 } from "lucide-react";
 import logo from "@/assets/logo.png";
 import { LogoutButton } from "./PinLock";
@@ -24,6 +25,7 @@ const navItems: NavItem[] = [
   { path: "/", label: "لوحة التحكم", icon: LayoutDashboard },
   { path: "/pos", label: "نقطة البيع", icon: ShoppingCart, cashierAllowed: true },
   { path: "/products", label: "المنتجات", icon: Package },
+  { path: "/inventory-audit", label: "جرد المخزون", icon: ClipboardCheck },
   { path: "/customers", label: "العملاء", icon: Users, cashierAllowed: true },
   { path: "/suppliers", label: "الموردين", icon: Truck },
   { path: "/purchases", label: "فواتير الشراء", icon: PackagePlus },
