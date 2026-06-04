@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw, ChevronDown, ChevronLeft } from "lucide-react";
 import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
@@ -179,7 +179,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                     const isInvoice = r.type === 'invoice' && r.invoice;
                     const isOpen = !!expanded[i];
                     return (
-                      <>
+                      <React.Fragment key={i}>
                         <tr key={i} className={`border-b border-border/30 hover:bg-accent/20 ${isInvoice ? 'cursor-pointer' : ''}`} onClick={() => isInvoice && toggle(i)}>
                           <td className="p-2 text-xs text-muted-foreground">{new Date(r.date).toLocaleDateString("ar-EG")}</td>
                           <td className={`p-2 font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>
