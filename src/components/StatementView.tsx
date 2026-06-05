@@ -22,6 +22,7 @@ interface Entry {
 export default function StatementView({ type, entityId, onClose }: Props) {
   const [detailInvoice, setDetailInvoice] = useState<any | null>(null);
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
+  const [showFull, setShowFull] = useState(false);
   const toggle = (i: number) => setExpanded(e => ({ ...e, [i]: !e[i] }));
 
   const data = useMemo(() => {
