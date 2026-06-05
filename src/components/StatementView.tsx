@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw, ChevronDown, ChevronLeft } from "lucide-react";
+import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw, ChevronDown, ChevronLeft, Printer, FileDown } from "lucide-react";
 import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
