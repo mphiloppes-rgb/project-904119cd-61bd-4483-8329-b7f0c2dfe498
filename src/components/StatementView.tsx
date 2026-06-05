@@ -175,18 +175,32 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                 <div key={i} className="bg-accent/40 rounded-xl p-3 text-xs">
                   <div className="flex justify-between mb-1 items-center gap-2">
                     <span className={`font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>{r.description} {r.ref}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground text-[10px]">{new Date(r.date).toLocaleDateString("ar-EG")}</span>
-                      {r.invoice && (
-                        <button onClick={() => setDetailInvoice(r.invoice)} className="p-1 rounded-md bg-primary/10 text-primary"><Eye size={14} /></button>
-                      )}
-                    </div>
+                    <span className="text-muted-foreground text-[10px]">{new Date(r.date).toLocaleDateString("ar-EG")}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center mt-2 pt-2 border-t border-border/30">
                     <div><p className="text-muted-foreground">عليه</p><p className="font-extrabold">{r.debit ? r.debit.toLocaleString() : '—'}</p></div>
                     <div><p className="text-muted-foreground">له</p><p className={`font-extrabold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</p></div>
                     <div><p className="text-muted-foreground">الرصيد</p><p className={`font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</p></div>
                   </div>
+                  {r.type === 'invoice' && r.invoice && (r.invoice.items || []).length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+                      <p className="font-extrabold text-primary text-[11px]">📋 محتوى الفاتورة:</p>
+                      {(r.invoice.items || []).map((it: any, k: number) => (
+                        <div key={k} className="flex justify-between text-[11px]">
+                          <span>{it.productName} × {it.quantity}</span>
+                          <span className="font-bold">{Number(it.total || 0).toLocaleString()}</span>
+                        </div>
+                      ))}
+                      {(r.invoice.returnedItems || []).length > 0 && (
+                        <div className="mt-1 p-1.5 bg-amber-500/10 rounded">
+                          <p className="font-extrabold text-amber-600 text-[10px]">⚠️ مرتجعات:</p>
+                          {r.invoice.returnedItems.map((rr: any, k: number) => (
+                            <div key={k} className="flex justify-between text-[10px]"><span>{rr.productName} × {rr.quantity}</span><span>{Number(rr.total || 0).toLocaleString()}</span></div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
