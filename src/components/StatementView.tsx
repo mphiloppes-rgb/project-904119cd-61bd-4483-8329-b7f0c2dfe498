@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw, ChevronDown, ChevronLeft } from "lucide-react";
+import { X, Receipt, Banknote, TrendingUp, TrendingDown, Eye, RotateCcw, ChevronDown, ChevronLeft, Printer, FileDown } from "lucide-react";
 import { getInvoicesByCustomer, getCustomerPayments, getCustomers, getSupplierPayments, getInvoiceInitialPaid, getInvoiceOriginalTotal, getInvoiceReturnedTotal, getInvoiceNetTotal, type Invoice } from "@/lib/store";
 import { getPurchaseInvoicesBySupplier, getSuppliers } from "@/lib/suppliers";
 
@@ -151,14 +151,15 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                 <p className="text-[11px] text-center text-muted-foreground mb-3">آخر حركة: {new Date(lastEntry.date).toLocaleDateString("ar-EG")} — {lastEntry.description}</p>
               )}
               {!showFull && rows.length > 0 && (
-                <button onClick={() => setShowFull(true)} className="btn-primary w-full py-3 text-sm">
-                  <Receipt size={16} /> كشف حساب كامل (عرض كل {rows.length} حركة)
+                <button onClick={() => { setShowFull(true); const all: Record<number, boolean> = {}; rows.forEach((r, idx) => { if (r.type === 'invoice' && r.invoice) all[idx] = true; }); setExpanded(all); }} className="btn-primary w-full py-3 text-sm">
+                  <Receipt size={16} /> كشف حساب كامل بكل التفاصيل ({rows.length} حركة)
                 </button>
               )}
               {showFull && (
-                <button onClick={() => setShowFull(false)} className="w-full py-2 text-xs font-bold rounded-xl bg-muted hover:bg-muted/70 transition-all">
-                  إخفاء التفاصيل
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => window.print()} className="btn-primary py-2 text-xs"><Printer size={14} /> طباعة / PDF</button>
+                  <button onClick={() => setShowFull(false)} className="py-2 text-xs font-bold rounded-xl bg-muted hover:bg-muted/70 transition-all">إخفاء التفاصيل</button>
+                </div>
               )}
             </div>
           );
@@ -174,18 +175,32 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                 <div key={i} className="bg-accent/40 rounded-xl p-3 text-xs">
                   <div className="flex justify-between mb-1 items-center gap-2">
                     <span className={`font-bold ${r.type === 'return' ? 'text-warning' : ''}`}>{r.description} {r.ref}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground text-[10px]">{new Date(r.date).toLocaleDateString("ar-EG")}</span>
-                      {r.invoice && (
-                        <button onClick={() => setDetailInvoice(r.invoice)} className="p-1 rounded-md bg-primary/10 text-primary"><Eye size={14} /></button>
-                      )}
-                    </div>
+                    <span className="text-muted-foreground text-[10px]">{new Date(r.date).toLocaleDateString("ar-EG")}</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center mt-2 pt-2 border-t border-border/30">
                     <div><p className="text-muted-foreground">عليه</p><p className="font-extrabold">{r.debit ? r.debit.toLocaleString() : '—'}</p></div>
                     <div><p className="text-muted-foreground">له</p><p className={`font-extrabold ${r.type === 'return' ? 'text-warning' : 'text-success'}`}>{r.credit ? r.credit.toLocaleString() : '—'}</p></div>
                     <div><p className="text-muted-foreground">الرصيد</p><p className={`font-extrabold ${r.balance > 0 ? 'text-destructive' : 'text-success'}`}>{r.balance.toLocaleString()}</p></div>
                   </div>
+                  {r.type === 'invoice' && r.invoice && (r.invoice.items || []).length > 0 && (
+                    <div className="mt-2 pt-2 border-t border-border/30 space-y-1">
+                      <p className="font-extrabold text-primary text-[11px]">📋 محتوى الفاتورة:</p>
+                      {(r.invoice.items || []).map((it: any, k: number) => (
+                        <div key={k} className="flex justify-between text-[11px]">
+                          <span>{it.productName} × {it.quantity}</span>
+                          <span className="font-bold">{Number(it.total || 0).toLocaleString()}</span>
+                        </div>
+                      ))}
+                      {(r.invoice.returnedItems || []).length > 0 && (
+                        <div className="mt-1 p-1.5 bg-amber-500/10 rounded">
+                          <p className="font-extrabold text-amber-600 text-[10px]">⚠️ مرتجعات:</p>
+                          {r.invoice.returnedItems.map((rr: any, k: number) => (
+                            <div key={k} className="flex justify-between text-[10px]"><span>{rr.productName} × {rr.quantity}</span><span>{Number(rr.total || 0).toLocaleString()}</span></div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
