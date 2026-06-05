@@ -151,14 +151,15 @@ export default function StatementView({ type, entityId, onClose }: Props) {
                 <p className="text-[11px] text-center text-muted-foreground mb-3">آخر حركة: {new Date(lastEntry.date).toLocaleDateString("ar-EG")} — {lastEntry.description}</p>
               )}
               {!showFull && rows.length > 0 && (
-                <button onClick={() => setShowFull(true)} className="btn-primary w-full py-3 text-sm">
-                  <Receipt size={16} /> كشف حساب كامل (عرض كل {rows.length} حركة)
+                <button onClick={() => { setShowFull(true); const all: Record<number, boolean> = {}; rows.forEach((r, idx) => { if (r.type === 'invoice' && r.invoice) all[idx] = true; }); setExpanded(all); }} className="btn-primary w-full py-3 text-sm">
+                  <Receipt size={16} /> كشف حساب كامل بكل التفاصيل ({rows.length} حركة)
                 </button>
               )}
               {showFull && (
-                <button onClick={() => setShowFull(false)} className="w-full py-2 text-xs font-bold rounded-xl bg-muted hover:bg-muted/70 transition-all">
-                  إخفاء التفاصيل
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => window.print()} className="btn-primary py-2 text-xs"><Printer size={14} /> طباعة / PDF</button>
+                  <button onClick={() => setShowFull(false)} className="py-2 text-xs font-bold rounded-xl bg-muted hover:bg-muted/70 transition-all">إخفاء التفاصيل</button>
+                </div>
               )}
             </div>
           );
