@@ -135,9 +135,38 @@ export default function StatementView({ type, entityId, onClose }: Props) {
           </div>
         </div>
 
+        {(() => {
+          const invoiceCount = data.entries.filter(e => e.type === 'invoice').length;
+          const paymentCount = data.entries.filter(e => e.type === 'payment').length;
+          const returnCount = data.entries.filter(e => e.type === 'return').length;
+          const lastEntry = data.entries[data.entries.length - 1];
+          return (
+            <div className="mb-4 bg-gradient-to-br from-primary/5 to-accent/30 rounded-2xl p-4 border border-border/40">
+              <div className="grid grid-cols-3 gap-3 text-center mb-3">
+                <div><p className="text-xs text-muted-foreground">عدد الفواتير</p><p className="font-extrabold text-lg text-primary">{invoiceCount}</p></div>
+                <div><p className="text-xs text-muted-foreground">مدفوعات</p><p className="font-extrabold text-lg text-success">{paymentCount}</p></div>
+                <div><p className="text-xs text-muted-foreground">مرتجعات</p><p className="font-extrabold text-lg text-warning">{returnCount}</p></div>
+              </div>
+              {lastEntry && (
+                <p className="text-[11px] text-center text-muted-foreground mb-3">آخر حركة: {new Date(lastEntry.date).toLocaleDateString("ar-EG")} — {lastEntry.description}</p>
+              )}
+              {!showFull && rows.length > 0 && (
+                <button onClick={() => setShowFull(true)} className="btn-primary w-full py-3 text-sm">
+                  <Receipt size={16} /> كشف حساب كامل (عرض كل {rows.length} حركة)
+                </button>
+              )}
+              {showFull && (
+                <button onClick={() => setShowFull(false)} className="w-full py-2 text-xs font-bold rounded-xl bg-muted hover:bg-muted/70 transition-all">
+                  إخفاء التفاصيل
+                </button>
+              )}
+            </div>
+          );
+        })()}
+
         {rows.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">لا توجد حركات</p>
-        ) : (
+        ) : showFull ? (
           <>
             {/* Mobile cards */}
             <div className="sm:hidden space-y-2">
