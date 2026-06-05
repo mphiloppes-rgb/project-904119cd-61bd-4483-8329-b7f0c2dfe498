@@ -270,7 +270,7 @@ export default function StatementView({ type, entityId, onClose }: Props) {
               </table>
             </div>
           </>
-        )}
+        ) : null}
       </div>
 
       {/* مودال تفاصيل الفاتورة */}
