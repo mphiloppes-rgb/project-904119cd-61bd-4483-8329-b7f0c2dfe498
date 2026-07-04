@@ -495,6 +495,15 @@ export function getTodayExpenses(): Expense[] {
   return getExpenses().filter(e => e.date.startsWith(today));
 }
 
+
+// Opening cash (رأس المال الافتتاحي / الكاش الابتدائي)
+export function getOpeningCash(): number {
+  return Number(getItem<number>('pos_opening_cash', 0)) || 0;
+}
+export function setOpeningCash(v: number): void {
+  setItem('pos_opening_cash', Number(v) || 0);
+}
+
 // Reports
 export function getDateRange(period: 'daily' | 'weekly' | 'monthly' | 'yearly'): { start: Date; end: Date } {
   const now = new Date();
