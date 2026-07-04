@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator } from "lucide-react";
-import { getReport, getStaleProductsByDays } from "@/lib/store";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator, Pencil, ArrowRight } from "lucide-react";
+import { getReport, getStaleProductsByDays, getOpeningCash, setOpeningCash } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
 import { exportElementToPDF } from "@/lib/pdf-export";
@@ -9,6 +9,7 @@ import { isCashier } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import ReportCalculator, { DebtReport } from "@/components/ReportCalculator";
 import ReportsIndex from "@/components/ReportsIndex";
+import MonthlyProfitModal from "@/components/MonthlyProfitModal";
 import { HourlyPerformance, ProfitMargins, SupplierBreakdown, CustomerAnalytics } from "@/components/ReportAnalytics";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
