@@ -165,15 +165,28 @@ export default function ReportsPage() {
               </div>
 
               <div className="p-4 rounded-2xl bg-card/80 border border-emerald-500/20 hover:scale-105 transition-transform">
-                <div className="flex items-center gap-2 mb-1">
-                  <Coins className="text-emerald-600" size={16} />
-                  <span className="text-[11px] font-bold text-muted-foreground">كاش في المحل</span>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <Coins className="text-emerald-600" size={16} />
+                    <span className="text-[11px] font-bold text-muted-foreground">كاش في المحل</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setCashInput(String(getOpeningCash())); setEditingCash(true); }}
+                    title="ضبط الكاش الابتدائي"
+                    className="p-1 rounded-lg hover:bg-emerald-500/10 text-emerald-700"
+                  >
+                    <Pencil size={12} />
+                  </button>
                 </div>
                 <p className={`text-lg sm:text-xl font-extrabold ${cash >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                   {cash >= 0 ? '+' : ''}{cash.toLocaleString()}
                 </p>
-                <p className="text-[10px] text-muted-foreground">تقديري تراكمي</p>
+                <p className="text-[10px] text-muted-foreground">
+                  ابتدائي: {report.openingCash.toLocaleString()} + حركات
+                </p>
               </div>
+
 
               <div className="p-4 rounded-2xl bg-card/80 border border-warning/20 hover:scale-105 transition-transform">
                 <div className="flex items-center gap-2 mb-1">
