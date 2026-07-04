@@ -453,15 +453,37 @@ export default function PurchasesPage() {
                 <span>الإجمالي</span>
                 <span>{total.toLocaleString()} ج.م</span>
               </div>
+
+              <label className="flex items-center gap-2 p-3 rounded-xl bg-success/10 border border-success/25 cursor-pointer hover:bg-success/15 transition-colors">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4 accent-success"
+                  checked={paid >= total && total > 0}
+                  onChange={(e) => setPaid(e.target.checked ? total : 0)}
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-extrabold text-success">💵 دفع كامل — بدون دين</p>
+                  <p className="text-[11px] text-muted-foreground">لو الفاتورة اتدفعت كاش بالكامل ومش هيتعمل دين على المحل</p>
+                </div>
+              </label>
+
               <div className="flex items-center gap-3">
                 <label className="text-sm font-bold min-w-[80px]">المدفوع</label>
                 <input type="number" className="input-field flex-1" value={paid || ""} onChange={(e) => setPaid(Number(e.target.value))} placeholder="0" />
+                <button
+                  type="button"
+                  onClick={() => setPaid(total)}
+                  className="px-3 py-2 rounded-lg bg-primary/15 text-primary text-xs font-extrabold whitespace-nowrap hover:bg-primary/25"
+                >
+                  = الإجمالي
+                </button>
               </div>
               <div className="flex justify-between font-extrabold text-destructive">
                 <span>المتبقي (مديونية على المحل)</span>
                 <span>{remaining.toLocaleString()} ج.م</span>
               </div>
             </div>
+
 
             <div className="grid grid-cols-2 gap-3 mt-4">
               <button onClick={submit} className="btn-primary py-3">حفظ الفاتورة</button>

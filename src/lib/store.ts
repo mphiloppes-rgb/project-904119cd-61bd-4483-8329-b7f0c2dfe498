@@ -495,6 +495,15 @@ export function getTodayExpenses(): Expense[] {
   return getExpenses().filter(e => e.date.startsWith(today));
 }
 
+
+// Opening cash (رأس المال الافتتاحي / الكاش الابتدائي)
+export function getOpeningCash(): number {
+  return Number(getItem<number>('pos_opening_cash', 0)) || 0;
+}
+export function setOpeningCash(v: number): void {
+  setItem('pos_opening_cash', Number(v) || 0);
+}
+
 // Reports
 export function getDateRange(period: 'daily' | 'weekly' | 'monthly' | 'yearly'): { start: Date; end: Date } {
   const now = new Date();
@@ -739,7 +748,8 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     allPurchasesAll.reduce((s, p: any) => s + (p.paid || 0), 0) +
     supplierPaymentsAll.reduce((s: number, p: any) => s + (p.amount || 0), 0) +
     allExpensesAll.reduce((s, e) => s + (e.amount || 0), 0);
-  const cashOnHand = lifetimeCashIn - lifetimeCashOut;
+  const openingCash = getOpeningCash();
+  const cashOnHand = openingCash + lifetimeCashIn - lifetimeCashOut;
 
   return {
     totalSales,
@@ -777,12 +787,80 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     lowStockCount,
     outOfStockCount,
     cashOnHand,
+    openingCash,
     lifetimeCashIn,
     lifetimeCashOut,
   };
 }
 
-// === فلتر المنتجات الراكدة بفترة قابلة للتخصيص ===
+// === تقرير الربح لكل شهر ميلادي (كل التاريخ) ===
+export interface MonthlyProfitRow {
+  key: string;         // YYYY-MM
+  year: number;
+  month: number;       // 1-12
+  label: string;       // "يونيو 2025"
+  sales: number;       // صافي المبيعات (بعد المرتجعات)
+  cost: number;        // تكلفة المباع
+  returns: number;     // قيمة المرتجعات
+  expenses: number;    // مصاريف
+  purchases: number;   // فواتير شراء (للعلم فقط)
+  invoiceCount: number;
+  profit: number;      // sales - cost - expenses
+}
+
+const AR_MONTHS = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+
+export function getMonthlyProfitBreakdown(): MonthlyProfitRow[] {
+  const invoices = getInvoices();
+  const expenses = getExpenses();
+  let purchases: any[] = [];
+  try { purchases = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]'); } catch {}
+
+  const map: Record<string, MonthlyProfitRow> = {};
+  const ensure = (d: Date): MonthlyProfitRow => {
+    const y = d.getFullYear();
+    const m = d.getMonth() + 1;
+    const key = `${y}-${String(m).padStart(2, '0')}`;
+    if (!map[key]) {
+      map[key] = {
+        key, year: y, month: m,
+        label: `${AR_MONTHS[m - 1]} ${y}`,
+        sales: 0, cost: 0, returns: 0, expenses: 0, purchases: 0,
+        invoiceCount: 0, profit: 0,
+      };
+    }
+    return map[key];
+  };
+
+  invoices.forEach(inv => {
+    const row = ensure(new Date(inv.createdAt));
+    row.invoiceCount += 1;
+    const returnedMap: Record<string, number> = {};
+    (inv.returnedItems || []).forEach(r => { returnedMap[r.productId] = (returnedMap[r.productId] || 0) + r.quantity; });
+    inv.items.forEach(it => {
+      const retQty = returnedMap[it.productId] || 0;
+      const netQty = it.quantity - retQty;
+      row.sales += netQty * it.unitPrice;
+      row.cost  += netQty * it.costPrice;
+    });
+    row.returns += (inv.returnedItems || []).reduce((s, r) => s + r.total, 0);
+  });
+
+  expenses.forEach(e => {
+    const row = ensure(new Date(e.date));
+    row.expenses += Number(e.amount) || 0;
+  });
+
+  purchases.forEach(p => {
+    const row = ensure(new Date(p.createdAt));
+    row.purchases += Number(p.total) || 0;
+  });
+
+  Object.values(map).forEach(r => { r.profit = r.sales - r.cost - r.expenses; });
+
+  return Object.values(map).sort((a, b) => b.key.localeCompare(a.key));
+}
+
 export function getStaleProductsByDays(days: number) {
   const allInvoicesUnfiltered = getInvoices();
   const cutoff = new Date();

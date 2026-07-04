@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator } from "lucide-react";
-import { getReport, getStaleProductsByDays } from "@/lib/store";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator, Pencil, ArrowRight } from "lucide-react";
+import { getReport, getStaleProductsByDays, getOpeningCash, setOpeningCash } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
 import { exportElementToPDF } from "@/lib/pdf-export";
@@ -9,6 +9,7 @@ import { isCashier } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
 import ReportCalculator, { DebtReport } from "@/components/ReportCalculator";
 import ReportsIndex from "@/components/ReportsIndex";
+import MonthlyProfitModal from "@/components/MonthlyProfitModal";
 import { HourlyPerformance, ProfitMargins, SupplierBreakdown, CustomerAnalytics } from "@/components/ReportAnalytics";
 
 type Period = "daily" | "weekly" | "monthly" | "yearly";
@@ -23,11 +24,14 @@ type Tab = "summary" | "financial" | "inventory" | "calculator" | "debt" | "sale
 type StaleDays = 30 | 60 | 90 | 180;
 
 export default function ReportsPage() {
-  const { refreshKey } = useStoreRefresh();
+  const { refreshKey, refresh } = useStoreRefresh();
   const [period, setPeriod] = useState<Period>("daily");
   const [tab, setTab] = useState<Tab>("summary");
   const [staleDays, setStaleDays] = useState<StaleDays>(30);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [monthlyOpen, setMonthlyOpen] = useState(false);
+  const [editingCash, setEditingCash] = useState(false);
+  const [cashInput, setCashInput] = useState<string>("");
   const reportRef = useRef<HTMLDivElement>(null);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
   const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
@@ -104,18 +108,31 @@ export default function ReportsPage() {
 
       {/* Stats — uniform sized cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-        {stats.map((s, idx) => (
-          <div key={s.label} className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1} flex flex-col h-full min-h-[130px]`}>
-            <div className="flex items-center gap-2 mb-2 min-h-[40px]">
-              <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
-                <s.icon className={s.iconColor} size={18} />
+        {stats.map((s, idx) => {
+          const isProfit = s.label === "صافي الربح";
+          return (
+            <button
+              key={s.label}
+              type="button"
+              onClick={isProfit ? () => setMonthlyOpen(true) : undefined}
+              className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1} flex flex-col h-full min-h-[130px] text-right ${isProfit ? 'cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all ring-1 ring-success/20 hover:ring-success/60' : 'cursor-default'}`}
+            >
+              <div className="flex items-center gap-2 mb-2 min-h-[40px]">
+                <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <s.icon className={s.iconColor} size={18} />
+                </div>
+                <span className="text-xs font-bold text-muted-foreground line-clamp-2 leading-tight">{s.label}</span>
+                {isProfit && <ArrowRight size={14} className="text-success animate-pulse" />}
               </div>
-              <span className="text-xs font-bold text-muted-foreground line-clamp-2 leading-tight">{s.label}</span>
-            </div>
-            <p className="text-lg sm:text-xl font-extrabold mt-auto truncate">{s.value.toLocaleString()} <span className="text-xs">ج.م</span></p>
-          </div>
-        ))}
+              <p className="text-lg sm:text-xl font-extrabold mt-auto truncate">{s.value.toLocaleString()} <span className="text-xs">ج.م</span></p>
+              {isProfit && <p className="text-[10px] text-success font-bold mt-1">اضغط لعرض التفصيل شهر بشهر</p>}
+            </button>
+          );
+        })}
       </div>
+
+      <MonthlyProfitModal open={monthlyOpen} onClose={() => setMonthlyOpen(false)} />
+
 
       {/* === صافي ثروة المحل (Net Worth Snapshot) — الكل في كارت واحد === */}
       {(() => {
@@ -148,15 +165,28 @@ export default function ReportsPage() {
               </div>
 
               <div className="p-4 rounded-2xl bg-card/80 border border-emerald-500/20 hover:scale-105 transition-transform">
-                <div className="flex items-center gap-2 mb-1">
-                  <Coins className="text-emerald-600" size={16} />
-                  <span className="text-[11px] font-bold text-muted-foreground">كاش في المحل</span>
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <Coins className="text-emerald-600" size={16} />
+                    <span className="text-[11px] font-bold text-muted-foreground">كاش في المحل</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setCashInput(String(getOpeningCash())); setEditingCash(true); }}
+                    title="ضبط الكاش الابتدائي"
+                    className="p-1 rounded-lg hover:bg-emerald-500/10 text-emerald-700"
+                  >
+                    <Pencil size={12} />
+                  </button>
                 </div>
                 <p className={`text-lg sm:text-xl font-extrabold ${cash >= 0 ? 'text-emerald-600' : 'text-destructive'}`}>
                   {cash >= 0 ? '+' : ''}{cash.toLocaleString()}
                 </p>
-                <p className="text-[10px] text-muted-foreground">تقديري تراكمي</p>
+                <p className="text-[10px] text-muted-foreground">
+                  ابتدائي: {report.openingCash.toLocaleString()} + حركات
+                </p>
               </div>
+
 
               <div className="p-4 rounded-2xl bg-card/80 border border-warning/20 hover:scale-105 transition-transform">
                 <div className="flex items-center gap-2 mb-1">
@@ -641,6 +671,47 @@ export default function ReportsPage() {
       </div>
       {/* end report ref wrapper */}
       </div>
+
+      {/* Opening cash editor */}
+      {editingCash && (
+        <div className="modal-overlay" onClick={() => setEditingCash(false)}>
+          <div className="glass-modal rounded-3xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
+              <Coins className="text-emerald-600" size={22} /> ضبط الكاش الابتدائي
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              دي قيمة الفلوس اللي كانت معاك في المحل قبل ما تبدأ تدخل حركات في السيستم.
+              كل الحركات الجديدة (قبض/صرف/شراء/بيع) هتتحسب فوقها تلقائياً.
+            </p>
+            <label className="text-xs font-extrabold mb-1 block">المبلغ بالجنيه</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              className="input-field w-full text-lg font-extrabold"
+              value={cashInput}
+              onChange={e => setCashInput(e.target.value)}
+              placeholder="0"
+              autoFocus
+            />
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setOpeningCash(Number(cashInput) || 0);
+                  toast({ title: "تم الحفظ ✅", description: "الكاش الابتدائي اتضبط" });
+                  setEditingCash(false);
+                  refresh();
+                }}
+                className="btn-primary py-3"
+              >
+                حفظ
+              </button>
+              <button onClick={() => setEditingCash(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
