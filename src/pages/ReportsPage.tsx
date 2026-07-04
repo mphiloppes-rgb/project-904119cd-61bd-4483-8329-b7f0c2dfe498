@@ -671,6 +671,47 @@ export default function ReportsPage() {
       </div>
       {/* end report ref wrapper */}
       </div>
+
+      {/* Opening cash editor */}
+      {editingCash && (
+        <div className="modal-overlay" onClick={() => setEditingCash(false)}>
+          <div className="glass-modal rounded-3xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
+              <Coins className="text-emerald-600" size={22} /> ضبط الكاش الابتدائي
+            </h3>
+            <p className="text-xs text-muted-foreground mb-4">
+              دي قيمة الفلوس اللي كانت معاك في المحل قبل ما تبدأ تدخل حركات في السيستم.
+              كل الحركات الجديدة (قبض/صرف/شراء/بيع) هتتحسب فوقها تلقائياً.
+            </p>
+            <label className="text-xs font-extrabold mb-1 block">المبلغ بالجنيه</label>
+            <input
+              type="number"
+              inputMode="decimal"
+              className="input-field w-full text-lg font-extrabold"
+              value={cashInput}
+              onChange={e => setCashInput(e.target.value)}
+              placeholder="0"
+              autoFocus
+            />
+            <div className="grid grid-cols-2 gap-3 mt-5">
+              <button
+                onClick={() => {
+                  setOpeningCash(Number(cashInput) || 0);
+                  toast({ title: "تم الحفظ ✅", description: "الكاش الابتدائي اتضبط" });
+                  setEditingCash(false);
+                  refresh();
+                }}
+                className="btn-primary py-3"
+              >
+                حفظ
+              </button>
+              <button onClick={() => setEditingCash(false)} className="bg-secondary text-secondary-foreground py-3 rounded-xl font-extrabold">
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
