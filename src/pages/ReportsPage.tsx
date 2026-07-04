@@ -108,18 +108,31 @@ export default function ReportsPage() {
 
       {/* Stats — uniform sized cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
-        {stats.map((s, idx) => (
-          <div key={s.label} className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1} flex flex-col h-full min-h-[130px]`}>
-            <div className="flex items-center gap-2 mb-2 min-h-[40px]">
-              <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
-                <s.icon className={s.iconColor} size={18} />
+        {stats.map((s, idx) => {
+          const isProfit = s.label === "صافي الربح";
+          return (
+            <button
+              key={s.label}
+              type="button"
+              onClick={isProfit ? () => setMonthlyOpen(true) : undefined}
+              className={`stat-card animate-fade-in-up stagger-${(idx % 4) + 1} flex flex-col h-full min-h-[130px] text-right ${isProfit ? 'cursor-pointer hover:scale-[1.02] hover:shadow-lg transition-all ring-1 ring-success/20 hover:ring-success/60' : 'cursor-default'}`}
+            >
+              <div className="flex items-center gap-2 mb-2 min-h-[40px]">
+                <div className={`w-9 h-9 rounded-xl ${s.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <s.icon className={s.iconColor} size={18} />
+                </div>
+                <span className="text-xs font-bold text-muted-foreground line-clamp-2 leading-tight">{s.label}</span>
+                {isProfit && <ArrowRight size={14} className="text-success animate-pulse" />}
               </div>
-              <span className="text-xs font-bold text-muted-foreground line-clamp-2 leading-tight">{s.label}</span>
-            </div>
-            <p className="text-lg sm:text-xl font-extrabold mt-auto truncate">{s.value.toLocaleString()} <span className="text-xs">ج.م</span></p>
-          </div>
-        ))}
+              <p className="text-lg sm:text-xl font-extrabold mt-auto truncate">{s.value.toLocaleString()} <span className="text-xs">ج.م</span></p>
+              {isProfit && <p className="text-[10px] text-success font-bold mt-1">اضغط لعرض التفصيل شهر بشهر</p>}
+            </button>
+          );
+        })}
       </div>
+
+      <MonthlyProfitModal open={monthlyOpen} onClose={() => setMonthlyOpen(false)} />
+
 
       {/* === صافي ثروة المحل (Net Worth Snapshot) — الكل في كارت واحد === */}
       {(() => {
