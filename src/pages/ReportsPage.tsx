@@ -24,11 +24,14 @@ type Tab = "summary" | "financial" | "inventory" | "calculator" | "debt" | "sale
 type StaleDays = 30 | 60 | 90 | 180;
 
 export default function ReportsPage() {
-  const { refreshKey } = useStoreRefresh();
+  const { refreshKey, refresh } = useStoreRefresh();
   const [period, setPeriod] = useState<Period>("daily");
   const [tab, setTab] = useState<Tab>("summary");
   const [staleDays, setStaleDays] = useState<StaleDays>(30);
   const [exportingPDF, setExportingPDF] = useState(false);
+  const [monthlyOpen, setMonthlyOpen] = useState(false);
+  const [editingCash, setEditingCash] = useState(false);
+  const [cashInput, setCashInput] = useState<string>("");
   const reportRef = useRef<HTMLDivElement>(null);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
   const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
