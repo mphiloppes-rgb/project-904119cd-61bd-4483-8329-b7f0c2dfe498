@@ -787,6 +787,7 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     lowStockCount,
     outOfStockCount,
     cashOnHand,
+    openingCash,
     lifetimeCashIn,
     lifetimeCashOut,
   };
