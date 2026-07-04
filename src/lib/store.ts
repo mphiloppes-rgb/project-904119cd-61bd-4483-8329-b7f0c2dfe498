@@ -739,7 +739,8 @@ export function getReport(period: 'daily' | 'weekly' | 'monthly' | 'yearly') {
     allPurchasesAll.reduce((s, p: any) => s + (p.paid || 0), 0) +
     supplierPaymentsAll.reduce((s: number, p: any) => s + (p.amount || 0), 0) +
     allExpensesAll.reduce((s, e) => s + (e.amount || 0), 0);
-  const cashOnHand = lifetimeCashIn - lifetimeCashOut;
+  const openingCash = getOpeningCash();
+  const cashOnHand = openingCash + lifetimeCashIn - lifetimeCashOut;
 
   return {
     totalSales,
