@@ -32,6 +32,9 @@ export default function ReportsPage() {
   const [monthlyOpen, setMonthlyOpen] = useState(false);
   const [editingCash, setEditingCash] = useState(false);
   const [cashInput, setCashInput] = useState<string>("");
+  const [editingStartDate, setEditingStartDate] = useState(false);
+  const [startDateInput, setStartDateInput] = useState<string>("");
+  const reportsStartDate = getReportsStartDate();
   const reportRef = useRef<HTMLDivElement>(null);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
   const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
