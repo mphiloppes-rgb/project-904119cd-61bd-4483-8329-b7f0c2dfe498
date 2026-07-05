@@ -690,10 +690,17 @@ export default function ReportsPage() {
             <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
               <Coins className="text-emerald-600" size={22} /> ضبط الكاش الابتدائي
             </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              دي قيمة الفلوس اللي كانت معاك في المحل قبل ما تبدأ تدخل حركات في السيستم.
-              كل الحركات الجديدة (قبض/صرف/شراء/بيع) هتتحسب فوقها تلقائياً.
-            </p>
+            <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs leading-relaxed">
+              <div className="flex items-start gap-2">
+                <Info className="text-primary flex-shrink-0 mt-0.5" size={14} />
+                <div>
+                  <p className="font-extrabold text-primary mb-1">تنبيه مهم:</p>
+                  <p className="text-muted-foreground">
+                    الرقم ده <strong className="text-foreground">نقطة بداية بس</strong> — بيتحط <strong>مرة واحدة</strong> كرصيد افتتاحي. مش هيتكرر تأثيره على أي حركة قديمة (بيع/شرا/مصاريف) اتسجلت قبل كده. كل الحركات هتفضل زي ما هي، والرقم ده بس هيتضاف فوقها.
+                  </p>
+                </div>
+              </div>
+            </div>
             <label className="text-xs font-extrabold mb-1 block">المبلغ بالجنيه</label>
             <input
               type="number"
