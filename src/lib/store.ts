@@ -825,6 +825,11 @@ export function getMonthlyProfitBreakdown(): MonthlyProfitRow[] {
   let purchases: any[] = [];
   try { purchases = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]'); } catch {}
 
+  const startStr = getReportsStartDate();
+  const startDate = startStr ? new Date(startStr) : null;
+  if (startDate) startDate.setHours(0, 0, 0, 0);
+  const afterStart = (d: Date) => !startDate || d >= startDate;
+
   const map: Record<string, MonthlyProfitRow> = {};
   const ensure = (d: Date): MonthlyProfitRow => {
     const y = d.getFullYear();
@@ -842,7 +847,9 @@ export function getMonthlyProfitBreakdown(): MonthlyProfitRow[] {
   };
 
   invoices.forEach(inv => {
-    const row = ensure(new Date(inv.createdAt));
+    const d = new Date(inv.createdAt);
+    if (!afterStart(d)) return;
+    const row = ensure(d);
     row.invoiceCount += 1;
     const returnedMap: Record<string, number> = {};
     (inv.returnedItems || []).forEach(r => { returnedMap[r.productId] = (returnedMap[r.productId] || 0) + r.quantity; });
@@ -856,12 +863,16 @@ export function getMonthlyProfitBreakdown(): MonthlyProfitRow[] {
   });
 
   expenses.forEach(e => {
-    const row = ensure(new Date(e.date));
+    const d = new Date(e.date);
+    if (!afterStart(d)) return;
+    const row = ensure(d);
     row.expenses += Number(e.amount) || 0;
   });
 
   purchases.forEach(p => {
-    const row = ensure(new Date(p.createdAt));
+    const d = new Date(p.createdAt);
+    if (!afterStart(d)) return;
+    const row = ensure(d);
     row.purchases += Number(p.total) || 0;
   });
 
@@ -869,6 +880,87 @@ export function getMonthlyProfitBreakdown(): MonthlyProfitRow[] {
 
   return Object.values(map).sort((a, b) => b.key.localeCompare(a.key));
 }
+
+// === ديون المحل للموردين شهر بشهر ===
+export interface MonthlyDebtRow {
+  key: string;         // YYYY-MM
+  label: string;
+  opening: number;     // رصيد الديون في بداية الشهر
+  added: number;       // مضاف خلال الشهر (إجمالي فواتير شراء - المدفوع منها فوراً)
+  paid: number;        // مدفوعات موردين خلال الشهر
+  closing: number;     // رصيد نهاية الشهر
+  purchaseTotal: number; // إجمالي فواتير الشراء في الشهر (للعلم)
+}
+
+export function getMonthlySupplierDebtBreakdown(): MonthlyDebtRow[] {
+  let purchases: any[] = [];
+  let supplierPayments: any[] = [];
+  try { purchases = JSON.parse(localStorage.getItem('pos_purchase_invoices') || '[]'); } catch {}
+  try { supplierPayments = JSON.parse(localStorage.getItem('pos_supplier_payments') || '[]'); } catch {}
+
+  const startStr = getReportsStartDate();
+  const startDate = startStr ? new Date(startStr) : null;
+  if (startDate) startDate.setHours(0, 0, 0, 0);
+
+  // اجمع كل الشهور اللي فيها حركة
+  const monthsSet = new Set<string>();
+  const addMonth = (d: Date) => {
+    if (startDate && d < startDate) return;
+    monthsSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+  };
+  purchases.forEach(p => addMonth(new Date(p.createdAt)));
+  supplierPayments.forEach(p => addMonth(new Date(p.date)));
+
+  const monthKeys = Array.from(monthsSet).sort();
+  if (monthKeys.length === 0) return [];
+
+  const rows: MonthlyDebtRow[] = [];
+  let running = 0; // رصيد جارٍ للديون
+
+  // احسب رصيد ما قبل بداية أول شهر (لو startDate موجود، الافتتاحي = صفر لأننا بنبدأ من التاريخ ده)
+  if (!startDate) {
+    // ابدأ من الصفر — كل الحركات ستُحسب
+    running = 0;
+  }
+
+  monthKeys.forEach(key => {
+    const [y, m] = key.split('-').map(Number);
+    const monthStart = new Date(y, m - 1, 1);
+    const monthEnd = new Date(y, m, 0, 23, 59, 59, 999);
+
+    const opening = running;
+    let added = 0;
+    let purchaseTotal = 0;
+    let paidInMonth = 0;
+
+    purchases.forEach(p => {
+      const d = new Date(p.createdAt);
+      if (d >= monthStart && d <= monthEnd) {
+        const total = Number(p.total) || 0;
+        const paid = Number(p.paid) || 0;
+        purchaseTotal += total;
+        added += Math.max(0, total - paid); // اللي اتضاف كدين
+      }
+    });
+    supplierPayments.forEach(p => {
+      const d = new Date(p.date);
+      if (d >= monthStart && d <= monthEnd) {
+        paidInMonth += Number(p.amount) || 0;
+      }
+    });
+
+    const closing = opening + added - paidInMonth;
+    running = closing;
+    rows.push({
+      key,
+      label: `${AR_MONTHS[m - 1]} ${y}`,
+      opening, added, paid: paidInMonth, closing, purchaseTotal,
+    });
+  });
+
+  return rows.reverse(); // الأحدث أولاً
+}
+
 
 export function getStaleProductsByDays(days: number) {
   const allInvoicesUnfiltered = getInvoices();
