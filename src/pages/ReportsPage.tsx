@@ -104,6 +104,14 @@ export default function ReportsPage() {
             {p.label}
           </button>
         ))}
+        <button
+          onClick={() => { setStartDateInput(reportsStartDate || ""); setEditingStartDate(true); }}
+          className={`flex items-center gap-1 px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${reportsStartDate ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted text-muted-foreground hover:bg-accent'}`}
+          title="تاريخ بداية حساب التقارير الشهرية"
+        >
+          <CalendarClock size={14} />
+          {reportsStartDate ? `من ${new Date(reportsStartDate).toLocaleDateString('ar-EG')}` : 'تاريخ بداية التقارير'}
+        </button>
       </div>
 
       {/* المنطقة القابلة للتصدير/الطباعة */}
