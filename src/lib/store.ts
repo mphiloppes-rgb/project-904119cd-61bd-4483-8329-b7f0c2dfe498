@@ -504,6 +504,15 @@ export function setOpeningCash(v: number): void {
   setItem('pos_opening_cash', Number(v) || 0);
 }
 
+// تاريخ بداية حساب التقارير (اختياري) — يستخدم في تقارير الربح الشهري
+export function getReportsStartDate(): string | null {
+  const v = getItem<string | null>('pos_reports_start_date', null);
+  return v || null;
+}
+export function setReportsStartDate(v: string | null): void {
+  setItem('pos_reports_start_date', v || null);
+}
+
 // Reports
 export function getDateRange(period: 'daily' | 'weekly' | 'monthly' | 'yearly'): { start: Date; end: Date } {
   const now = new Date();
