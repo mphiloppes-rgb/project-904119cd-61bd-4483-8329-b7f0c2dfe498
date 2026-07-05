@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator, Pencil, ArrowRight } from "lucide-react";
-import { getReport, getStaleProductsByDays, getOpeningCash, setOpeningCash } from "@/lib/store";
+import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator, Pencil, ArrowRight, CalendarClock, Info } from "lucide-react";
+import { getReport, getStaleProductsByDays, getOpeningCash, setOpeningCash, getReportsStartDate, setReportsStartDate } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
 import { exportReportToExcel } from "@/lib/excel-export";
 import { exportElementToPDF } from "@/lib/pdf-export";
@@ -32,6 +32,9 @@ export default function ReportsPage() {
   const [monthlyOpen, setMonthlyOpen] = useState(false);
   const [editingCash, setEditingCash] = useState(false);
   const [cashInput, setCashInput] = useState<string>("");
+  const [editingStartDate, setEditingStartDate] = useState(false);
+  const [startDateInput, setStartDateInput] = useState<string>("");
+  const reportsStartDate = getReportsStartDate();
   const reportRef = useRef<HTMLDivElement>(null);
   const report = useMemo(() => getReport(period), [period, refreshKey]);
   const staleByDays = useMemo(() => getStaleProductsByDays(staleDays), [staleDays, refreshKey]);
@@ -101,6 +104,14 @@ export default function ReportsPage() {
             {p.label}
           </button>
         ))}
+        <button
+          onClick={() => { setStartDateInput(reportsStartDate || ""); setEditingStartDate(true); }}
+          className={`flex items-center gap-1 px-3 py-2.5 rounded-xl font-bold text-xs transition-all ${reportsStartDate ? 'bg-primary/15 text-primary border border-primary/30' : 'bg-muted text-muted-foreground hover:bg-accent'}`}
+          title="تاريخ بداية حساب التقارير الشهرية"
+        >
+          <CalendarClock size={14} />
+          {reportsStartDate ? `من ${new Date(reportsStartDate).toLocaleDateString('ar-EG')}` : 'تاريخ بداية التقارير'}
+        </button>
       </div>
 
       {/* المنطقة القابلة للتصدير/الطباعة */}
@@ -679,10 +690,17 @@ export default function ReportsPage() {
             <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
               <Coins className="text-emerald-600" size={22} /> ضبط الكاش الابتدائي
             </h3>
-            <p className="text-xs text-muted-foreground mb-4">
-              دي قيمة الفلوس اللي كانت معاك في المحل قبل ما تبدأ تدخل حركات في السيستم.
-              كل الحركات الجديدة (قبض/صرف/شراء/بيع) هتتحسب فوقها تلقائياً.
-            </p>
+            <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs leading-relaxed">
+              <div className="flex items-start gap-2">
+                <Info className="text-primary flex-shrink-0 mt-0.5" size={14} />
+                <div>
+                  <p className="font-extrabold text-primary mb-1">تنبيه مهم:</p>
+                  <p className="text-muted-foreground">
+                    الرقم ده <strong className="text-foreground">نقطة بداية بس</strong> — بيتحط <strong>مرة واحدة</strong> كرصيد افتتاحي. مش هيتكرر تأثيره على أي حركة قديمة (بيع/شرا/مصاريف) اتسجلت قبل كده. كل الحركات هتفضل زي ما هي، والرقم ده بس هيتضاف فوقها.
+                  </p>
+                </div>
+              </div>
+            </div>
             <label className="text-xs font-extrabold mb-1 block">المبلغ بالجنيه</label>
             <input
               type="number"
@@ -709,6 +727,60 @@ export default function ReportsPage() {
                 إلغاء
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reports start date editor */}
+      {editingStartDate && (
+        <div className="modal-overlay" onClick={() => setEditingStartDate(false)}>
+          <div className="glass-modal rounded-3xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
+              <CalendarClock className="text-primary" size={22} /> تاريخ بداية حساب التقارير
+            </h3>
+            <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs leading-relaxed">
+              <div className="flex items-start gap-2">
+                <Info className="text-primary flex-shrink-0 mt-0.5" size={14} />
+                <p className="text-muted-foreground">
+                  حدد اليوم اللي هيبدأ منه حساب <strong className="text-foreground">الأرباح الشهرية وديون المحل الشهرية</strong> (مثلاً 30/6 لو نقلت البيانات في التاريخ ده). الحركات اللي قبله مش هتظهر في التقارير الشهرية عشان المقارنة بين الشهور تكون عادلة.
+                </p>
+              </div>
+            </div>
+            <label className="text-xs font-extrabold mb-1 block">التاريخ</label>
+            <input
+              type="date"
+              className="input-field w-full text-base font-extrabold"
+              value={startDateInput}
+              onChange={e => setStartDateInput(e.target.value)}
+              autoFocus
+            />
+            <div className="grid grid-cols-3 gap-2 mt-5">
+              <button
+                onClick={() => {
+                  setReportsStartDate(startDateInput || null);
+                  toast({ title: "تم الحفظ ✅", description: startDateInput ? `التقارير هتبدأ من ${new Date(startDateInput).toLocaleDateString('ar-EG')}` : 'تم إلغاء تاريخ البداية' });
+                  setEditingStartDate(false);
+                  refresh();
+                }}
+                className="btn-primary py-3 col-span-2"
+              >
+                حفظ
+              </button>
+              <button
+                onClick={() => {
+                  setReportsStartDate(null);
+                  toast({ title: "تم المسح", description: "شيلنا تاريخ البداية — التقارير هتشمل كل الحركات" });
+                  setEditingStartDate(false);
+                  refresh();
+                }}
+                className="bg-destructive/10 text-destructive py-3 rounded-xl font-extrabold text-xs"
+              >
+                مسح
+              </button>
+            </div>
+            <button onClick={() => setEditingStartDate(false)} className="w-full mt-2 bg-secondary text-secondary-foreground py-2 rounded-xl font-extrabold text-sm">
+              إلغاء
+            </button>
           </div>
         </div>
       )}
