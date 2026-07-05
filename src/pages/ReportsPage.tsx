@@ -730,6 +730,60 @@ export default function ReportsPage() {
           </div>
         </div>
       )}
+
+      {/* Reports start date editor */}
+      {editingStartDate && (
+        <div className="modal-overlay" onClick={() => setEditingStartDate(false)}>
+          <div className="glass-modal rounded-3xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+            <h3 className="font-extrabold text-lg mb-2 flex items-center gap-2">
+              <CalendarClock className="text-primary" size={22} /> تاريخ بداية حساب التقارير
+            </h3>
+            <div className="mb-4 p-3 rounded-xl bg-primary/10 border border-primary/30 text-xs leading-relaxed">
+              <div className="flex items-start gap-2">
+                <Info className="text-primary flex-shrink-0 mt-0.5" size={14} />
+                <p className="text-muted-foreground">
+                  حدد اليوم اللي هيبدأ منه حساب <strong className="text-foreground">الأرباح الشهرية وديون المحل الشهرية</strong> (مثلاً 30/6 لو نقلت البيانات في التاريخ ده). الحركات اللي قبله مش هتظهر في التقارير الشهرية عشان المقارنة بين الشهور تكون عادلة.
+                </p>
+              </div>
+            </div>
+            <label className="text-xs font-extrabold mb-1 block">التاريخ</label>
+            <input
+              type="date"
+              className="input-field w-full text-base font-extrabold"
+              value={startDateInput}
+              onChange={e => setStartDateInput(e.target.value)}
+              autoFocus
+            />
+            <div className="grid grid-cols-3 gap-2 mt-5">
+              <button
+                onClick={() => {
+                  setReportsStartDate(startDateInput || null);
+                  toast({ title: "تم الحفظ ✅", description: startDateInput ? `التقارير هتبدأ من ${new Date(startDateInput).toLocaleDateString('ar-EG')}` : 'تم إلغاء تاريخ البداية' });
+                  setEditingStartDate(false);
+                  refresh();
+                }}
+                className="btn-primary py-3 col-span-2"
+              >
+                حفظ
+              </button>
+              <button
+                onClick={() => {
+                  setReportsStartDate(null);
+                  toast({ title: "تم المسح", description: "شيلنا تاريخ البداية — التقارير هتشمل كل الحركات" });
+                  setEditingStartDate(false);
+                  refresh();
+                }}
+                className="bg-destructive/10 text-destructive py-3 rounded-xl font-extrabold text-xs"
+              >
+                مسح
+              </button>
+            </div>
+            <button onClick={() => setEditingStartDate(false)} className="w-full mt-2 bg-secondary text-secondary-foreground py-2 rounded-xl font-extrabold text-sm">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
