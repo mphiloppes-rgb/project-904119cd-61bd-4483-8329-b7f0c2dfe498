@@ -15,6 +15,7 @@ import {
 const KIND_OPTS: EntityKind[] = ['products','customers','suppliers','expenses','categories','unknown'];
 
 export default function SmartImporter() {
+  const { toast } = useToast();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [db, setDb] = useState<ParsedDb | null>(null);
