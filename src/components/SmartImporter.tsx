@@ -33,7 +33,7 @@ export default function SmartImporter() {
       setItems(detected.map(d => ({ ...d, include: d.kind !== 'unknown' })));
       setOpen(true);
     } catch (e: any) {
-      toast.error(e?.message || 'فشل قراءة الملف');
+      toast({ title: e?.message || 'فشل قراءة الملف', variant: "destructive" });
     } finally {
       setLoading(false);
     }
@@ -50,7 +50,7 @@ export default function SmartImporter() {
       setDb(null); setItems([]);
       setTimeout(() => window.location.reload(), 800);
     } catch (e: any) {
-      toast.error(e?.message || 'فشل الاستيراد');
+      toast({ title: e?.message || 'فشل الاستيراد', variant: "destructive" });
     }
   };
 
