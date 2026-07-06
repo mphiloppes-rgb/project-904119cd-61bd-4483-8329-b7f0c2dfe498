@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import {
   parseFile, detectAll, runImport, KIND_LABEL,
   type ParsedDb, type DetectedSelection, type EntityKind, type ImportMode,
