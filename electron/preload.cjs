@@ -11,4 +11,7 @@ contextBridge.exposeInMainWorld('posElectron', {
   chooseBackupFolder: () => ipcRenderer.invoke('pos:choose-backup-folder'),
   getDefaultBackupFolder: () => ipcRenderer.invoke('pos:get-default-backup-folder'),
   listBackups: (folder) => ipcRenderer.invoke('pos:list-backups', folder),
+
+  // Smart importer: read Access .mdb/.accdb
+  readMdb: (bytes) => ipcRenderer.invoke('pos:read-mdb', bytes),
 });
