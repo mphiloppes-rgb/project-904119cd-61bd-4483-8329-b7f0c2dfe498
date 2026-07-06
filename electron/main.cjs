@@ -133,17 +133,6 @@ ipcMain.handle('pos:read-mdb', async (_evt, bytes) => {
     return { ok: false, error: e.message };
   }
 });
-      .filter(f => f.startsWith('pos-backup-') && f.endsWith('.json'))
-      .map(f => {
-        const st = fs.statSync(path.join(dir, f));
-        return { name: f, size: st.size, mtime: st.mtime.toISOString() };
-      })
-      .sort((a, b) => b.mtime.localeCompare(a.mtime));
-    return { ok: true, folder: dir, files };
-  } catch (e) {
-    return { ok: false, error: e.message };
-  }
-});
 
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => app.quit());
