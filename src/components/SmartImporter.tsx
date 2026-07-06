@@ -42,10 +42,7 @@ export default function SmartImporter() {
   const doImport = () => {
     try {
       const res = runImport(items, mode);
-      toast.success(
-        `تم الاستيراد ✓ منتجات: ${res.products} • عملاء: ${res.customers} • موردين: ${res.suppliers} • مصاريف: ${res.expenses} • تصنيفات: ${res.categories}` +
-        (res.skipped ? ` (تم تجاهل ${res.skipped} صف)` : '')
-      );
+      toast({ title: `تم الاستيراد ✓ منتجات: ${res.products} • عملاء: ${res.customers} • موردين: ${res.suppliers} • مصاريف: ${res.expenses} • تصنيفات: ${res.categories}${res.skipped ? ` (تجاهل ${res.skipped} صف)` : ''}` });
       setOpen(false);
       setDb(null); setItems([]);
       setTimeout(() => window.location.reload(), 800);
