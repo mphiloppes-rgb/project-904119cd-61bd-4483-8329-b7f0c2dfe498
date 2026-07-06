@@ -109,6 +109,42 @@ ipcMain.handle('pos:list-backups', async (_evt, folder) => {
   }
 });
 
+// ===== Access .mdb / .accdb reader (smart importer) =====
+ipcMain.handle('pos:read-mdb', async (_evt, bytes) => {
+  try {
+    const MDBReader = require('mdb-reader').default || require('mdb-reader');
+    const buf = Buffer.from(bytes);
+    const reader = new MDBReader(buf);
+    const names = reader.getTableNames();
+    const tables = names.map((n) => {
+      try {
+        const t = reader.getTable(n);
+        return {
+          name: n,
+          columns: t.getColumnNames(),
+          rows: t.getData(),
+        };
+      } catch (e) {
+        return { name: n, columns: [], rows: [], error: e.message };
+      }
+    });
+    return { ok: true, tables };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+      .filter(f => f.startsWith('pos-backup-') && f.endsWith('.json'))
+      .map(f => {
+        const st = fs.statSync(path.join(dir, f));
+        return { name: f, size: st.size, mtime: st.mtime.toISOString() };
+      })
+      .sort((a, b) => b.mtime.localeCompare(a.mtime));
+    return { ok: true, folder: dir, files };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
 app.whenReady().then(createWindow);
 app.on('window-all-closed', () => app.quit());
 app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
