@@ -18,6 +18,7 @@ import {
 import PatternLock from "@/components/PatternLock";
 import CashierPermissionsCard from "@/components/CashierPermissionsCard";
 import LegacyImporter from "@/components/LegacyImporter";
+import SmartImporter from "@/components/SmartImporter";
 import { exportViewerData, chooseViewerSavePath, getViewerSavePath } from "@/lib/viewer-sync";
 import { getBackupFolder, chooseDiskBackupFolder, runDiskBackup, isDiskBackupEnabled, setDiskBackupEnabled, getDiskBackupIntervalMs, setDiskBackupIntervalMs, getLastBackupInfo } from "@/lib/disk-backup";
 
