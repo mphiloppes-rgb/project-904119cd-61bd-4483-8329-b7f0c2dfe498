@@ -267,6 +267,9 @@ export default function SettingsPage() {
         {/* Legacy data importer */}
         {admin && <LegacyImporter />}
 
+        {/* Smart importer (Access / Excel / CSV) */}
+        {admin && <div className="lg:col-span-2"><SmartImporter /></div>}
+
         {/* Viewer app sync */}
         {admin && (
           <div className="stat-card animate-fade-in-up">
