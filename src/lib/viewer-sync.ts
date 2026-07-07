@@ -1,4 +1,4 @@
-// تصدير ملف بيانات للعارض المنفصل (RaeiViewer)
+// تصدير ملف بيانات للعارض المنفصل (MoonTechViewer)
 // اسم الملف ثابت ليطابق ما يتوقعه العارض: shop-viewer-data.json
 // يدعم: حفظ تلقائي عبر Electron لمسار محدد + سجل الأسعار + آخر سعر مورد
 import { getProducts } from "./store";

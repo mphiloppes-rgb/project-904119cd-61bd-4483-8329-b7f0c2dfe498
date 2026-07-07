@@ -48,7 +48,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 550,
-    title: 'عارض المخزون والأسعار — الراعي للعدد والآلات',
+    title: 'عارض المخزون والأسعار — مون تك',
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),

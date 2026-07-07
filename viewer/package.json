@@ -1,12 +1,12 @@
 {
-  "name": "raei-viewer",
+  "name": "moontech-viewer",
   "version": "1.0.0",
   "description": "عارض الأسعار والمخزون — للراعي للعدد والآلات",
   "main": "main.cjs",
   "scripts": {
     "start": "electron .",
-    "package:win": "electron-packager . \"RaeiViewer\" --platform=win32 --arch=x64 --out=dist --overwrite --icon=../public/favicon.ico",
-    "package:linux": "electron-packager . \"RaeiViewer\" --platform=linux --arch=x64 --out=dist --overwrite"
+    "package:win": "electron-packager . \"MoonTechViewer\" --platform=win32 --arch=x64 --out=dist --overwrite --icon=../public/favicon.ico",
+    "package:linux": "electron-packager . \"MoonTechViewer\" --platform=linux --arch=x64 --out=dist --overwrite"
   },
   "devDependencies": {
     "electron": "^28.3.3",

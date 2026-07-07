@@ -13,7 +13,7 @@ export default function ThermalPrint({ invoice }: { invoice: Invoice }) {
       `}</style>
       <div style={{ width: "76mm", margin: "0 auto", fontSize: "12px", lineHeight: 1.4 }}>
         <div style={{ textAlign: "center", borderBottom: "1px dashed #000", paddingBottom: 6, marginBottom: 6 }}>
-          <h1 style={{ fontSize: "16px", fontWeight: 800, margin: 0 }}>الراعي للعدد والآلات</h1>
+          <h1 style={{ fontSize: "16px", fontWeight: 800, margin: 0 }}>مون تك</h1>
           <p style={{ margin: "2px 0", fontSize: "11px" }}>موزع معتمد Fit & Apt</p>
           <p style={{ margin: "2px 0", fontSize: "11px" }} dir="ltr">📞 01210004358</p>
         </div>

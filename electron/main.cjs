@@ -15,7 +15,7 @@ function createWindow() {
     height: 800,
     minWidth: 900,
     minHeight: 600,
-    title: 'الراعي للعدد والآلات',
+    title: 'مون تك',
     icon: path.join(__dirname, '..', 'public', 'favicon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),

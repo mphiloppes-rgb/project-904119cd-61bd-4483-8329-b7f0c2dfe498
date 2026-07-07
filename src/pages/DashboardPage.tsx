@@ -56,10 +56,10 @@ export default function DashboardPage() {
           <div className="relative mb-5">
             <div className="absolute inset-0 rounded-full animate-pulse-ring" style={{ background: 'hsla(200, 85%, 48%, 0.15)', transform: 'scale(1.15)' }} />
             <div className="w-28 h-28 rounded-full overflow-hidden border-4 shadow-xl animate-float" style={{ borderColor: 'hsl(200, 85%, 48%)', boxShadow: '0 8px 40px hsla(200, 85%, 48%, 0.3)' }}>
-              <img src={logo} alt="الراعي للعدد والآلات" className="w-full h-full object-cover" />
+              <img src={logo} alt="مون تك" className="w-full h-full object-cover" />
             </div>
           </div>
-          <h1 className="text-3xl font-extrabold text-foreground mb-1">الراعي للعدد والآلات</h1>
+          <h1 className="text-3xl font-extrabold text-foreground mb-1">مون تك</h1>
           <p className="text-sm text-primary font-bold mb-1">موزع معتمد Fit & Apt</p>
           <p className="text-xs text-muted-foreground">
             {new Date().toLocaleDateString("ar-EG", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
