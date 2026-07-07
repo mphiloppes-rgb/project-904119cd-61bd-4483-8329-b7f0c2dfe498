@@ -91,7 +91,7 @@ export default function PinLock({ children }: { children: React.ReactNode }) {
           <div className="w-24 h-24 rounded-full overflow-hidden border-4 mb-3" style={{ borderColor: 'hsl(var(--primary))' }}>
             <img src={logo} alt="logo" className="w-full h-full object-cover" />
           </div>
-          <h1 className="text-2xl font-extrabold text-center">الراعي للعدد والآلات</h1>
+          <h1 className="text-2xl font-extrabold text-center">مون تك</h1>
           <p className="text-sm text-muted-foreground mt-1">اختار طريقة الدخول</p>
         </div>
 

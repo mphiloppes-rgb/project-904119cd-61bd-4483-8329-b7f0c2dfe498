@@ -25,7 +25,7 @@ cd viewer
 npm install
 npm run package:win
 ```
-الناتج في `viewer/dist/RaeiViewer-win32-x64/RaeiViewer.exe`
+الناتج في `viewer/dist/MoonTechViewer-win32-x64/MoonTechViewer.exe`
 
 ## في البرنامج الأساسي
 من **الإعدادات → "مزامنة العارض"** يحفظ ملف JSON في المسار أعلاه.

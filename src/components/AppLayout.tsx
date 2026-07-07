@@ -79,11 +79,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className="p-5 border-b border-sidebar-border">
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 rounded-full overflow-hidden border-2 flex-shrink-0" style={{ borderColor: 'hsl(200, 85%, 48%)' }}>
-                <img src={logo} alt="الراعي للعدد والآلات" className="w-full h-full object-cover" />
+                <img src={logo} alt="مون تك" className="w-full h-full object-cover" />
               </div>
               <div>
                 <h1 className="text-base font-extrabold text-sidebar-primary-foreground leading-tight">
-                  الراعي للعدد والآلات
+                  مون تك
                 </h1>
                 <p className="text-[11px] text-sidebar-foreground/50 mt-0.5">موزع معتمد Fit & Apt</p>
               </div>
@@ -136,7 +136,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             )}
             <p className="font-bold">إدارة: أ/ مينا عيد</p>
-            <p dir="ltr">📞 01210004358</p>
+            <p dir="ltr">📞 01008317208 • 01205669854</p>
           </div>
         </div>
       </aside>
@@ -147,9 +147,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         <div className="lg:hidden flex items-center justify-between p-4 glass-card rounded-none border-x-0 border-t-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-full overflow-hidden border-2" style={{ borderColor: 'hsl(200, 85%, 48%)' }}>
-              <img src={logo} alt="الراعي" className="w-full h-full object-cover" />
+              <img src={logo} alt="مون تك" className="w-full h-full object-cover" />
             </div>
-            <h2 className="font-extrabold text-primary">الراعي للعدد والآلات</h2>
+            <h2 className="font-extrabold text-primary">مون تك</h2>
           </div>
           <button onClick={() => setSidebarOpen(true)} className="p-2 rounded-xl hover:bg-muted transition-colors">
             {sidebarOpen ? <X size={24} /> : <Menu size={24} />}

@@ -47,7 +47,7 @@ export default function ReportsPage() {
       await exportElementToPDF(
         reportRef.current,
         `تقرير_${periodLabel}_${new Date().toISOString().split('T')[0]}.pdf`,
-        `تقرير ${periodLabel} — الراعي للعدد والآلات`
+        `تقرير ${periodLabel} — مون تك`
       );
       toast({ title: "تم تصدير PDF ✅" });
     } catch (e: any) {

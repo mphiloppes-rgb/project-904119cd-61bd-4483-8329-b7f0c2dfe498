@@ -275,7 +275,7 @@ export default function SettingsPage() {
           <div className="stat-card animate-fade-in-up">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"><Download className="text-primary" size={22} /></div>
-              <h3 className="font-extrabold text-lg">مزامنة العارض (RaeiViewer)</h3>
+              <h3 className="font-extrabold text-lg">مزامنة العارض (MoonTechViewer)</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-3">
               المزامنة شغّالة تلقائياً كل 5 ثواني. على نسخة Electron الملف بيتحفظ مباشرة، وعلى المتصفح بيتحمّل عند الضغط على التصدير.

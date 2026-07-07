@@ -14,10 +14,10 @@ export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
                 <img src={logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div>
-                <h1 className="text-xl font-extrabold">الراعي للعدد والآلات</h1>
+                <h1 className="text-xl font-extrabold">مون تك</h1>
                 <p className="text-xs opacity-70">موزع معتمد: Fit & Apt</p>
                 <p className="text-xs opacity-70">إدارة: أ/ مينا عيد</p>
-                <p className="text-xs opacity-70" dir="ltr">📞 01210004358</p>
+                <p className="text-xs opacity-70" dir="ltr">📞 01008317208 • 01205669854</p>
               </div>
             </div>
           </div>

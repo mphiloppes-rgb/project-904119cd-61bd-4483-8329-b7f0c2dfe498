@@ -1,6 +1,6 @@
 {
-  "name": "الراعي للعدد والآلات",
-  "short_name": "الراعي",
+  "name": "مون تك",
+  "short_name": "مون تك",
   "description": "نظام إدارة محل أدوات وعدد",
   "start_url": "./index.html",
   "scope": "./",
