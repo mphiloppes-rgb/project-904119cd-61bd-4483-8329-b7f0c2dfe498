@@ -136,7 +136,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             )}
             <p className="font-bold">إدارة: أ/ مينا عيد</p>
-            <p dir="ltr">📞 01210004358</p>
+            <p dir="ltr">📞 01008317208 📞 01210004358nbsp;•📞 01210004358nbsp; 01205669854</p>
           </div>
         </div>
       </aside>

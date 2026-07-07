@@ -17,7 +17,7 @@ export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
                 <h1 className="text-xl font-extrabold">مون تك</h1>
                 <p className="text-xs opacity-70">موزع معتمد: Fit & Apt</p>
                 <p className="text-xs opacity-70">إدارة: أ/ مينا عيد</p>
-                <p className="text-xs opacity-70" dir="ltr">📞 01210004358</p>
+                <p className="text-xs opacity-70" dir="ltr">📞 01008317208 📞 01210004358nbsp;•📞 01210004358nbsp; 01205669854</p>
               </div>
             </div>
           </div>
