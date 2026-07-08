@@ -598,6 +598,17 @@ export default function POSPage() {
           </div>
         </div>
       </div>
+
+      {/* Keyboard shortcut hint bar */}
+      <div className="no-print fixed bottom-2 left-1/2 -translate-x-1/2 z-40 hidden md:flex items-center gap-2 px-4 py-1.5 rounded-full bg-background/90 backdrop-blur border border-border shadow-lg text-[11px] font-bold text-muted-foreground">
+        <span className="text-primary">اختصارات:</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted text-foreground">F2</kbd><span>فاتورة جديدة</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted text-foreground">F3</kbd><span>بحث/باركود</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted text-foreground">F4</kbd><span>المدفوع</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted text-foreground">F9</kbd><span>بيع وطباعة</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted text-foreground">F10</kbd><span>حفظ</span>
+        <kbd className="px-1.5 py-0.5 rounded bg-muted text-foreground">Esc</kbd><span>إلغاء</span>
+      </div>
     </>
   );
 }
