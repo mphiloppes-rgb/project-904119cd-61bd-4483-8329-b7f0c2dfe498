@@ -150,7 +150,7 @@ export function exportAllDataToExcel() {
 }
 
 // ================= Extra: Monthly profit / Debts / CSV =================
-import { getInvoices, getInvoiceOriginalTotal, getInvoiceNetTotal, getInvoiceInitialPaid } from './store';
+import { getInvoiceNetTotal } from './store';
 
 function monthKey(iso: string) { const d = new Date(iso); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
 function monthLabel(k: string) { const [y,m]=k.split('-'); return `${m}/${y}`; }
