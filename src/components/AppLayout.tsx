@@ -85,7 +85,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <h1 className="text-base font-extrabold text-sidebar-primary-foreground leading-tight">
                   مون تك
                 </h1>
-                <p className="text-[11px] text-sidebar-foreground/50 mt-0.5">موزع معتمد Fit & Apt</p>
+                <p className="text-[11px] text-sidebar-foreground/50 mt-0.5">إدارة: مينا فيلبس</p>
               </div>
             </div>
           </div>

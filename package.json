@@ -11,7 +11,29 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "electron": "electron .",
+    "start": "npm run build && electron .",
+    "pack:win": "npm run build && electron-builder --win --x64",
+    "pack:portable": "npm run build && electron-packager . \"MoonTech\" --platform=win32 --arch=x64 --out=release --overwrite --ignore='^/src' --ignore='^/public' --ignore='^/release' --ignore='^/node_modules/(?!(mdb-reader))'"
+  },
+  "build": {
+    "appId": "com.moontech.pos",
+    "productName": "MoonTech",
+    "directories": { "output": "release" },
+    "files": ["dist/**/*", "electron/**/*", "package.json"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }],
+      "icon": "public/logo-512.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MoonTech"
+    },
+    "asar": true
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
@@ -70,6 +92,7 @@
   },
   "devDependencies": {
     "@electron/packager": "^19.1.0",
+    "electron-builder": "^24.13.3",
     "@eslint/js": "^9.32.0",
     "@tailwindcss/typography": "^0.5.16",
     "@testing-library/jest-dom": "^6.6.0",

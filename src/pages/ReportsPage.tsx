@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { BarChart3, TrendingUp, TrendingDown, Receipt, Star, Download, RotateCcw, ShoppingBag, Wallet, Banknote, AlertCircle, Users, Package, Crown, Boxes, Coins, FileText, Calculator, Pencil, ArrowRight, CalendarClock, Info } from "lucide-react";
 import { getReport, getStaleProductsByDays, getOpeningCash, setOpeningCash, getReportsStartDate, setReportsStartDate } from "@/lib/store";
 import { useStoreRefresh } from "@/hooks/use-store-refresh";
-import { exportReportToExcel } from "@/lib/excel-export";
+import { exportReportToExcel, exportReportToCSV, exportMonthlyProfitToExcel, exportMonthlyProfitToCSV, exportDebtsReportToExcel, exportDebtsReportToCSV } from "@/lib/excel-export";
 import { exportElementToPDF } from "@/lib/pdf-export";
 import { isCashier } from "@/lib/auth";
 import { toast } from "@/hooks/use-toast";
@@ -92,6 +92,21 @@ export default function ReportsPage() {
       <div className="flex gap-2 mb-4 flex-wrap items-center">
         <button onClick={() => exportReportToExcel(period)} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-success text-success-foreground hover:opacity-90 transition-all hover:scale-105">
           <Download size={16} /> تصدير Excel
+        </button>
+        <button onClick={() => exportReportToCSV(period)} className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs bg-success/15 text-success hover:bg-success/25 transition-all">
+          <Download size={14} /> CSV
+        </button>
+        <button onClick={exportMonthlyProfitToExcel} className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs bg-primary/15 text-primary hover:bg-primary/25 transition-all" title="صافي الربح لكل شهر — Excel">
+          <TrendingUp size={14} /> ربح شهري Excel
+        </button>
+        <button onClick={exportMonthlyProfitToCSV} className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs bg-primary/10 text-primary hover:bg-primary/20 transition-all" title="صافي الربح لكل شهر — CSV">
+          <TrendingUp size={14} /> ربح شهري CSV
+        </button>
+        <button onClick={exportDebtsReportToExcel} className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 transition-all" title="ديون العملاء والموردين — Excel">
+          <Coins size={14} /> ديون Excel
+        </button>
+        <button onClick={exportDebtsReportToCSV} className="flex items-center gap-2 px-3 py-2.5 rounded-xl font-bold text-xs bg-amber-500/10 text-amber-600 hover:bg-amber-500/20 transition-all" title="ديون العملاء والموردين — CSV">
+          <Coins size={14} /> ديون CSV
         </button>
         <button onClick={handleExportPDF} disabled={exportingPDF} className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-destructive text-destructive-foreground hover:opacity-90 transition-all hover:scale-105 disabled:opacity-50">
           <FileText size={16} /> {exportingPDF ? 'جاري التصدير...' : 'تصدير PDF'}
