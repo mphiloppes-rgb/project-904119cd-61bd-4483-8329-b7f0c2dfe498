@@ -15,8 +15,8 @@ export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
               </div>
               <div>
                 <h1 className="text-xl font-extrabold">مون تك</h1>
-                <p className="text-xs opacity-70">موزع معتمد: Fit & Apt</p>
-                <p className="text-xs opacity-70">إدارة: أ/ مينا عيد</p>
+                <p className="text-xs opacity-70">نظام إدارة المبيعات والمخزون</p>
+                <p className="text-xs opacity-70">إدارة: مينا فيلبس</p>
                 <p className="text-xs opacity-70" dir="ltr">📞 01008317208 • 01205669854</p>
               </div>
             </div>
@@ -117,7 +117,7 @@ export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
             <span className="text-lg font-extrabold" style={{ color: '#0c4a6e' }}>شكراً لتعاملكم معنا</span>
             <div className="h-px flex-1 max-w-16" style={{ background: 'linear-gradient(to left, transparent, #0284c7)' }} />
           </div>
-          <p className="text-xs" style={{ color: '#999' }}>Fit & Apt</p>
+          <p className="text-xs" style={{ color: '#999' }}>مون تك • MoonTech POS</p>
         </div>
       </div>
     </div>

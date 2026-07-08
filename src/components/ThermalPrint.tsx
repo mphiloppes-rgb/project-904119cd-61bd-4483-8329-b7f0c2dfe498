@@ -14,7 +14,7 @@ export default function ThermalPrint({ invoice }: { invoice: Invoice }) {
       <div style={{ width: "76mm", margin: "0 auto", fontSize: "12px", lineHeight: 1.4 }}>
         <div style={{ textAlign: "center", borderBottom: "1px dashed #000", paddingBottom: 6, marginBottom: 6 }}>
           <h1 style={{ fontSize: "16px", fontWeight: 800, margin: 0 }}>مون تك</h1>
-          <p style={{ margin: "2px 0", fontSize: "11px" }}>موزع معتمد Fit & Apt</p>
+          <p style={{ margin: "2px 0", fontSize: "11px" }}>إدارة: مينا فيلبس</p>
           <p style={{ margin: "2px 0", fontSize: "11px" }} dir="ltr">📞 01008317208 • 01205669854</p>
         </div>
 
@@ -78,7 +78,7 @@ export default function ThermalPrint({ invoice }: { invoice: Invoice }) {
 
         <div style={{ textAlign: "center", borderTop: "1px dashed #000", paddingTop: 8, marginTop: 8 }}>
           <p style={{ margin: 0, fontWeight: 700 }}>شكراً لتعاملكم معنا</p>
-          <p style={{ margin: "2px 0 0", fontSize: "10px" }}>إدارة: أ/ مينا عيد</p>
+          <p style={{ margin: "2px 0 0", fontSize: "10px" }}>إدارة: مينا فيلبس</p>
         </div>
       </div>
     </div>
