@@ -60,7 +60,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <h1 className="text-3xl font-extrabold text-foreground mb-1">مون تك</h1>
-          <p className="text-sm text-primary font-bold mb-1">إدارة: مينا فيلبس</p>
+          <p className="text-sm text-primary font-bold mb-1">نظام حسابات وكاشير للمحلات</p>
           <p className="text-xs text-muted-foreground">
             {new Date().toLocaleDateString("ar-EG", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
           </p>

@@ -85,7 +85,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <h1 className="text-base font-extrabold text-sidebar-primary-foreground leading-tight">
                   مون تك
                 </h1>
-                <p className="text-[11px] text-sidebar-foreground/50 mt-0.5">إدارة: مينا فيلبس</p>
+                <p className="text-[11px] text-sidebar-foreground/50 mt-0.5">نظام حسابات وكاشير</p>
               </div>
             </div>
           </div>
@@ -135,8 +135,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <LogoutButton />
               </div>
             )}
-            <p className="font-bold">إدارة: أ/ مينا عيد</p>
-            <p dir="ltr">📞 01008317208 • 01205669854</p>
+            <p className="font-bold">MOON TECH © {new Date().getFullYear()}</p>
           </div>
         </div>
       </aside>

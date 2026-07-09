@@ -19,6 +19,7 @@ import PatternLock from "@/components/PatternLock";
 import CashierPermissionsCard from "@/components/CashierPermissionsCard";
 import LegacyImporter from "@/components/LegacyImporter";
 import SmartImporter from "@/components/SmartImporter";
+import PrintTest from "@/components/PrintTest";
 import { exportViewerData, chooseViewerSavePath, getViewerSavePath } from "@/lib/viewer-sync";
 import { getBackupFolder, chooseDiskBackupFolder, runDiskBackup, isDiskBackupEnabled, setDiskBackupEnabled, getDiskBackupIntervalMs, setDiskBackupIntervalMs, getLastBackupInfo } from "@/lib/disk-backup";
 
@@ -269,6 +270,10 @@ export default function SettingsPage() {
 
         {/* Smart importer (Access / Excel / CSV) */}
         {admin && <div className="lg:col-span-2"><SmartImporter /></div>}
+
+        {/* Print test (A4 + Thermal) */}
+        {admin && <PrintTest />}
+
 
         {/* Viewer app sync */}
         {admin && (
