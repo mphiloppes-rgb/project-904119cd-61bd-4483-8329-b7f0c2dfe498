@@ -3,37 +3,33 @@ import logo from "@/assets/logo.png";
 
 export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
   return (
-    <div className="fixed inset-0 z-[9999] bg-white p-4 print:p-0" dir="rtl" style={{ fontFamily: "Tajawal, sans-serif", color: '#1a2332' }}>
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="relative overflow-hidden rounded-t-xl" style={{ background: 'linear-gradient(135deg, #0c4a6e 0%, #0284c7 60%, #38bdf8 100%)' }}>
+    <div className="fixed inset-0 z-[9999] bg-white p-4 print:p-0" dir="rtl" style={{ fontFamily: "Tajawal, sans-serif", color: '#000' }}>
+      <div className="max-w-2xl mx-auto border border-black/10 rounded-xl overflow-hidden shadow-lg">
+        {/* Header — MoonTech branding (black + steel + electric blue) */}
+        <div className="relative overflow-hidden" style={{ background: 'linear-gradient(135deg, #050914 0%, #0f172a 45%, #1e293b 100%)' }}>
           <div className="flex items-center justify-between p-5 text-white">
             <div className="flex items-center gap-4">
-              {/* Circular logo */}
-              <div style={{ width: 72, height: 72, borderRadius: '50%', overflow: 'hidden', border: '3px solid rgba(255,255,255,0.4)', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-                <img src={logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <div style={{ width: 78, height: 78, borderRadius: '50%', overflow: 'hidden', border: '2px solid #3b82f6', boxShadow: '0 0 24px rgba(59,130,246,0.55)', background: '#000' }}>
+                <img src={logo} alt="MoonTech" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               </div>
               <div>
-                <h1 className="text-xl font-extrabold">مون تك</h1>
-                <p className="text-xs opacity-70">نظام إدارة المبيعات والمخزون</p>
-                <p className="text-xs opacity-70">إدارة: مينا فيلبس</p>
-                <p className="text-xs opacity-70" dir="ltr">📞 01008317208 • 01205669854</p>
+                <h1 className="text-2xl font-black tracking-wider" style={{ background: 'linear-gradient(90deg,#cbd5e1,#3b82f6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>MOON TECH</h1>
+                <p className="text-xs opacity-80">مون تك • نظام حسابات وكاشير للمحلات</p>
               </div>
             </div>
           </div>
-          {/* Accent bar */}
-          <div className="h-1" style={{ background: 'linear-gradient(90deg, #0ea5e9, #38bdf8, #7dd3fc, #38bdf8, #0ea5e9)' }} />
+          <div className="h-1" style={{ background: 'linear-gradient(90deg, #3b82f6, #60a5fa, #cbd5e1, #60a5fa, #3b82f6)' }} />
         </div>
 
         {/* Invoice meta */}
-        <div className="bg-gray-50 border-x border-gray-200 px-5 py-3 flex justify-between items-center text-sm">
+        <div className="bg-gray-50 border-b border-gray-200 px-5 py-3 flex justify-between items-center text-sm" style={{ color: '#000' }}>
           <div>
-            <span className="font-bold" style={{ color: '#0c4a6e' }}>
+            <span className="font-extrabold">
               {(invoice as any).status === 'saved' ? 'فاتورة محفوظة / SAVED INVOICE' : 'فاتورة مبيعات / SALES INVOICE'}
             </span>
           </div>
-          <div className="flex gap-6 text-xs" style={{ color: '#666' }}>
-            <span>الفاتورة: {invoice.invoiceNumber || invoice.id?.slice(-6)}</span>
+          <div className="flex gap-6 text-xs">
+            <span>الفاتورة: <b>{invoice.invoiceNumber || invoice.id?.slice(-6)}</b></span>
             <span>{new Date(invoice.createdAt).toLocaleDateString("ar-EG")}</span>
             <span>{new Date(invoice.createdAt).toLocaleTimeString("ar-EG", { hour: '2-digit', minute: '2-digit' })}</span>
           </div>
