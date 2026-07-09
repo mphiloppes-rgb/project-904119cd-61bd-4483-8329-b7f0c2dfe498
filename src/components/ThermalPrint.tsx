@@ -13,9 +13,8 @@ export default function ThermalPrint({ invoice }: { invoice: Invoice }) {
       `}</style>
       <div style={{ width: "76mm", margin: "0 auto", fontSize: "12px", lineHeight: 1.4 }}>
         <div style={{ textAlign: "center", borderBottom: "1px dashed #000", paddingBottom: 6, marginBottom: 6 }}>
-          <h1 style={{ fontSize: "16px", fontWeight: 800, margin: 0 }}>مون تك</h1>
-          <p style={{ margin: "2px 0", fontSize: "11px" }}>إدارة: مينا فيلبس</p>
-          <p style={{ margin: "2px 0", fontSize: "11px" }} dir="ltr">📞 01008317208 • 01205669854</p>
+          <h1 style={{ fontSize: "18px", fontWeight: 900, margin: 0, letterSpacing: 1 }}>MOON TECH</h1>
+          <p style={{ margin: "2px 0", fontSize: "12px", fontWeight: 700 }}>مون تك • نظام حسابات وكاشير</p>
         </div>
 
         <div style={{ fontSize: "11px", marginBottom: 6 }}>
@@ -78,7 +77,7 @@ export default function ThermalPrint({ invoice }: { invoice: Invoice }) {
 
         <div style={{ textAlign: "center", borderTop: "1px dashed #000", paddingTop: 8, marginTop: 8 }}>
           <p style={{ margin: 0, fontWeight: 700 }}>شكراً لتعاملكم معنا</p>
-          <p style={{ margin: "2px 0 0", fontSize: "10px" }}>إدارة: مينا فيلبس</p>
+          <p style={{ margin: "2px 0 0", fontSize: "10px" }}>MOON TECH POS</p>
         </div>
       </div>
     </div>
