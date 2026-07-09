@@ -41,10 +41,10 @@ export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
           </div>
         )}
 
-        {/* Items table */}
-        <table className="w-full text-sm border-collapse">
+        {/* Items table — black text on clean rows */}
+        <table className="w-full text-sm border-collapse" style={{ color: '#000' }}>
           <thead>
-            <tr style={{ background: '#0c4a6e', color: 'white' }}>
+            <tr style={{ background: '#0f172a', color: '#fff' }}>
               <th className="py-2.5 px-3 text-center w-10">#</th>
               <th className="py-2.5 px-3 text-right">اسم المنتج</th>
               <th className="py-2.5 px-3 text-center">الكمية</th>
@@ -55,36 +55,36 @@ export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
           </thead>
           <tbody>
             {invoice.items.map((item: any, idx: number) => (
-              <tr key={idx} className={idx % 2 === 0 ? 'bg-white' : 'bg-sky-50/50'} style={{ borderBottom: '1px solid #e5e7eb' }}>
-                <td className="py-2.5 px-3 text-center font-bold" style={{ color: '#0284c7' }}>{idx + 1}</td>
-                <td className="py-2.5 px-3 font-medium">{item.productName}</td>
+              <tr key={idx} style={{ background: idx % 2 === 0 ? '#ffffff' : '#f3f6fb', borderBottom: '1px solid #e5e7eb' }}>
+                <td className="py-2.5 px-3 text-center font-bold" style={{ color: '#1d4ed8' }}>{idx + 1}</td>
+                <td className="py-2.5 px-3 font-semibold">{item.productName}</td>
                 <td className="py-2.5 px-3 text-center">{item.quantity}</td>
                 <td className="py-2.5 px-3 text-center">{item.unitPrice.toLocaleString()} ج.م</td>
-                <td className="py-2.5 px-3 text-center" style={{ color: item.discount ? '#d97706' : '#999' }}>
+                <td className="py-2.5 px-3 text-center" style={{ color: item.discount ? '#b45309' : '#999' }}>
                   {item.discount ? `- ${item.discount.toLocaleString()}` : '—'}
                 </td>
-                <td className="py-2.5 px-3 text-left font-bold">{item.total.toLocaleString()} ج.م</td>
+                <td className="py-2.5 px-3 text-left font-extrabold">{item.total.toLocaleString()} ج.م</td>
               </tr>
             ))}
           </tbody>
         </table>
 
         {/* Totals */}
-        <div className="border border-gray-200 rounded-b-xl overflow-hidden">
+        <div style={{ color: '#000' }}>
           {(invoice as any).subtotal && (invoice as any).subtotal !== invoice.total && (
-            <div className="flex justify-between items-center px-5 py-2 bg-white border-b border-gray-200 text-sm">
+            <div className="flex justify-between items-center px-5 py-2 bg-white border-t border-gray-200 text-sm">
               <span className="font-bold">الإجمالي قبل الخصم / SUBTOTAL:</span>
               <span className="font-bold">{(invoice as any).subtotal.toLocaleString()} ج.م</span>
             </div>
           )}
           {(invoice as any).itemsDiscountTotal > 0 && (
-            <div className="flex justify-between items-center px-5 py-2 bg-amber-50 border-b border-gray-200 text-sm" style={{ color: '#b45309' }}>
+            <div className="flex justify-between items-center px-5 py-2 bg-amber-50 border-t border-gray-200 text-sm">
               <span className="font-bold">خصم الأصناف / ITEMS DISCOUNT:</span>
               <span className="font-bold">- {(invoice as any).itemsDiscountTotal.toLocaleString()} ج.م</span>
             </div>
           )}
           {(invoice as any).invoiceDiscount > 0 && (
-            <div className="flex justify-between items-center px-5 py-2 bg-amber-50 border-b border-gray-200 text-sm" style={{ color: '#b45309' }}>
+            <div className="flex justify-between items-center px-5 py-2 bg-amber-50 border-t border-gray-200 text-sm">
               <span className="font-bold">
                 خصم الفاتورة / INVOICE DISCOUNT
                 {(invoice as any).invoiceDiscountType === 'percent' && (invoice as any).invoiceDiscountValue ? ` (${(invoice as any).invoiceDiscountValue}%)` : ''}:
@@ -92,28 +92,28 @@ export default function InvoicePrint({ invoice }: { invoice: Invoice }) {
               <span className="font-bold">- {(invoice as any).invoiceDiscount.toLocaleString()} ج.م</span>
             </div>
           )}
-          <div className="flex justify-between items-center px-5 py-2.5 bg-gray-50 border-b border-gray-200">
+          <div className="flex justify-between items-center px-5 py-2.5 bg-gray-100 border-t border-gray-200">
             <span className="font-bold text-sm">الإجمالي / TOTAL:</span>
             <span className="font-extrabold text-base">{invoice.total.toLocaleString()} ج.م</span>
           </div>
-          <div className="flex justify-between items-center px-5 py-2.5 bg-white border-b border-gray-200">
+          <div className="flex justify-between items-center px-5 py-2.5 bg-white border-t border-gray-200">
             <span className="font-bold text-sm">المدفوع / PAID:</span>
-            <span className="font-bold text-sm" style={{ color: '#16a34a' }}>{invoice.paid.toLocaleString()} ج.م</span>
+            <span className="font-extrabold text-sm" style={{ color: '#15803d' }}>{invoice.paid.toLocaleString()} ج.م</span>
           </div>
-          <div className="flex justify-between items-center px-5 py-2.5" style={{ background: 'linear-gradient(135deg, #0284c7, #38bdf8)' }}>
+          <div className="flex justify-between items-center px-5 py-3" style={{ background: 'linear-gradient(135deg, #0f172a, #1e3a8a)' }}>
             <span className="font-extrabold text-sm text-white">المتبقي / REMAINING:</span>
             <span className="font-extrabold text-lg text-white">{invoice.remaining.toLocaleString()} ج.م</span>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="text-center mt-6 pb-4">
-          <div className="flex items-center justify-center gap-2 mb-2">
-            <div className="h-px flex-1 max-w-16" style={{ background: 'linear-gradient(to right, transparent, #0284c7)' }} />
-            <span className="text-lg font-extrabold" style={{ color: '#0c4a6e' }}>شكراً لتعاملكم معنا</span>
-            <div className="h-px flex-1 max-w-16" style={{ background: 'linear-gradient(to left, transparent, #0284c7)' }} />
+        <div className="text-center py-4 bg-white border-t border-gray-200">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <div className="h-px flex-1 max-w-16" style={{ background: 'linear-gradient(to right, transparent, #0f172a)' }} />
+            <span className="text-base font-extrabold" style={{ color: '#000' }}>شكراً لتعاملكم معنا</span>
+            <div className="h-px flex-1 max-w-16" style={{ background: 'linear-gradient(to left, transparent, #0f172a)' }} />
           </div>
-          <p className="text-xs" style={{ color: '#999' }}>مون تك • MoonTech POS</p>
+          <p className="text-xs" style={{ color: '#666' }}>MOON TECH • مون تك POS</p>
         </div>
       </div>
     </div>
